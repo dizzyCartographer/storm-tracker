@@ -131,6 +131,33 @@ export async function saveDailyLog(input: DailyLogInput) {
   return { success: true, entryId: entry.id };
 }
 
+export async function getEntriesByMonth(tenantId: string, year: number, month: number) {
+  const user = await requireUser();
+
+  const membership = await prisma.tenantMember.findUnique({
+    where: { userId_tenantId: { userId: user.id, tenantId } },
+  });
+  if (!membership) return [];
+
+  const start = new Date(Date.UTC(year, month - 1, 1));
+  const end = new Date(Date.UTC(year, month, 1));
+
+  return prisma.entry.findMany({
+    where: {
+      tenantId,
+      date: { gte: start, lt: end },
+    },
+    include: {
+      user: { select: { id: true, name: true } },
+      behaviorChecks: true,
+      customChecks: { include: { item: true } },
+      impairments: true,
+      menstrualLog: true,
+    },
+    orderBy: { date: "asc" },
+  });
+}
+
 export async function getRecentEntries(tenantId: string, limit = 14) {
   const user = await requireUser();
 
