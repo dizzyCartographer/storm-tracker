@@ -13,7 +13,8 @@ storm-tracker/
 │       ├── features.md       # Full functional requirements
 │       ├── architecture.md   # System design and decisions
 │       ├── data-sources.md   # External APIs and data feeds
-│       └── conventions.md    # Coding conventions and patterns
+│       ├── conventions.md    # Coding conventions and patterns
+│       └── diagnostic-resources.md  # Clinical scales (YMRS, KSADS-PL, GBI)
 └── CLAUDE.md         # This file — loaded into every Claude session
 ```
 
@@ -27,3 +28,4 @@ Before making significant changes, read the relevant context files.
 @docs/context/architecture.md
 @docs/context/data-sources.md
 @docs/context/conventions.md
+@docs/context/diagnostic-resources.md

@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ──────────────────────────────────────────────
+// Identity & Multi-Tenancy
+// ──────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  memberships TenantMember[]
+  entries     Entry[]
+  sessions    Session[]
+  accounts    Account[]
+
+  @@map("users")
+}
+
+// ──────────────────────────────────────────────
+// Better Auth tables
+// ──────────────────────────────────────────────
+
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String    @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("verifications")
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String // e.g. the teen's first name or nickname
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members      TenantMember[]
+  entries      Entry[]
+  customItems  CustomChecklistItem[]
+
+  @@map("tenants")
+}
+
+enum TenantRole {
+  OWNER
+  CAREGIVER
+  TEEN_SELF
+}
+
+model TenantMember {
+  id       String     @id @default(uuid())
+  role     TenantRole
+  joinedAt DateTime   @default(now())
+
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@map("tenant_members")
+}
+
+// ──────────────────────────────────────────────
+// Daily Entry (one per user per tenant per date)
+// ──────────────────────────────────────────────
+
+enum MoodDescriptor {
+  MANIC
+  DEPRESSIVE
+  NEUTRAL
+  MIXED
+}
+
+enum DayQuality {
+  GOOD
+  NEUTRAL
+  BAD
+}
+
+model Entry {
+  id   String   @id @default(uuid())
+  date DateTime @db.Date // calendar date, no time component
+
+  // Quick Log (always required)
+  mood       MoodDescriptor
+  dayQuality DayQuality
+
+  // Freeform Notes
+  notes String? @db.Text
+
+  // Timestamps & attribution
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Related sub-entries
+  behaviorChecks  BehaviorCheck[]
+  customChecks    CustomCheck[]
+  impairments     Impairment[]
+  menstrualLog    MenstrualLog?
+
+  @@unique([userId, tenantId, date])
+  @@map("entries")
+}
+
+// ──────────────────────────────────────────────
+// Behavior Checklist (DSM-based, static items)
+// ──────────────────────────────────────────────
+
+enum BehaviorCategory {
+  SLEEP
+  ENERGY
+  MANIC
+  DEPRESSIVE
+  MIXED_CYCLING
+}
+
+model BehaviorCheck {
+  id       String           @id @default(uuid())
+  category BehaviorCategory
+  itemKey  String           // e.g. "very-little-sleep", matches a static registry
+  checked  Boolean          @default(true)
+
+  entryId String
+  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, itemKey])
+  @@map("behavior_checks")
+}
+
+// ──────────────────────────────────────────────
+// Custom Checklist Items (user-defined per tenant)
+// ──────────────────────────────────────────────
+
+model CustomChecklistItem {
+  id    String @id @default(uuid())
+  label String
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  checks CustomCheck[]
+
+  @@map("custom_checklist_items")
+}
+
+model CustomCheck {
+  id      String  @id @default(uuid())
+  checked Boolean @default(true)
+
+  entryId String
+  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  itemId  String
+  item    CustomChecklistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, itemId])
+  @@map("custom_checks")
+}
+
+// ──────────────────────────────────────────────
+// Impairment Tracking
+// ──────────────────────────────────────────────
+
+enum ImpairmentDomain {
+  SCHOOL_WORK
+  FAMILY_LIFE
+  FRIENDSHIPS
+  SELF_CARE
+  SAFETY_CONCERN
+}
+
+enum ImpairmentSeverity {
+  NONE
+  PRESENT
+  SEVERE
+}
+
+model Impairment {
+  id       String             @id @default(uuid())
+  domain   ImpairmentDomain
+  severity ImpairmentSeverity
+
+  entryId String
+  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, domain])
+  @@map("impairments")
+}
+
+// ──────────────────────────────────────────────
+// Menstrual Tracking
+// ──────────────────────────────────────────────
+
+enum BleedingSeverity {
+  LIGHT
+  MEDIUM
+  HEAVY
+}
+
+model MenstrualLog {
+  id       String           @id @default(uuid())
+  severity BleedingSeverity
+
+  entryId String @unique
+  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@map("menstrual_logs")
+}
