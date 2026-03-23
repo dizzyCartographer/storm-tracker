@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { saveQuickLog } from "@/lib/actions/entry-actions";
+import { saveDailyLog } from "@/lib/actions/entry-actions";
 import { useRouter } from "next/navigation";
+import { BehaviorChecklist } from "./behavior-checklist";
 
 const moods = ["MANIC", "DEPRESSIVE", "NEUTRAL", "MIXED"] as const;
 const dayQualities = ["GOOD", "NEUTRAL", "BAD"] as const;
@@ -24,22 +25,39 @@ export function QuickLogForm({ tenantId }: { tenantId: string }) {
   const router = useRouter();
   const [mood, setMood] = useState<string>("");
   const [dayQuality, setDayQuality] = useState<string>("");
+  const [checkedBehaviors, setCheckedBehaviors] = useState<Set<string>>(
+    new Set()
+  );
+  const [showChecklist, setShowChecklist] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  function toggleBehavior(key: string) {
+    setCheckedBehaviors((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!mood || !dayQuality) {
-      setError("Both fields are required");
+      setError("Mood and day quality are required");
       return;
     }
     setError("");
     setLoading(true);
 
-    const result = await saveQuickLog({
+    const result = await saveDailyLog({
       tenantId,
       mood: mood as "MANIC" | "DEPRESSIVE" | "NEUTRAL" | "MIXED",
       dayQuality: dayQuality as "GOOD" | "NEUTRAL" | "BAD",
+      behaviorKeys: Array.from(checkedBehaviors),
     });
 
     setLoading(false);
@@ -92,6 +110,30 @@ export function QuickLogForm({ tenantId }: { tenantId: string }) {
           ))}
         </div>
       </fieldset>
+
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowChecklist(!showChecklist)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-700"
+        >
+          <span>{showChecklist ? "▾" : "▸"}</span>
+          Behavior checklist
+          {checkedBehaviors.size > 0 && (
+            <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs">
+              {checkedBehaviors.size}
+            </span>
+          )}
+        </button>
+        {showChecklist && (
+          <div className="mt-3">
+            <BehaviorChecklist
+              checked={checkedBehaviors}
+              onToggle={toggleBehavior}
+            />
+          </div>
+        )}
+      </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 

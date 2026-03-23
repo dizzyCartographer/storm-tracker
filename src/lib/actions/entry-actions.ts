@@ -2,19 +2,20 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-utils";
-import { MoodDescriptor, DayQuality } from "@/generated/prisma/client";
+import { MoodDescriptor, DayQuality, BehaviorCategory } from "@/generated/prisma/client";
+import { BEHAVIOR_ITEMS } from "@/lib/behavior-items";
 
-interface QuickLogInput {
+interface DailyLogInput {
   tenantId: string;
   mood: MoodDescriptor;
   dayQuality: DayQuality;
-  date?: string; // ISO date string, defaults to today
+  behaviorKeys?: string[];
+  date?: string;
 }
 
-export async function saveQuickLog(input: QuickLogInput) {
+export async function saveDailyLog(input: DailyLogInput) {
   const user = await requireUser();
 
-  // Verify user belongs to this tenant
   const membership = await prisma.tenantMember.findUnique({
     where: {
       userId_tenantId: {
@@ -29,7 +30,6 @@ export async function saveQuickLog(input: QuickLogInput) {
   }
 
   const date = input.date ? new Date(input.date) : new Date();
-  // Normalize to date only (strip time)
   const dateOnly = new Date(
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
   );
@@ -54,6 +54,32 @@ export async function saveQuickLog(input: QuickLogInput) {
       tenantId: input.tenantId,
     },
   });
+
+  // Replace behavior checks: delete existing, insert new
+  if (input.behaviorKeys) {
+    await prisma.behaviorCheck.deleteMany({
+      where: { entryId: entry.id },
+    });
+
+    if (input.behaviorKeys.length > 0) {
+      const checks = input.behaviorKeys
+        .map((key) => {
+          const item = BEHAVIOR_ITEMS.find((i) => i.key === key);
+          if (!item) return null;
+          return {
+            entryId: entry.id,
+            category: item.category as BehaviorCategory,
+            itemKey: key,
+            checked: true,
+          };
+        })
+        .filter((c): c is NonNullable<typeof c> => c !== null);
+
+      if (checks.length > 0) {
+        await prisma.behaviorCheck.createMany({ data: checks });
+      }
+    }
+  }
 
   return { success: true, entryId: entry.id };
 }
