@@ -130,3 +130,24 @@ export async function saveDailyLog(input: DailyLogInput) {
 
   return { success: true, entryId: entry.id };
 }
+
+export async function getRecentEntries(tenantId: string, limit = 14) {
+  const user = await requireUser();
+
+  const membership = await prisma.tenantMember.findUnique({
+    where: { userId_tenantId: { userId: user.id, tenantId } },
+  });
+  if (!membership) return [];
+
+  return prisma.entry.findMany({
+    where: { tenantId },
+    include: {
+      user: { select: { name: true } },
+      behaviorChecks: true,
+      impairments: true,
+      menstrualLog: true,
+    },
+    orderBy: { date: "desc" },
+    take: limit,
+  });
+}
