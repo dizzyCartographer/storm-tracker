@@ -1,11 +1,21 @@
 import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants } from "@/lib/actions/tenant-actions";
+import { getCustomItems } from "@/lib/actions/custom-item-actions";
 import { Nav } from "@/app/_components/nav";
+import { CustomItemsManager } from "./custom-items";
 import Link from "next/link";
 
 export default async function SettingsPage() {
   await requireUser();
   const tenants = await getUserTenants();
+
+  // Load custom items for each tenant
+  const tenantsWithItems = await Promise.all(
+    tenants.map(async (t) => ({
+      ...t,
+      customItems: await getCustomItems(t.id),
+    }))
+  );
 
   return (
     <>
@@ -37,15 +47,24 @@ export default async function SettingsPage() {
             </p>
           ) : (
             <ul className="mt-4 space-y-3">
-              {tenants.map((t) => (
-                <li
-                  key={t.id}
-                  className="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3"
-                >
-                  <div>
-                    <p className="font-medium">{t.name}</p>
-                    <p className="text-sm text-gray-500">Role: {t.role.toLowerCase().replace("_", " ")}</p>
+              {tenantsWithItems.map((t) => (
+                <li key={t.id}>
+                  <div className="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3">
+                    <div>
+                      <p className="font-medium">{t.name}</p>
+                      <p className="text-sm text-gray-500">
+                        Role: {t.role.toLowerCase().replace("_", " ")}
+                      </p>
+                    </div>
                   </div>
+                  <CustomItemsManager
+                    tenantId={t.id}
+                    tenantName={t.name}
+                    items={t.customItems.map((i) => ({
+                      id: i.id,
+                      label: i.label,
+                    }))}
+                  />
                 </li>
               ))}
             </ul>

@@ -1,8 +1,9 @@
 import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants } from "@/lib/actions/tenant-actions";
+import { getCustomItems } from "@/lib/actions/custom-item-actions";
 import { Nav } from "@/app/_components/nav";
 import { redirect } from "next/navigation";
-import { QuickLogForm } from "./quick-log-form";
+import { DailyLogForm } from "./daily-log-form";
 
 export default async function LogPage({
   searchParams,
@@ -19,6 +20,7 @@ export default async function LogPage({
 
   const activeTenantId = params.tenant ?? tenants[0].id;
   const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
+  const customItems = await getCustomItems(activeTenant.id);
 
   return (
     <>
@@ -28,7 +30,10 @@ export default async function LogPage({
         <p className="mt-1 text-sm text-gray-500">
           Logging for {activeTenant.name}
         </p>
-        <QuickLogForm tenantId={activeTenant.id} />
+        <DailyLogForm
+          tenantId={activeTenant.id}
+          customItems={customItems.map((i) => ({ id: i.id, label: i.label }))}
+        />
       </main>
     </>
   );
