@@ -1,0 +1,6 @@
+github:
+  owner: dizzyCartographer
+  name: storm-tracker
+  cloneURL: https://github.com/dizzyCartographer/storm-tracker.git
+  branch: docs/context
+syncMode: manual
