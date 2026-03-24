@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants } from "@/lib/actions/tenant-actions";
 import { getRecentEntries } from "@/lib/actions/entry-actions";
 import { Nav } from "@/app/_components/nav";
+import { AnalysisPanel } from "./analysis-panel";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -79,6 +80,8 @@ export default async function DashboardPage({
             ))}
           </div>
         )}
+
+        <AnalysisPanel tenantId={activeTenant.id} />
 
         {entries.length === 0 ? (
           <p className="mt-8 text-gray-500">
