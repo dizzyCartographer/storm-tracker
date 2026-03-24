@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth-utils";
 import { scoreDailyEntry, type DailyScore, type DailyScoringInput } from "@/lib/analysis/daily-score";
 import { detectEpisodes, type Episode, type DayWithScore } from "@/lib/analysis/episode-detection";
 import { detectProdromeSignals, type ProdromeSignal } from "@/lib/analysis/prodrome-signals";
+import { loadTenantFramework } from "@/lib/analysis/framework-loader";
 
 export interface ReportDay {
   date: string;
@@ -47,6 +48,9 @@ export async function getReportData(
     select: { name: true },
   });
 
+  // Load the tenant's diagnostic framework
+  const framework = await loadTenantFramework(tenantId);
+
   const from = new Date(fromDate + "T00:00:00Z");
   const to = new Date(toDate + "T23:59:59Z");
 
@@ -64,7 +68,6 @@ export async function getReportData(
     orderBy: { date: "asc" },
   });
 
-  // Build report days
   const days: ReportDay[] = entries.map((entry) => {
     const input: DailyScoringInput = {
       behaviorKeys: entry.behaviorChecks.map((bc) => bc.itemKey),
@@ -77,7 +80,7 @@ export async function getReportData(
     };
     return {
       date: entry.date.toISOString().slice(0, 10),
-      score: scoreDailyEntry(input),
+      score: scoreDailyEntry(input, framework ?? undefined),
       userId: entry.user.id,
       userName: entry.user.name,
       mood: entry.mood,
@@ -112,8 +115,8 @@ export async function getReportData(
   }
 
   const daysWithScores = Array.from(byDate.values());
-  const episodes = detectEpisodes(daysWithScores);
-  const signals = detectProdromeSignals(daysWithScores, behaviorsByDate);
+  const episodes = detectEpisodes(daysWithScores, framework ?? undefined);
+  const signals = detectProdromeSignals(daysWithScores, behaviorsByDate, framework ?? undefined);
 
   // Behavior frequency
   const behaviorCounts = new Map<string, number>();

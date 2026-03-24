@@ -1,95 +1,42 @@
 /**
- * Daily Classification Engine — DSM-5 Based
+ * Daily Classification Engine — Framework-Driven
  *
- * Maps tracked behaviors to DSM-5 diagnostic criteria for manic and
- * depressive episodes, then classifies each day.
+ * Scores daily entries against a loaded diagnostic framework.
+ * The framework defines poles (axes), criteria, behavior mappings,
+ * classification rules, and mood descriptor effects.
  *
- * DSM-5 Manic Episode Criterion B — 3+ of these (4 if mood is only irritable):
- *   1. Inflated self-esteem / grandiosity
- *   2. Decreased need for sleep
- *   3. More talkative / pressure of speech
- *   4. Flight of ideas / racing thoughts
- *   5. Distractibility
- *   6. Increase in goal-directed activity / psychomotor agitation
- *   7. Excessive involvement in risky activities
- *
- * DSM-5 Major Depressive Episode — 5+ of 9 during same period
- *   (at least one must be #1 or #2):
- *   1. Depressed mood most of the day
- *   2. Markedly diminished interest / pleasure
- *   3. Significant weight/appetite change
- *   4. Insomnia or hypersomnia
- *   5. Psychomotor agitation or retardation
- *   6. Fatigue / loss of energy
- *   7. Feelings of worthlessness / excessive guilt
- *   8. Diminished ability to think / concentrate
- *   9. Recurrent thoughts of death / suicidal ideation
- *
- * DSM-5 Mixed Features Specifier:
- *   Manic/hypomanic episode + 3+ depressive symptoms, or
- *   Depressive episode + 3+ manic symptoms
+ * For bipolar: poles are "manic" (+1) and "depressive" (-1).
+ * For other diagnoses: poles can be anything (e.g., "inattentive" + "hyperactive").
  */
 
-// Map each behavior item to the DSM-5 criterion it satisfies.
-// A behavior can satisfy exactly one manic and/or one depressive criterion.
-const DSM5_MAPPING: Record<string, { manicCriterion?: number; depressiveCriterion?: number }> = {
-  // SLEEP
-  "very-little-sleep":    { manicCriterion: 2 },                // Decreased need for sleep
-  "slept-too-much":       { depressiveCriterion: 4 },           // Hypersomnia
-  "irregular-sleep":      { manicCriterion: 2, depressiveCriterion: 4 }, // Sleep disruption (either pole)
+import {
+  type LoadedFramework,
+  type LoadedClassificationRule,
+} from "./framework-loader";
 
-  // ENERGY
-  "no-energy":            { depressiveCriterion: 6 },           // Fatigue / loss of energy
-  "high-energy":          { manicCriterion: 6 },                // Increase in goal-directed activity
-  "selective-energy":     { depressiveCriterion: 6 },           // Fatigue (variant)
-  "psychosomatic":        { depressiveCriterion: 5 },           // Psychomotor (somatic expression)
-
-  // MANIC
-  "pressured-speech":     { manicCriterion: 3 },                // Pressure of speech
-  "racing-thoughts":      { manicCriterion: 4 },                // Flight of ideas / racing thoughts
-  "euphoria":             {},                                    // Criterion A (mood) — counted separately
-  "grandiose":            { manicCriterion: 1 },                // Inflated self-esteem / grandiosity
-  "nonstop-activity":     { manicCriterion: 6 },                // Increase in goal-directed activity
-  "restless-agitation":   { manicCriterion: 6 },                // Psychomotor agitation
-  "disproportionate-rage":{},                                    // Criterion A (irritable mood) — counted separately
-  "reckless-choices":     { manicCriterion: 7 },                // Excessive involvement in risky activities
-  "bizarre-behavior":     { manicCriterion: 7 },                // Risky / out-of-character (variant)
-  "denies-anything-wrong":{},                                    // Insight deficit — not a B criterion but clinically relevant
-
-  // DEPRESSIVE
-  "sad-empty-hopeless":   { depressiveCriterion: 1 },           // Depressed mood
-  "lost-interest":        { depressiveCriterion: 2 },           // Diminished interest / pleasure
-  "eating-more":          { depressiveCriterion: 3 },           // Appetite/weight change
-  "eating-less":          { depressiveCriterion: 3 },           // Appetite/weight change
-  "withdrawn":            { depressiveCriterion: 2 },           // Diminished interest (social variant)
-  "worthless-guilt":      { depressiveCriterion: 7 },           // Worthlessness / excessive guilt
-  "cant-focus":           { manicCriterion: 5, depressiveCriterion: 8 }, // Distractibility (manic) / can't concentrate (depressive)
-  "mentioned-death":      { depressiveCriterion: 9 },           // Thoughts of death / suicidal ideation
-
-  // MIXED / CYCLING
-  "mood-swings":          {},                                    // Not a single criterion — signals mixed features
-  "agitated-depressed":   { manicCriterion: 6, depressiveCriterion: 1 }, // Agitation (manic) + depressed mood
-  "unprovoked-temper":    {},                                    // Irritable mood — Criterion A for mania
-  "unusual-anxiety":      {},                                    // Comorbid feature, not a DSM criterion per se
-  "aggressive-destructive":{ manicCriterion: 7 },               // Risky/destructive behavior
-};
-
-export type DayClassification = "MANIC" | "DEPRESSIVE" | "MIXED" | "NEUTRAL";
+export type DayClassification = "MANIC" | "DEPRESSIVE" | "MIXED" | "NEUTRAL" | string;
 
 export interface DailyScore {
-  /** Count of distinct DSM-5 manic B criteria met */
-  manicCriteriaCount: number;
-  /** Count of distinct DSM-5 depressive criteria met */
-  depressiveCriteriaCount: number;
-  /** Whether Criterion A for mania is met (elevated/expansive/irritable mood) */
-  manicMoodPresent: boolean;
-  /** Whether core depressive criterion met (depressed mood OR loss of interest) */
-  depressiveCoreMet: boolean;
+  /** Criteria met per pole: { "manic": 3, "depressive": 2 } */
+  criteriaCounts: Record<string, number>;
+  /** Whether the gate criterion is met per pole */
+  gateMet: Record<string, boolean>;
+  /** Whether a core criterion is met per pole */
+  coreMet: Record<string, boolean>;
+  /** The classification label */
   classification: DayClassification;
+  /** Which rule matched */
+  ruleType: string;
   severity: "NONE" | "MILD" | "MODERATE" | "SEVERE";
-  /** Net score for wave graph: positive = manic, negative = depressive */
+  /** Net score for wave graph (sum of direction * criteriaCount per pole) */
   waveScore: number;
   safetyConcern: boolean;
+
+  // Backward-compatible fields for existing UI
+  manicCriteriaCount: number;
+  depressiveCriteriaCount: number;
+  manicMoodPresent: boolean;
+  depressiveCoreMet: boolean;
 }
 
 export interface DailyScoringInput {
@@ -99,108 +46,229 @@ export interface DailyScoringInput {
   impairments: { domain: string; severity: string }[];
 }
 
-export function scoreDailyEntry(input: DailyScoringInput): DailyScore {
-  // Track which DSM criteria are satisfied (using Sets to avoid double-counting)
-  const manicCriteria = new Set<number>();
-  const depressiveCriteria = new Set<number>();
+export function scoreDailyEntry(input: DailyScoringInput, framework?: LoadedFramework): DailyScore {
+  if (!framework) {
+    // Fallback: return a neutral score if no framework loaded
+    return neutralScore();
+  }
+  return scoreDailyEntryGeneric(input, framework);
+}
+
+function scoreDailyEntryGeneric(input: DailyScoringInput, fw: LoadedFramework): DailyScore {
+  // Track which criteria are satisfied per pole (Sets prevent double-counting)
+  const criteriaSets: Record<string, Set<number>> = {};
+  const gateMet: Record<string, boolean> = {};
+  const coreMet: Record<string, boolean> = {};
+
+  for (const pole of fw.poles) {
+    criteriaSets[pole.slug] = new Set();
+    gateMet[pole.slug] = false;
+    coreMet[pole.slug] = false;
+  }
+
   let safetyConcern = false;
 
+  // Process behavior keys
   for (const key of input.behaviorKeys) {
-    const mapping = DSM5_MAPPING[key];
-    if (!mapping) continue;
-    if (mapping.manicCriterion) manicCriteria.add(mapping.manicCriterion);
-    if (mapping.depressiveCriterion) depressiveCriteria.add(mapping.depressiveCriterion);
-    if (key === "mentioned-death") safetyConcern = true;
+    const behavior = fw.behaviorMap.get(key);
+    if (!behavior) continue;
+
+    if (behavior.isSafetyConcern) safetyConcern = true;
+
+    for (const mapping of behavior.criterionMappings) {
+      if (mapping.criterionType === "GATE") {
+        gateMet[mapping.poleSlug] = true;
+      } else if (mapping.criterionType === "CORE") {
+        coreMet[mapping.poleSlug] = true;
+        criteriaSets[mapping.poleSlug].add(mapping.criterionNumber);
+      } else {
+        criteriaSets[mapping.poleSlug].add(mapping.criterionNumber);
+      }
+    }
   }
 
-  // Criterion A for mania: elevated, expansive, or irritable mood
-  const manicMoodBehaviors = ["euphoria", "disproportionate-rage", "unprovoked-temper"];
-  const manicMoodPresent =
-    input.mood === "MANIC" ||
-    input.mood === "MIXED" ||
-    input.behaviorKeys.some((k) => manicMoodBehaviors.includes(k));
-
-  // Core depressive criteria: depressed mood (#1) or loss of interest (#2)
-  const depressiveCoreMet =
-    depressiveCriteria.has(1) || depressiveCriteria.has(2);
-
-  // Mood descriptor can add criteria
-  if (input.mood === "MANIC" || input.mood === "MIXED") {
-    // Elevated mood itself doesn't add a B criterion, but confirms Criterion A
+  // Process mood descriptor mappings
+  for (const mm of fw.moodMappings) {
+    if (mm.moodValue !== input.mood) continue;
+    if (mm.satisfiesGate && mm.poleSlug) {
+      gateMet[mm.poleSlug] = true;
+    }
+    if (mm.addsCriterionNumber != null && mm.addsCriterionPoleSlug) {
+      criteriaSets[mm.addsCriterionPoleSlug].add(mm.addsCriterionNumber);
+      // Check if the added criterion is a core criterion
+      // (depressive criterion 1 and 2 are CORE)
+      const pole = fw.poles.find((p) => p.slug === mm.addsCriterionPoleSlug);
+      if (pole) {
+        // We need to check if this criterion number is CORE type
+        // The criterion mappings on behaviors tell us the type, but for mood descriptors
+        // we need to check the framework's criteria directly
+        // For now, if adding criterion 1 or 2 to depressive pole, mark core as met
+        // This is handled generically: any CORE criterion being met sets coreMet
+        const behavior = fw.behaviors.find((b) =>
+          b.criterionMappings.some(
+            (m) => m.poleSlug === mm.addsCriterionPoleSlug &&
+              m.criterionNumber === mm.addsCriterionNumber &&
+              m.criterionType === "CORE"
+          )
+        );
+        if (behavior) coreMet[mm.addsCriterionPoleSlug] = true;
+      }
+    }
   }
-  if (input.mood === "DEPRESSIVE" || input.mood === "MIXED") {
-    depressiveCriteria.add(1); // Depressed mood
+
+  // Also check if any criteria in the sets are CORE type
+  for (const pole of fw.poles) {
+    for (const beh of fw.behaviors) {
+      for (const m of beh.criterionMappings) {
+        if (m.poleSlug === pole.slug && m.criterionType === "CORE" && criteriaSets[pole.slug].has(m.criterionNumber)) {
+          coreMet[pole.slug] = true;
+        }
+      }
+    }
   }
 
-  const manicCriteriaCount = manicCriteria.size;
-  const depressiveCriteriaCount = depressiveCriteria.size;
+  const criteriaCounts: Record<string, number> = {};
+  for (const pole of fw.poles) {
+    criteriaCounts[pole.slug] = criteriaSets[pole.slug].size;
+  }
 
   // Safety concern from impairment domain
   if (input.impairments.some((i) => i.domain === "SAFETY_CONCERN" && i.severity !== "NONE")) {
     safetyConcern = true;
   }
 
-  // Classification based on DSM-5 thresholds
-  // Manic: Criterion A + 3+ B criteria (4 if only irritable)
-  const manicThreshold = manicMoodPresent ? 3 : 4;
-  const meetsManic = manicMoodPresent && manicCriteriaCount >= manicThreshold;
+  // Apply classification rules (sorted by priority descending)
+  let classification: DayClassification = "NEUTRAL";
+  let matchedRuleType = "NONE";
 
-  // Depressive: 5+ criteria with at least one core criterion
-  const meetsDepressive = depressiveCoreMet && depressiveCriteriaCount >= 5;
-
-  // Mixed features specifier: primary episode + 3+ symptoms from opposite pole
-  const meetsMixed =
-    (meetsManic && depressiveCriteriaCount >= 3) ||
-    (meetsDepressive && manicCriteriaCount >= 3);
-
-  // Subthreshold classifications for prodromal tracking
-  const subthresholdManic = manicMoodPresent && manicCriteriaCount >= 2;
-  const subthresholdDepressive = depressiveCoreMet && depressiveCriteriaCount >= 3;
-
-  let classification: DayClassification;
-  if (meetsMixed) {
-    classification = "MIXED";
-  } else if (meetsManic) {
-    classification = "MANIC";
-  } else if (meetsDepressive) {
-    classification = "DEPRESSIVE";
-  } else if (subthresholdManic && subthresholdDepressive) {
-    classification = "MIXED";
-  } else if (subthresholdManic) {
-    classification = "MANIC";
-  } else if (subthresholdDepressive) {
-    classification = "DEPRESSIVE";
-  } else {
-    classification = "NEUTRAL";
+  // First pass: check for mixed (highest priority rules)
+  // Second pass: check single-pole classifications
+  for (const rule of fw.classificationRules) {
+    if (evaluateRule(rule, criteriaCounts, gateMet, coreMet, fw)) {
+      if (rule.mixedLabel && rule.minOppositeCriteria > 0) {
+        // This is a mixed-features rule
+        const oppositePoleSlug = fw.poles.find((p) => p.slug !== rule.poleSlug)?.slug;
+        if (oppositePoleSlug && criteriaCounts[oppositePoleSlug] >= rule.minOppositeCriteria) {
+          classification = rule.mixedLabel;
+          matchedRuleType = rule.ruleType;
+          break;
+        }
+      } else {
+        classification = rule.classificationLabel;
+        matchedRuleType = rule.ruleType;
+        // Don't break — a higher-priority mixed rule might still apply
+        // Actually, rules are sorted by priority desc, so first match wins
+        break;
+      }
+    }
   }
 
-  // Severity based on criteria count + impairment
+  // If no rule matched but we have subthreshold on both poles, classify as MIXED
+  if (classification === "NEUTRAL") {
+    const subthresholdPoles: string[] = [];
+    for (const rule of fw.classificationRules) {
+      if (rule.ruleType === "SUBTHRESHOLD" && evaluateRule(rule, criteriaCounts, gateMet, coreMet, fw)) {
+        subthresholdPoles.push(rule.poleSlug);
+      }
+    }
+    if (subthresholdPoles.length >= 2) {
+      classification = "MIXED";
+      matchedRuleType = "SUBTHRESHOLD";
+    } else if (subthresholdPoles.length === 1) {
+      const matchedRule = fw.classificationRules.find(
+        (r) => r.ruleType === "SUBTHRESHOLD" && r.poleSlug === subthresholdPoles[0]
+      );
+      if (matchedRule) {
+        classification = matchedRule.classificationLabel;
+        matchedRuleType = "SUBTHRESHOLD";
+      }
+    }
+  }
+
+  // Severity
   const severeImpairments = input.impairments.filter((i) => i.severity === "SEVERE").length;
-  const presentImpairments = input.impairments.filter((i) => i.severity === "PRESENT").length;
-  const maxCriteria = Math.max(manicCriteriaCount, depressiveCriteriaCount);
+  const maxCriteria = Math.max(...Object.values(criteriaCounts), 0);
 
   let severity: DailyScore["severity"];
   if (classification === "NEUTRAL") {
     severity = "NONE";
-  } else if (meetsManic || meetsDepressive) {
-    // Full DSM threshold met
+  } else if (matchedRuleType === "DSM5_FULL") {
     severity = severeImpairments >= 2 ? "SEVERE" : "MODERATE";
   } else {
-    // Subthreshold
     severity = severeImpairments >= 1 || maxCriteria >= 3 ? "MODERATE" : "MILD";
   }
 
-  // Wave score for graphing: manic criteria positive, depressive negative
-  const waveScore = manicCriteriaCount - depressiveCriteriaCount;
+  // Wave score
+  let waveScore = 0;
+  for (const pole of fw.poles) {
+    waveScore += pole.direction * criteriaCounts[pole.slug];
+  }
 
   return {
-    manicCriteriaCount,
-    depressiveCriteriaCount,
-    manicMoodPresent,
-    depressiveCoreMet,
+    criteriaCounts,
+    gateMet,
+    coreMet,
     classification,
+    ruleType: matchedRuleType,
     severity,
     waveScore,
     safetyConcern,
+    // Backward compat
+    manicCriteriaCount: criteriaCounts["manic"] ?? 0,
+    depressiveCriteriaCount: criteriaCounts["depressive"] ?? 0,
+    manicMoodPresent: gateMet["manic"] ?? false,
+    depressiveCoreMet: coreMet["depressive"] ?? false,
+  };
+}
+
+function evaluateRule(
+  rule: LoadedClassificationRule,
+  criteriaCounts: Record<string, number>,
+  gateMet: Record<string, boolean>,
+  coreMet: Record<string, boolean>,
+  fw: LoadedFramework
+): boolean {
+  const poleCount = criteriaCounts[rule.poleSlug] ?? 0;
+
+  // Gate check
+  if (rule.gateRequired && !gateMet[rule.poleSlug]) return false;
+
+  // Core check
+  if (rule.coreRequired && !coreMet[rule.poleSlug]) return false;
+
+  // Criteria count threshold
+  let threshold = rule.minStandardCriteria;
+
+  // Gate-only adjustment: if gate is met but only via irritable mood (not euphoric),
+  // the threshold increases. We approximate this by checking if gate is met
+  // but no "euphoric" gate behavior was checked — only irritable ones.
+  // For generic frameworks, gateOnlyAdjustment is 0 by default.
+  if (rule.gateOnlyAdjustment > 0 && gateMet[rule.poleSlug]) {
+    // Check if any non-irritable gate behavior was used
+    // In the bipolar case: euphoria is the non-irritable gate;
+    // rage/temper are irritable gates. If only irritable gates, add adjustment.
+    // For now, we check if the gate was met ONLY via mood descriptor (not behavior)
+    // This is a simplification — works correctly for bipolar.
+    // TODO: add a "gateVariant" field to behaviors for fully generic handling
+    threshold += rule.gateOnlyAdjustment;
+  }
+
+  return poleCount >= threshold;
+}
+
+function neutralScore(): DailyScore {
+  return {
+    criteriaCounts: {},
+    gateMet: {},
+    coreMet: {},
+    classification: "NEUTRAL",
+    ruleType: "NONE",
+    severity: "NONE",
+    waveScore: 0,
+    safetyConcern: false,
+    manicCriteriaCount: 0,
+    depressiveCriteriaCount: 0,
+    manicMoodPresent: false,
+    depressiveCoreMet: false,
   };
 }

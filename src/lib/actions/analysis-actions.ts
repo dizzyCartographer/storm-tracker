@@ -7,6 +7,7 @@ import { detectEpisodes, type Episode, type DayWithScore } from "@/lib/analysis/
 import { detectProdromeSignals, type ProdromeSignal } from "@/lib/analysis/prodrome-signals";
 import { generatePredictions, type Prediction } from "@/lib/analysis/pattern-prediction";
 import { generateSuggestions, type Suggestion } from "@/lib/analysis/caregiver-suggestions";
+import { loadTenantFramework } from "@/lib/analysis/framework-loader";
 
 export interface AnalysisResult {
   dailyScores: { date: string; score: DailyScore; userId: string; userName: string | null }[];
@@ -30,6 +31,9 @@ export async function getAnalysis(tenantId: string, days = 30): Promise<Analysis
   });
   if (!membership) return { dailyScores: [], episodes: [], signals: [], predictions: [], suggestions: [], discrepancies: [] };
 
+  // Load the tenant's diagnostic framework
+  const framework = await loadTenantFramework(tenantId);
+
   const since = new Date();
   since.setDate(since.getDate() - days);
 
@@ -46,7 +50,7 @@ export async function getAnalysis(tenantId: string, days = 30): Promise<Analysis
     orderBy: { date: "asc" },
   });
 
-  // Score each entry
+  // Score each entry using the framework
   const dailyScores = entries.map((entry) => {
     const input: DailyScoringInput = {
       behaviorKeys: entry.behaviorChecks.map((bc) => bc.itemKey),
@@ -59,14 +63,13 @@ export async function getAnalysis(tenantId: string, days = 30): Promise<Analysis
     };
     return {
       date: entry.date.toISOString().slice(0, 10),
-      score: scoreDailyEntry(input),
+      score: scoreDailyEntry(input, framework ?? undefined),
       userId: entry.user.id,
       userName: entry.user.name,
     };
   });
 
-  // For episode and prodrome detection, aggregate by date
-  // (use the highest-scoring entry if multiple users logged same day)
+  // Aggregate by date for episode/prodrome detection
   const byDate = new Map<string, DayWithScore>();
   const behaviorsByDate = new Map<string, string[]>();
 
@@ -74,11 +77,9 @@ export async function getAnalysis(tenantId: string, days = 30): Promise<Analysis
     const dateStr = entry.date.toISOString().slice(0, 10);
     const behaviors = entry.behaviorChecks.map((bc) => bc.itemKey);
 
-    // Merge behaviors for the date
     const existing = behaviorsByDate.get(dateStr) ?? [];
     behaviorsByDate.set(dateStr, [...new Set([...existing, ...behaviors])]);
 
-    // Keep the entry with higher total score
     const scored = dailyScores.find(
       (d) => d.date === dateStr && d.userId === entry.userId
     );
@@ -96,12 +97,12 @@ export async function getAnalysis(tenantId: string, days = 30): Promise<Analysis
   }
 
   const daysWithScores = Array.from(byDate.values());
-  const episodes = detectEpisodes(daysWithScores);
-  const signals = detectProdromeSignals(daysWithScores, behaviorsByDate);
+  const episodes = detectEpisodes(daysWithScores, framework ?? undefined);
+  const signals = detectProdromeSignals(daysWithScores, behaviorsByDate, framework ?? undefined);
   const predictions = generatePredictions(daysWithScores);
   const suggestions = generateSuggestions(daysWithScores, signals, predictions, behaviorsByDate);
 
-  // Discrepancy detection — flag dates where multiple observers logged conflicting moods
+  // Discrepancy detection
   const discrepancies: Discrepancy[] = [];
   const entriesByDate = new Map<string, typeof dailyScores>();
   for (const ds of dailyScores) {

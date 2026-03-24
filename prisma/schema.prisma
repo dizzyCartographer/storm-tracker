@@ -88,6 +88,7 @@ model Tenant {
   entries      Entry[]
   customItems  CustomChecklistItem[]
   invites      Invite[]
+  frameworks   TenantFramework[]
 
   @@map("tenants")
 }
@@ -194,6 +195,9 @@ model BehaviorCheck {
   entryId String
   entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
 
+  behaviorDefinitionId String?
+  behaviorDefinition   BehaviorDefinition? @relation(fields: [behaviorDefinitionId], references: [id])
+
   @@unique([entryId, itemKey])
   @@map("behavior_checks")
 }
@@ -275,4 +279,211 @@ model MenstrualLog {
   entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
 
   @@map("menstrual_logs")
+}
+
+// ──────────────────────────────────────────────
+// Diagnostic Frameworks (database-driven)
+// ──────────────────────────────────────────────
+
+model DiagnosticFramework {
+  id          String   @id @default(uuid())
+  slug        String   @unique          // "dsm5-bipolar", "dsm5-adhd"
+  name        String                    // "DSM-5 Bipolar Disorder"
+  version     String   @default("1.0")
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  poles               CriterionPole[]
+  behaviorCategories  FrameworkBehaviorCategory[]
+  classificationRules ClassificationRule[]
+  episodeThresholds   EpisodeThreshold[]
+  signalRules         SignalRule[]
+  tenants             TenantFramework[]
+  moodDescriptorMappings MoodDescriptorMapping[]
+
+  @@map("diagnostic_frameworks")
+}
+
+model CriterionPole {
+  id        String @id @default(uuid())
+  slug      String                    // "manic", "depressive"
+  name      String                    // "Manic", "Depressive"
+  direction Int    @default(0)        // +1 for wave-positive, -1 for wave-negative
+  sortOrder Int    @default(0)
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  criteria               Criterion[]
+  classificationRules    ClassificationRule[]
+  episodeThresholds      EpisodeThreshold[]
+  moodDescriptorMappings MoodDescriptorMapping[]
+
+  @@unique([frameworkId, slug])
+  @@map("criterion_poles")
+}
+
+model Criterion {
+  id            String  @id @default(uuid())
+  number        Int                       // 1-7 for manic B, 1-9 for depressive
+  name          String                    // "Inflated self-esteem / grandiosity"
+  criterionType String  @default("STANDARD") // "GATE", "CORE", "STANDARD"
+  description   String? @db.Text
+
+  poleId String
+  pole   CriterionPole @relation(fields: [poleId], references: [id], onDelete: Cascade)
+
+  behaviorMappings       BehaviorCriterionMapping[]
+  moodDescriptorMappings MoodDescriptorMapping[]
+
+  @@unique([poleId, number])
+  @@map("criteria")
+}
+
+model FrameworkBehaviorCategory {
+  id        String @id @default(uuid())
+  slug      String                    // "sleep", "energy", "manic"
+  name      String                    // "Sleep", "Energy"
+  sortOrder Int    @default(0)
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  behaviors BehaviorDefinition[]
+
+  @@unique([frameworkId, slug])
+  @@map("framework_behavior_categories")
+}
+
+model BehaviorDefinition {
+  id              String  @id @default(uuid())
+  itemKey         String                    // "very-little-sleep" — stable key
+  label           String                    // "Very little sleep"
+  description     String                    // "Got much less sleep than normal"
+  isSafetyConcern Boolean @default(false)
+  sortOrder       Int     @default(0)
+
+  categoryId String
+  category   FrameworkBehaviorCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  criterionMappings BehaviorCriterionMapping[]
+  signalBehaviors   SignalBehavior[]
+  behaviorChecks    BehaviorCheck[]
+
+  @@unique([categoryId, itemKey])
+  @@map("behavior_definitions")
+}
+
+model BehaviorCriterionMapping {
+  id String @id @default(uuid())
+
+  behaviorId  String
+  behavior    BehaviorDefinition @relation(fields: [behaviorId], references: [id], onDelete: Cascade)
+  criterionId String
+  criterion   Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@unique([behaviorId, criterionId])
+  @@map("behavior_criterion_mappings")
+}
+
+model MoodDescriptorMapping {
+  id            String  @id @default(uuid())
+  moodValue     String                    // "MANIC", "DEPRESSIVE", "MIXED"
+  satisfiesGate Boolean @default(false)
+  addsCriterionId String?
+
+  poleId String?
+  pole   CriterionPole? @relation(fields: [poleId], references: [id], onDelete: Cascade)
+
+  addsCriterion Criterion? @relation(fields: [addsCriterionId], references: [id])
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  @@unique([frameworkId, moodValue, poleId])
+  @@map("mood_descriptor_mappings")
+}
+
+model ClassificationRule {
+  id                  String  @id @default(uuid())
+  classificationLabel String                    // "MANIC", "DEPRESSIVE"
+  ruleType            String                    // "DSM5_FULL", "SUBTHRESHOLD"
+  gateRequired        Boolean @default(true)
+  minStandardCriteria Int
+  coreRequired        Boolean @default(false)
+  gateOnlyAdjustment  Int     @default(0)       // +1 if irritable-only variant
+  minOppositeCriteria Int     @default(0)        // for mixed features
+  mixedLabel          String?                    // "MIXED"
+  priority            Int     @default(0)
+
+  poleId String
+  pole   CriterionPole @relation(fields: [poleId], references: [id], onDelete: Cascade)
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  @@map("classification_rules")
+}
+
+model EpisodeThreshold {
+  id                  String  @id @default(uuid())
+  episodeLabel        String                    // "MANIC", "HYPOMANIC", "DEPRESSIVE"
+  confidenceLevel     String                    // "DSM5_MET", "PRODROMAL_CONCERN"
+  minDays             Int
+  requiresDsmSymptoms Boolean @default(false)
+
+  poleId String
+  pole   CriterionPole @relation(fields: [poleId], references: [id], onDelete: Cascade)
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  @@map("episode_thresholds")
+}
+
+model SignalRule {
+  id                 String  @id @default(uuid())
+  signalId           String                    // "sleep-disruption"
+  title              String                    // "Sleep disruption pattern"
+  descriptionTemplate String @db.Text          // Template with {count}, {window} placeholders
+  level              String                    // "INFO", "WARNING", "ALERT"
+  windowDays         Int
+  minOccurrences     Int
+  trendCompare       Boolean @default(false)
+  trendMinLate       Int     @default(0)
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  behaviors SignalBehavior[]
+
+  @@map("signal_rules")
+}
+
+model SignalBehavior {
+  id String @id @default(uuid())
+
+  signalRuleId String
+  signalRule   SignalRule @relation(fields: [signalRuleId], references: [id], onDelete: Cascade)
+
+  behaviorId String
+  behavior   BehaviorDefinition @relation(fields: [behaviorId], references: [id], onDelete: Cascade)
+
+  @@unique([signalRuleId, behaviorId])
+  @@map("signal_behaviors")
+}
+
+model TenantFramework {
+  id          String   @id @default(uuid())
+  activatedAt DateTime @default(now())
+
+  tenantId    String
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, frameworkId])
+  @@map("tenant_frameworks")
 }

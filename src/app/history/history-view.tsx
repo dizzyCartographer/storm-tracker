@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getEntriesByMonth } from "@/lib/actions/entry-actions";
-import { BEHAVIOR_ITEMS } from "@/lib/behavior-items";
 import { EntryDetail } from "./entry-detail";
 
 type Entry = Awaited<ReturnType<typeof getEntriesByMonth>>[number];
@@ -16,7 +15,7 @@ const moodColors: Record<string, string> = {
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function HistoryView({ tenantId, currentUserId }: { tenantId: string; currentUserId: string }) {
+export function HistoryView({ tenantId, currentUserId, behaviorLabelMap }: { tenantId: string; currentUserId: string; behaviorLabelMap?: Record<string, string> }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -154,7 +153,7 @@ export function HistoryView({ tenantId, currentUserId }: { tenantId: string; cur
             </p>
           )}
           {selectedEntries.map((entry) => (
-            <EntryDetail key={entry.id} entry={entry} currentUserId={currentUserId} />
+            <EntryDetail key={entry.id} entry={entry} currentUserId={currentUserId} behaviorLabelMap={behaviorLabelMap} />
           ))}
         </div>
       )}

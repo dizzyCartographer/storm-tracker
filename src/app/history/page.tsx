@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants } from "@/lib/actions/tenant-actions";
+import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
 import { Nav } from "@/app/_components/nav";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -20,6 +21,8 @@ export default async function HistoryPage({
 
   const activeTenantId = params.tenant ?? tenants[0].id;
   const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
+  const { items: behaviorItems } = await getTenantBehaviorItems(activeTenant.id);
+  const behaviorLabelMap = Object.fromEntries(behaviorItems.map((i) => [i.key, i.label]));
 
   return (
     <>
@@ -48,7 +51,7 @@ export default async function HistoryPage({
           </div>
         )}
 
-        <HistoryView tenantId={activeTenant.id} currentUserId={user.id} />
+        <HistoryView tenantId={activeTenant.id} currentUserId={user.id} behaviorLabelMap={behaviorLabelMap} />
       </main>
     </>
   );

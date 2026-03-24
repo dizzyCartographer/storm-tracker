@@ -10,7 +10,7 @@ import {
   ImpairmentSeverity,
   BleedingSeverity,
 } from "@/generated/prisma/client";
-import { BEHAVIOR_ITEMS } from "@/lib/behavior-items";
+import { loadTenantFramework } from "@/lib/analysis/framework-loader";
 
 interface ImpairmentInput {
   domain: ImpairmentDomain;
@@ -76,18 +76,30 @@ export async function saveDailyLog(input: DailyLogInput) {
   // Behavior checks: delete + recreate
   await prisma.behaviorCheck.deleteMany({ where: { entryId: entry.id } });
   if (input.behaviorKeys && input.behaviorKeys.length > 0) {
+    // Load framework to map keys to categories and definition IDs
+    const framework = await loadTenantFramework(input.tenantId);
     const checks = input.behaviorKeys
       .map((key) => {
-        const item = BEHAVIOR_ITEMS.find((i) => i.key === key);
-        if (!item) return null;
+        const behavior = framework?.behaviorMap.get(key);
+        // Map framework category slug to BehaviorCategory enum
+        const categoryMap: Record<string, BehaviorCategory> = {
+          sleep: "SLEEP",
+          energy: "ENERGY",
+          manic: "MANIC",
+          depressive: "DEPRESSIVE",
+          "mixed-cycling": "MIXED_CYCLING",
+        };
+        const category = behavior
+          ? (categoryMap[behavior.categorySlug] ?? "MIXED_CYCLING")
+          : "MIXED_CYCLING";
         return {
           entryId: entry.id,
-          category: item.category as BehaviorCategory,
+          category,
           itemKey: key,
           checked: true,
+          behaviorDefinitionId: behavior?.id ?? null,
         };
-      })
-      .filter((c): c is NonNullable<typeof c> => c !== null);
+      });
     if (checks.length > 0) {
       await prisma.behaviorCheck.createMany({ data: checks });
     }

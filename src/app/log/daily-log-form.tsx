@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { saveDailyLog, getEntryByDate } from "@/lib/actions/entry-actions";
 import { useRouter } from "next/navigation";
-import { BehaviorChecklist } from "./behavior-checklist";
+import { BehaviorChecklist, type BehaviorItem } from "./behavior-checklist";
 import { CustomChecklist } from "./custom-checklist";
 import { ImpairmentTracking } from "./impairment-tracking";
 import { NotesField } from "./notes-field";
@@ -78,10 +78,12 @@ export function DailyLogForm({
   tenantId,
   customItems,
   initialData,
+  behaviorItems,
 }: {
   tenantId: string;
   customItems: CustomItem[];
   initialData?: InitialData;
+  behaviorItems?: BehaviorItem[];
 }) {
   const router = useRouter();
   const isEdit = !!initialData;
@@ -287,7 +289,7 @@ export function DailyLogForm({
         badge={checkedBehaviors.size + checkedCustom.size}
         defaultOpen={isEdit && (checkedBehaviors.size > 0 || checkedCustom.size > 0)}
       >
-        <BehaviorChecklist checked={checkedBehaviors} onToggle={toggleBehavior} />
+        <BehaviorChecklist checked={checkedBehaviors} onToggle={toggleBehavior} items={behaviorItems ?? []} />
         {customItems.length > 0 && (
           <div className="mt-4">
             <CustomChecklist

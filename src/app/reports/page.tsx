@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants } from "@/lib/actions/tenant-actions";
+import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
 import { Nav } from "@/app/_components/nav";
 import { ReportView } from "./report-view";
 import Link from "next/link";
@@ -21,6 +22,8 @@ export default async function ReportsPage({
   const activeTenantId = params.tenant ?? tenants[0].id;
   const activeTenant =
     tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
+  const { items: behaviorItems } = await getTenantBehaviorItems(activeTenant.id);
+  const behaviorLabelMap = Object.fromEntries(behaviorItems.map((i) => [i.key, i.label]));
 
   return (
     <>
@@ -51,7 +54,7 @@ export default async function ReportsPage({
         )}
 
         <div className="mt-6">
-          <ReportView tenantId={activeTenant.id} tenantName={activeTenant.name} />
+          <ReportView tenantId={activeTenant.id} tenantName={activeTenant.name} behaviorLabelMap={behaviorLabelMap} />
         </div>
       </main>
 

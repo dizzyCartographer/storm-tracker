@@ -1,19 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { BEHAVIOR_ITEMS, type BehaviorCategory } from "@/lib/behavior-items";
 
-const CATEGORY_ORDER: { key: BehaviorCategory; label: string }[] = [
-  { key: "SLEEP", label: "Sleep" },
-  { key: "ENERGY", label: "Energy" },
-  { key: "MANIC", label: "Manic" },
-  { key: "DEPRESSIVE", label: "Depressive" },
-  { key: "MIXED_CYCLING", label: "Mixed / Cycling" },
-];
+export interface BehaviorItem {
+  key: string;
+  category: string;
+  categoryName: string;
+  label: string;
+  description: string;
+  sortOrder: number;
+  categorySortOrder: number;
+}
 
 interface BehaviorChecklistProps {
   checked: Set<string>;
   onToggle: (itemKey: string) => void;
+  items: BehaviorItem[];
 }
 
 function InfoTip({ text }: { text: string }) {
@@ -40,18 +42,30 @@ function InfoTip({ text }: { text: string }) {
   );
 }
 
-export function BehaviorChecklist({ checked, onToggle }: BehaviorChecklistProps) {
+export function BehaviorChecklist({ checked, onToggle, items }: BehaviorChecklistProps) {
+  // Group items by category, preserving sort order
+  const categories = new Map<string, { name: string; sortOrder: number; items: BehaviorItem[] }>();
+  for (const item of items) {
+    if (!categories.has(item.category)) {
+      categories.set(item.category, { name: item.categoryName, sortOrder: item.categorySortOrder, items: [] });
+    }
+    categories.get(item.category)!.items.push(item);
+  }
+
+  const sortedCategories = Array.from(categories.entries())
+    .sort(([, a], [, b]) => a.sortOrder - b.sortOrder);
+
   return (
     <div className="space-y-4">
-      {CATEGORY_ORDER.map((cat) => {
-        const items = BEHAVIOR_ITEMS.filter((i) => i.category === cat.key);
-        return (
-          <fieldset key={cat.key}>
-            <legend className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-              {cat.label}
-            </legend>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {items.map((item) => (
+      {sortedCategories.map(([catSlug, cat]) => (
+        <fieldset key={catSlug}>
+          <legend className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+            {cat.name}
+          </legend>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {cat.items
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((item) => (
                 <label
                   key={item.key}
                   className={`flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -70,10 +84,9 @@ export function BehaviorChecklist({ checked, onToggle }: BehaviorChecklistProps)
                   <InfoTip text={item.description} />
                 </label>
               ))}
-            </div>
-          </fieldset>
-        );
-      })}
+          </div>
+        </fieldset>
+      ))}
     </div>
   );
 }

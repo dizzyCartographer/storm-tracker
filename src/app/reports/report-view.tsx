@@ -29,6 +29,7 @@ const signalColors: Record<string, string> = {
 interface ReportViewProps {
   tenantId: string;
   tenantName: string;
+  behaviorLabelMap?: Record<string, string>;
 }
 
 function defaultRange() {
@@ -41,7 +42,7 @@ function defaultRange() {
   };
 }
 
-export function ReportView({ tenantId, tenantName }: ReportViewProps) {
+export function ReportView({ tenantId, tenantName, behaviorLabelMap }: ReportViewProps) {
   const range = defaultRange();
   const [fromDate, setFromDate] = useState(range.from);
   const [toDate, setToDate] = useState(range.to);
@@ -219,7 +220,7 @@ export function ReportView({ tenantId, tenantName }: ReportViewProps) {
               Behavior Frequency (Top 15)
             </h2>
             <div className="mt-3">
-              <FrequencyChart data={data.behaviorFrequency} />
+              <FrequencyChart data={data.behaviorFrequency} behaviorLabelMap={behaviorLabelMap} />
             </div>
           </section>
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { getEntriesByMonth } from "@/lib/actions/entry-actions";
-import { BEHAVIOR_ITEMS } from "@/lib/behavior-items";
 import Link from "next/link";
 
 type Entry = Awaited<ReturnType<typeof getEntriesByMonth>>[number];
@@ -34,10 +33,17 @@ const domainLabels: Record<string, string> = {
   SAFETY_CONCERN: "Safety Concern",
 };
 
-export function EntryDetail({ entry, currentUserId }: { entry: Entry; currentUserId: string }) {
+export function EntryDetail({
+  entry,
+  currentUserId,
+  behaviorLabelMap,
+}: {
+  entry: Entry;
+  currentUserId: string;
+  behaviorLabelMap?: Record<string, string>;
+}) {
   const behaviorLabels = entry.behaviorChecks.map((bc) => {
-    const item = BEHAVIOR_ITEMS.find((i) => i.key === bc.itemKey);
-    return item ? item.label : bc.itemKey;
+    return behaviorLabelMap?.[bc.itemKey] ?? bc.itemKey;
   });
 
   const activeImpairments = entry.impairments.filter(
