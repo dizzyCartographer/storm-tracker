@@ -95,10 +95,17 @@ export function DailyLogForm({
   const [checkedCustom, setCheckedCustom] = useState<Set<string>>(
     new Set(initialData?.customItemIds ?? [])
   );
+  const defaultImpairments: Record<string, string> = {
+    SCHOOL_WORK: "NONE",
+    FAMILY_LIFE: "NONE",
+    FRIENDSHIPS: "NONE",
+    SELF_CARE: "NONE",
+    SAFETY_CONCERN: "NONE",
+  };
   const [impairments, setImpairments] = useState<Record<string, string>>(
     initialData?.impairments
-      ? Object.fromEntries(initialData.impairments.map((i) => [i.domain, i.severity]))
-      : {}
+      ? { ...defaultImpairments, ...Object.fromEntries(initialData.impairments.map((i) => [i.domain, i.severity])) }
+      : defaultImpairments
   );
   const [notes, setNotes] = useState(initialData?.notes ?? "");
   const [menstrual, setMenstrual] = useState<string | null>(initialData?.menstrualSeverity ?? null);
