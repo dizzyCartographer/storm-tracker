@@ -1,19 +1,22 @@
 import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants } from "@/lib/actions/tenant-actions";
 import { getCustomItems } from "@/lib/actions/custom-item-actions";
+import { getInvites } from "@/lib/actions/invite-actions";
 import { Nav } from "@/app/_components/nav";
 import { CustomItemsManager } from "./custom-items";
+import { InviteManager } from "./invite-manager";
 import Link from "next/link";
 
 export default async function SettingsPage() {
   await requireUser();
   const tenants = await getUserTenants();
 
-  // Load custom items for each tenant
+  // Load custom items and invites for each tenant
   const tenantsWithItems = await Promise.all(
     tenants.map(async (t) => ({
       ...t,
       customItems: await getCustomItems(t.id),
+      invites: t.role === "OWNER" ? await getInvites(t.id) : [],
     }))
   );
 
@@ -64,6 +67,17 @@ export default async function SettingsPage() {
                       id: i.id,
                       label: i.label,
                     }))}
+                  />
+                  <InviteManager
+                    tenantId={t.id}
+                    tenantName={t.name}
+                    invites={t.invites.map((inv: { id: string; token: string; role: typeof t.role; expiresAt: Date }) => ({
+                      id: inv.id,
+                      token: inv.token,
+                      role: inv.role,
+                      expiresAt: inv.expiresAt,
+                    }))}
+                    isOwner={t.role === "OWNER"}
                   />
                 </li>
               ))}

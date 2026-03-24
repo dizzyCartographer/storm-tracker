@@ -87,6 +87,7 @@ model Tenant {
   members      TenantMember[]
   entries      Entry[]
   customItems  CustomChecklistItem[]
+  invites      Invite[]
 
   @@map("tenants")
 }
@@ -109,6 +110,20 @@ model TenantMember {
 
   @@unique([userId, tenantId])
   @@map("tenant_members")
+}
+
+model Invite {
+  id        String     @id @default(uuid())
+  token     String     @unique @default(uuid())
+  role      TenantRole @default(CAREGIVER)
+  used      Boolean    @default(false)
+  expiresAt DateTime
+  createdAt DateTime   @default(now())
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("invites")
 }
 
 // ──────────────────────────────────────────────
