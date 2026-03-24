@@ -35,3 +35,11 @@ Enhancements, refinements, edge cases, and polish items to address as features a
   - ~~Background: Date of onset / first suspected, family history of mental illness~~
 
 - ~~Ability to copy project description data from another project when creating a new project~~ → Phase 8.4
+
+- User profile page
+
+- icons or emojis that coordinate with the symptoms (customizable)
+
+- option to view emoji/icons only on the pills toggles, this condenses the log page even more, less scrolling
+
+- <br />
