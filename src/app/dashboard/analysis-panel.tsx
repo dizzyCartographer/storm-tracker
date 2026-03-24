@@ -217,6 +217,104 @@ export function AnalysisPanel({ tenantId }: { tenantId: string }) {
           DSM-5 criteria count: <span className="text-orange-600">manic</span> / <span className="text-blue-600">depressive</span>
         </p>
       </section>
+
+      {/* Predictions */}
+      {data.predictions.length > 0 && (
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            Predictions
+            <InfoTip text="Predictions are based on patterns in your logged data — cycle length, recent trends, and day-of-week patterns. They help you anticipate what might be coming so you can prepare. Confidence levels reflect how much data supports each prediction." />
+          </h2>
+          <div className="mt-2 space-y-2">
+            {data.predictions.map((pred) => (
+              <div
+                key={pred.id}
+                className="rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3"
+              >
+                <div className="flex items-start justify-between">
+                  <p className="text-sm font-semibold text-indigo-900">{pred.title}</p>
+                  <span className={`ml-2 flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    pred.confidence === "HIGH"
+                      ? "bg-indigo-200 text-indigo-800"
+                      : pred.confidence === "MEDIUM"
+                        ? "bg-indigo-100 text-indigo-700"
+                        : "bg-gray-100 text-gray-600"
+                  }`}>
+                    {pred.confidence.toLowerCase()} confidence
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-indigo-800">{pred.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Caregiver Suggestions */}
+      {data.suggestions.length > 0 && (
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            Suggestions for You
+            <InfoTip text="These are context-aware tips based on current mood patterns, signals, and predictions. They're drawn from clinical guidance for caregivers of teens with bipolar disorder. Adjust based on your knowledge of your teen." />
+          </h2>
+          <div className="mt-2 space-y-2">
+            {data.suggestions.map((sug) => (
+              <div
+                key={sug.id}
+                className={`rounded-md border px-4 py-3 ${
+                  sug.priority === "HIGH"
+                    ? "border-rose-200 bg-rose-50"
+                    : "border-gray-200 bg-gray-50"
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 flex-shrink-0 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 border border-gray-200">
+                    {sug.category.toLowerCase().replace("_", " ")}
+                  </span>
+                  <div>
+                    <p className={`text-sm font-semibold ${sug.priority === "HIGH" ? "text-rose-900" : "text-gray-900"}`}>
+                      {sug.title}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-600 leading-relaxed">{sug.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Observer Discrepancies */}
+      {data.discrepancies.length > 0 && (
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            Observer Discrepancies
+            <InfoTip text="These dates had multiple observers who logged entries with different mood classifications. Discrepancies are normal — different caregivers see different behaviors. Discuss these differences to build a more complete picture." />
+          </h2>
+          <div className="mt-2 space-y-2">
+            {data.discrepancies.map((disc) => (
+              <div
+                key={disc.date}
+                className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3"
+              >
+                <p className="text-sm font-semibold text-amber-900">
+                  {formatDate(disc.date)}
+                </p>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {disc.entries.map((e, i) => (
+                    <span
+                      key={i}
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${classColors[e.classification]}`}
+                    >
+                      {e.userName ?? "Unknown"}: {e.mood.toLowerCase()} → {e.classification.toLowerCase()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

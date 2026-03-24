@@ -5,11 +5,21 @@ import { requireUser } from "@/lib/auth-utils";
 import { scoreDailyEntry, type DailyScore, type DailyScoringInput } from "@/lib/analysis/daily-score";
 import { detectEpisodes, type Episode, type DayWithScore } from "@/lib/analysis/episode-detection";
 import { detectProdromeSignals, type ProdromeSignal } from "@/lib/analysis/prodrome-signals";
+import { generatePredictions, type Prediction } from "@/lib/analysis/pattern-prediction";
+import { generateSuggestions, type Suggestion } from "@/lib/analysis/caregiver-suggestions";
 
 export interface AnalysisResult {
   dailyScores: { date: string; score: DailyScore; userId: string; userName: string | null }[];
   episodes: Episode[];
   signals: ProdromeSignal[];
+  predictions: Prediction[];
+  suggestions: Suggestion[];
+  discrepancies: Discrepancy[];
+}
+
+export interface Discrepancy {
+  date: string;
+  entries: { userName: string | null; mood: string; classification: string; criteriaCount: number }[];
 }
 
 export async function getAnalysis(tenantId: string, days = 30): Promise<AnalysisResult> {
@@ -18,7 +28,7 @@ export async function getAnalysis(tenantId: string, days = 30): Promise<Analysis
   const membership = await prisma.tenantMember.findUnique({
     where: { userId_tenantId: { userId: user.id, tenantId } },
   });
-  if (!membership) return { dailyScores: [], episodes: [], signals: [] };
+  if (!membership) return { dailyScores: [], episodes: [], signals: [], predictions: [], suggestions: [], discrepancies: [] };
 
   const since = new Date();
   since.setDate(since.getDate() - days);
@@ -88,6 +98,32 @@ export async function getAnalysis(tenantId: string, days = 30): Promise<Analysis
   const daysWithScores = Array.from(byDate.values());
   const episodes = detectEpisodes(daysWithScores);
   const signals = detectProdromeSignals(daysWithScores, behaviorsByDate);
+  const predictions = generatePredictions(daysWithScores);
+  const suggestions = generateSuggestions(daysWithScores, signals, predictions, behaviorsByDate);
 
-  return { dailyScores, episodes, signals };
+  // Discrepancy detection — flag dates where multiple observers logged conflicting moods
+  const discrepancies: Discrepancy[] = [];
+  const entriesByDate = new Map<string, typeof dailyScores>();
+  for (const ds of dailyScores) {
+    const arr = entriesByDate.get(ds.date) ?? [];
+    arr.push(ds);
+    entriesByDate.set(ds.date, arr);
+  }
+  for (const [date, dateEntries] of entriesByDate) {
+    if (dateEntries.length < 2) continue;
+    const classifications = new Set(dateEntries.map((e) => e.score.classification));
+    if (classifications.size > 1) {
+      discrepancies.push({
+        date,
+        entries: dateEntries.map((e) => ({
+          userName: e.userName,
+          mood: entries.find((en) => en.date.toISOString().slice(0, 10) === date && en.userId === e.userId)?.mood ?? "Unknown",
+          classification: e.score.classification,
+          criteriaCount: e.score.manicCriteriaCount + e.score.depressiveCriteriaCount,
+        })),
+      });
+    }
+  }
+
+  return { dailyScores, episodes, signals, predictions, suggestions, discrepancies };
 }
