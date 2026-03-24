@@ -8,6 +8,7 @@ import { CustomChecklist } from "./custom-checklist";
 import { ImpairmentTracking } from "./impairment-tracking";
 import { NotesField } from "./notes-field";
 import { MenstrualTracking } from "./menstrual-tracking";
+import { AttachmentManager } from "./attachments";
 
 const moods = ["MANIC", "DEPRESSIVE", "NEUTRAL", "MIXED"] as const;
 const dayQualities = ["GOOD", "NEUTRAL", "BAD", "MIXED"] as const;
@@ -80,11 +81,13 @@ export function DailyLogForm({
   customItems,
   initialData,
   behaviorItems,
+  initialAttachments,
 }: {
   tenantId: string;
   customItems: CustomItem[];
   initialData?: InitialData;
   behaviorItems?: BehaviorItem[];
+  initialAttachments?: { id: string; fileName: string; fileType: string; fileSize: number; url: string }[];
 }) {
   const router = useRouter();
   const isEdit = !!initialData;
@@ -312,6 +315,14 @@ export function DailyLogForm({
 
       <CollapsibleSection title="Menstrual tracking" defaultOpen={isEdit && !!menstrual}>
         <MenstrualTracking value={menstrual} onChange={setMenstrual} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Attachments" badge={initialAttachments?.length} defaultOpen={isEdit && (initialAttachments?.length ?? 0) > 0}>
+        <AttachmentManager
+          entryId={initialData?.id ?? null}
+          tenantId={tenantId}
+          initialAttachments={initialAttachments ?? []}
+        />
       </CollapsibleSection>
 
       {checking && (

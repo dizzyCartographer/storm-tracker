@@ -165,6 +165,37 @@ export default async function LogDetailPage({
           </section>
         )}
 
+        {/* Attachments */}
+        {entry.attachments.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+              Attachments ({entry.attachments.length})
+            </h2>
+            <ul className="mt-2 space-y-2">
+              {entry.attachments.map((a) => (
+                <li key={a.id}>
+                  <a
+                    href={a.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50"
+                  >
+                    <span className="flex-shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600">
+                      {a.fileType.startsWith("image/") ? "IMG" : a.fileType === "application/pdf" ? "PDF" : "FILE"}
+                    </span>
+                    <span className="truncate">{a.fileName}</span>
+                    <span className="flex-shrink-0 text-xs text-gray-400">
+                      {a.fileSize < 1024 * 1024
+                        ? `${(a.fileSize / 1024).toFixed(1)} KB`
+                        : `${(a.fileSize / (1024 * 1024)).toFixed(1)} MB`}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* Notes */}
         {entry.notes && (
           <section className="mt-6">

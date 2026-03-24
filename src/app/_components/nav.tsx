@@ -8,6 +8,7 @@ const viewLinks = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/history", label: "History" },
   { href: "/reports", label: "Reports" },
+  { href: "/documents", label: "Docs" },
   { href: "/projects", label: "Projects" },
 ];
 

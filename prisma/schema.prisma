@@ -118,6 +118,7 @@ model Tenant {
   customItems  CustomChecklistItem[]
   invites      Invite[]
   frameworks   TenantFramework[]
+  attachments  Attachment[]
   defaultFor   User[]           @relation("defaultTenant")
 
   @@map("tenants")
@@ -200,6 +201,7 @@ model Entry {
   customChecks    CustomCheck[]
   impairments     Impairment[]
   menstrualLog    MenstrualLog?
+  attachments     Attachment[]
 
   @@unique([userId, tenantId, date])
   @@map("entries")
@@ -310,6 +312,26 @@ model MenstrualLog {
   entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
 
   @@map("menstrual_logs")
+}
+
+// ──────────────────────────────────────────────
+// Document Attachments
+// ──────────────────────────────────────────────
+
+model Attachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  fileType  String   // MIME type e.g. "application/pdf", "image/jpeg"
+  fileSize  Int      // bytes
+  url       String   // Vercel Blob URL
+  createdAt DateTime @default(now())
+
+  entryId  String
+  entry    Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
 }
 
 // ──────────────────────────────────────────────

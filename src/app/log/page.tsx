@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants, getDefaultTenantId } from "@/lib/actions/tenant-actions";
 import { getCustomItems } from "@/lib/actions/custom-item-actions";
 import { getEntryForEdit } from "@/lib/actions/entry-actions";
+import { getEntryAttachments } from "@/lib/actions/attachment-actions";
 import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
 import { Nav } from "@/app/_components/nav";
 import { redirect } from "next/navigation";
@@ -28,6 +29,7 @@ export default async function LogPage({
 
   // Load existing entry for editing
   const entryData = params.entry ? await getEntryForEdit(params.entry) : null;
+  const attachments = entryData ? await getEntryAttachments(entryData.id) : [];
 
   return (
     <>
@@ -46,6 +48,13 @@ export default async function LogPage({
           customItems={customItems.map((i) => ({ id: i.id, label: i.label }))}
           initialData={entryData ?? undefined}
           behaviorItems={behaviorItems}
+          initialAttachments={attachments.map((a) => ({
+            id: a.id,
+            fileName: a.fileName,
+            fileType: a.fileType,
+            fileSize: a.fileSize,
+            url: a.url,
+          }))}
         />
       </main>
     </>

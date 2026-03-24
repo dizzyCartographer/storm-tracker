@@ -164,17 +164,15 @@ Reports project tabs now show favorite color dots matching the enriched project 
 
 ***
 
-## Phase 10: Document Management ⬜
+## Phase 10: Document Management ✅
 
 _From iterative requirements: attach documents to logs and browse them._
 
-### 10.1 — File attachments on log entries ⬜
+### 10.1 — File attachments on log entries ✅
+Attachment model with Vercel Blob storage. Upload API route (`/api/attachments`) with POST/DELETE, 10MB limit, PDF and image types allowed. AttachmentManager component in log form (collapsible section). Attachments shown on read-only detail view (`/log/[id]`). Entry detail action includes attachments.
 
-Upload and attach documents (PDF, images) to a daily log entry. Store via Vercel Blob or similar.
-
-### 10.2 — Document library ⬜
-
-Browse all uploaded documents across entries. Filter by date, entry, or document type.
+### 10.2 — Document library ✅
+New `/documents` page with "Docs" nav link. Filterable by file type (images/PDFs) and date range. Each document links to its parent entry. Project tabs with color dots.
 
 ***
 

@@ -286,6 +286,7 @@ export async function getEntryDetail(entryId: string) {
       customChecks: { include: { item: true } },
       impairments: true,
       menstrualLog: true,
+      attachments: true,
       tenant: { select: { id: true, name: true } },
     },
   });
