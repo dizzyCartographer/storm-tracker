@@ -36,6 +36,16 @@ const signalIcons: Record<string, string> = {
   INFO: "i",
 };
 
+const confidenceLabels: Record<string, string> = {
+  DSM5_MET: "DSM-5 criteria met",
+  PRODROMAL_CONCERN: "Prodromal concern",
+};
+
+const confidenceStyles: Record<string, string> = {
+  DSM5_MET: "bg-red-100 text-red-700",
+  PRODROMAL_CONCERN: "bg-amber-100 text-amber-700",
+};
+
 export function AnalysisPanel({ tenantId }: { tenantId: string }) {
   const [data, setData] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,7 +65,6 @@ export function AnalysisPanel({ tenantId }: { tenantId: string }) {
     return null;
   }
 
-  // Recent 7 day scores for mini timeline
   const recent7 = data.dailyScores.slice(-7);
 
   return (
@@ -100,9 +109,14 @@ export function AnalysisPanel({ tenantId }: { tenantId: string }) {
                 className={`rounded-md border px-4 py-3 ${episodeColors[ep.type]}`}
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">
-                    {ep.type.charAt(0) + ep.type.slice(1).toLowerCase()} episode
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold">
+                      {ep.type.charAt(0) + ep.type.slice(1).toLowerCase()} episode
+                    </p>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${confidenceStyles[ep.confidence]}`}>
+                      {confidenceLabels[ep.confidence]}
+                    </span>
+                  </div>
                   <span className="text-xs text-gray-500">
                     {ep.dayCount} days
                   </span>
@@ -116,6 +130,9 @@ export function AnalysisPanel({ tenantId }: { tenantId: string }) {
                       Safety concern flagged
                     </span>
                   )}
+                </p>
+                <p className="mt-1 text-[10px] text-gray-500 italic">
+                  {ep.criteriaNote}
                 </p>
               </div>
             ))}
@@ -141,10 +158,20 @@ export function AnalysisPanel({ tenantId }: { tenantId: string }) {
               </span>
               <div
                 className={`flex h-8 w-full items-center justify-center rounded text-xs font-medium ${classColors[day.score.classification]}`}
-                title={`${day.score.classification} (M:${day.score.manicScore} D:${day.score.depressiveScore})`}
+                title={`${day.score.classification} — Manic criteria: ${day.score.manicCriteriaCount}/7, Depressive criteria: ${day.score.depressiveCriteriaCount}/9`}
               >
-                {day.score.waveScore > 0 ? "+" : ""}
-                {day.score.waveScore}
+                {day.score.manicCriteriaCount > 0 && (
+                  <span className="text-orange-700">{day.score.manicCriteriaCount}</span>
+                )}
+                {day.score.manicCriteriaCount > 0 && day.score.depressiveCriteriaCount > 0 && (
+                  <span className="text-gray-400 mx-0.5">/</span>
+                )}
+                {day.score.depressiveCriteriaCount > 0 && (
+                  <span className="text-blue-700">{day.score.depressiveCriteriaCount}</span>
+                )}
+                {day.score.manicCriteriaCount === 0 && day.score.depressiveCriteriaCount === 0 && (
+                  <span>—</span>
+                )}
               </div>
               <span className={`text-[10px] font-medium ${severityColors[day.score.severity]}`}>
                 {day.score.severity !== "NONE" ? day.score.severity.toLowerCase() : "—"}
@@ -153,7 +180,7 @@ export function AnalysisPanel({ tenantId }: { tenantId: string }) {
           ))}
         </div>
         <p className="mt-1 text-[10px] text-gray-400">
-          Wave score: + manic / − depressive
+          DSM-5 criteria count: <span className="text-orange-600">manic</span> / <span className="text-blue-600">depressive</span>
         </p>
       </section>
     </div>

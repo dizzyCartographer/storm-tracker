@@ -1,29 +1,37 @@
 import { type DailyScore, type DayClassification } from "./daily-score";
 
 /**
- * Episode Detection
+ * Episode Detection — DSM-5 Duration Criteria
  *
- * Evaluates runs of classified days against clinical criteria:
- * - Manic episode: ≥4 consecutive days with MANIC or MIXED classification
- *   (DSM requires 7 days for full mania, but 4 flags concern in a prodromal context)
- * - Hypomanic episode: 2-3 consecutive days of MANIC classification
- * - Depressive episode: ≥5 consecutive days with DEPRESSIVE or MIXED classification
- *   (DSM requires 14 days, but 5 flags concern in prodromal tracking)
+ * DSM-5 duration requirements:
+ *   - Manic episode:     ≥7 consecutive days (Criterion A) or any duration if hospitalized
+ *   - Hypomanic episode: ≥4 consecutive days (Criterion A)
+ *   - Major Depressive:  ≥14 consecutive days (2 weeks, Criterion A)
  *
- * These thresholds are deliberately lower than DSM criteria because
- * we're tracking a prodrome, not diagnosing. The goal is early detection.
+ * Since this app tracks a prodrome (pre-diagnosis), we report at two levels:
+ *   1. "DSM-5 criteria met" — full duration + symptom threshold
+ *   2. "Prodromal concern" — sub-threshold duration but pattern is emerging
+ *
+ * Prodromal thresholds (shorter, for early detection):
+ *   - Manic concern:      ≥4 days (approaching hypomanic threshold)
+ *   - Hypomanic concern:  ≥2 days
+ *   - Depressive concern:  ≥7 days (half of DSM-5 threshold)
  */
 
 export type EpisodeType = "MANIC" | "HYPOMANIC" | "DEPRESSIVE" | "MIXED";
+export type EpisodeConfidence = "DSM5_MET" | "PRODROMAL_CONCERN";
 
 export interface Episode {
   type: EpisodeType;
+  confidence: EpisodeConfidence;
   startDate: string;
   endDate: string;
   dayCount: number;
   peakSeverity: DailyScore["severity"];
   averageWaveScore: number;
   hasSafetyConcern: boolean;
+  /** Summary of which DSM-5 criteria were met */
+  criteriaNote: string;
 }
 
 export interface DayWithScore {
@@ -34,7 +42,6 @@ export interface DayWithScore {
 export function detectEpisodes(days: DayWithScore[]): Episode[] {
   if (days.length === 0) return [];
 
-  // Sort by date ascending
   const sorted = [...days].sort((a, b) => a.date.localeCompare(b.date));
   const episodes: Episode[] = [];
 
@@ -48,10 +55,8 @@ export function detectEpisodes(days: DayWithScore[]): Episode[] {
       continue;
     }
 
-    // Find the end of this run of non-neutral days with compatible classification
+    // Find the end of this run of non-neutral days
     let runEnd = runStart;
-    const isManicRun = startClass === "MANIC" || startClass === "MIXED";
-    const isDepressiveRun = startClass === "DEPRESSIVE" || startClass === "MIXED";
 
     while (runEnd + 1 < sorted.length) {
       const nextClass = sorted[runEnd + 1].score.classification;
@@ -60,15 +65,9 @@ export function detectEpisodes(days: DayWithScore[]): Episode[] {
       // Check date continuity (allow 1 day gap for missed logging)
       const currentDate = new Date(sorted[runEnd].date);
       const nextDate = new Date(sorted[runEnd + 1].date);
-      const dayGap = (nextDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24);
+      const dayGap =
+        (nextDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24);
       if (dayGap > 2) break;
-
-      // Check compatible classification
-      const nextIsManic = nextClass === "MANIC" || nextClass === "MIXED";
-      const nextIsDepressive = nextClass === "DEPRESSIVE" || nextClass === "MIXED";
-
-      if (isManicRun && !nextIsManic && !nextIsDepressive) break;
-      if (isDepressiveRun && !nextIsDepressive && !nextIsManic) break;
 
       runEnd++;
     }
@@ -76,7 +75,7 @@ export function detectEpisodes(days: DayWithScore[]): Episode[] {
     const runDays = sorted.slice(runStart, runEnd + 1);
     const dayCount = runDays.length;
 
-    // Categorize the run
+    // Count day types
     const manicDays = runDays.filter(
       (d) => d.score.classification === "MANIC" || d.score.classification === "MIXED"
     ).length;
@@ -84,33 +83,87 @@ export function detectEpisodes(days: DayWithScore[]): Episode[] {
       (d) => d.score.classification === "DEPRESSIVE" || d.score.classification === "MIXED"
     ).length;
 
+    // Check if any day in the run fully meets DSM-5 symptom thresholds
+    const anyDayMeetsDsmManic = runDays.some(
+      (d) => d.score.manicMoodPresent && d.score.manicCriteriaCount >= 3
+    );
+    const anyDayMeetsDsmDepressive = runDays.some(
+      (d) => d.score.depressiveCoreMet && d.score.depressiveCriteriaCount >= 5
+    );
+
     const peakSeverity = getHighestSeverity(runDays.map((d) => d.score.severity));
     const avgWave =
       runDays.reduce((sum, d) => sum + d.score.waveScore, 0) / runDays.length;
     const hasSafety = runDays.some((d) => d.score.safetyConcern);
 
+    // Evaluate against DSM-5 duration + symptom criteria
     let episodeType: EpisodeType | null = null;
+    let confidence: EpisodeConfidence = "PRODROMAL_CONCERN";
+    let criteriaNote = "";
 
-    if (manicDays >= 4) {
+    // Manic episode: DSM-5 = 7+ days with Criterion A + 3+ B criteria
+    if (manicDays >= 7 && anyDayMeetsDsmManic) {
       episodeType = "MANIC";
-    } else if (manicDays >= 2) {
+      confidence = "DSM5_MET";
+      criteriaNote = `${manicDays} days of manic symptoms meeting DSM-5 Criteria A+B (≥7 days required)`;
+    }
+    // Hypomanic episode: DSM-5 = 4+ days with Criterion A + 3+ B criteria
+    else if (manicDays >= 4 && anyDayMeetsDsmManic) {
       episodeType = "HYPOMANIC";
+      confidence = "DSM5_MET";
+      criteriaNote = `${manicDays} days of hypomanic symptoms meeting DSM-5 Criteria A+B (≥4 days required)`;
+    }
+    // Prodromal manic concern: 4+ days subthreshold
+    else if (manicDays >= 4) {
+      episodeType = "MANIC";
+      confidence = "PRODROMAL_CONCERN";
+      criteriaNote = `${manicDays} days of manic-leaning symptoms (below DSM-5 symptom threshold but duration concerning)`;
+    }
+    // Prodromal hypomanic concern: 2+ days
+    else if (manicDays >= 2) {
+      episodeType = "HYPOMANIC";
+      confidence = "PRODROMAL_CONCERN";
+      criteriaNote = `${manicDays} days of elevated symptoms (below DSM-5 4-day threshold for hypomania)`;
     }
 
-    if (depressiveDays >= 5) {
-      // If already flagged as manic, it's mixed
-      episodeType = episodeType ? "MIXED" : "DEPRESSIVE";
+    // Depressive episode: DSM-5 = 14+ days with 5+ criteria including core
+    if (depressiveDays >= 14 && anyDayMeetsDsmDepressive) {
+      const prevType = episodeType;
+      episodeType = prevType ? "MIXED" : "DEPRESSIVE";
+      confidence = "DSM5_MET";
+      criteriaNote = prevType
+        ? `Mixed: ${criteriaNote}; plus ${depressiveDays} depressive days meeting DSM-5 criteria (≥14 days)`
+        : `${depressiveDays} days of depressive symptoms meeting DSM-5 criteria (≥14 days required)`;
+    }
+    // Prodromal depressive concern: 7+ days
+    else if (depressiveDays >= 7) {
+      if (!episodeType) {
+        episodeType = "DEPRESSIVE";
+        confidence = "PRODROMAL_CONCERN";
+        criteriaNote = `${depressiveDays} days of depressive symptoms (below DSM-5 14-day threshold but pattern is emerging)`;
+      } else {
+        episodeType = "MIXED";
+        criteriaNote = `${criteriaNote}; plus ${depressiveDays} depressive days (prodromal concern)`;
+      }
+    }
+    // Shorter depressive runs noted if significant
+    else if (depressiveDays >= 5 && !episodeType) {
+      episodeType = "DEPRESSIVE";
+      confidence = "PRODROMAL_CONCERN";
+      criteriaNote = `${depressiveDays} days of depressive symptoms (early pattern, DSM-5 requires ≥14 days)`;
     }
 
     if (episodeType && dayCount >= 2) {
       episodes.push({
         type: episodeType,
+        confidence,
         startDate: runDays[0].date,
         endDate: runDays[runDays.length - 1].date,
         dayCount,
         peakSeverity,
         averageWaveScore: Math.round(avgWave * 10) / 10,
         hasSafetyConcern: hasSafety,
+        criteriaNote,
       });
     }
 

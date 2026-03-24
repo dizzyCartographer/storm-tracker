@@ -1,68 +1,90 @@
-import { BEHAVIOR_ITEMS } from "@/lib/behavior-items";
-
 /**
- * Daily Classification Engine
+ * Daily Classification Engine — DSM-5 Based
  *
- * Scores a day's behaviors to produce manic and depressive scores,
- * then classifies the day. Scoring is inspired by the YMRS approach:
- * core symptoms weighted higher, supporting symptoms add context.
+ * Maps tracked behaviors to DSM-5 diagnostic criteria for manic and
+ * depressive episodes, then classifies each day.
  *
- * Manic score:  sum of manic-leaning behavior weights
- * Depressive score: sum of depressive-leaning behavior weights
+ * DSM-5 Manic Episode Criterion B — 3+ of these (4 if mood is only irritable):
+ *   1. Inflated self-esteem / grandiosity
+ *   2. Decreased need for sleep
+ *   3. More talkative / pressure of speech
+ *   4. Flight of ideas / racing thoughts
+ *   5. Distractibility
+ *   6. Increase in goal-directed activity / psychomotor agitation
+ *   7. Excessive involvement in risky activities
  *
- * Sleep and energy items contribute to both poles depending on direction.
- * Mixed/cycling items contribute to both scores.
- * Impairments amplify severity.
+ * DSM-5 Major Depressive Episode — 5+ of 9 during same period
+ *   (at least one must be #1 or #2):
+ *   1. Depressed mood most of the day
+ *   2. Markedly diminished interest / pleasure
+ *   3. Significant weight/appetite change
+ *   4. Insomnia or hypersomnia
+ *   5. Psychomotor agitation or retardation
+ *   6. Fatigue / loss of energy
+ *   7. Feelings of worthlessness / excessive guilt
+ *   8. Diminished ability to think / concentrate
+ *   9. Recurrent thoughts of death / suicidal ideation
+ *
+ * DSM-5 Mixed Features Specifier:
+ *   Manic/hypomanic episode + 3+ depressive symptoms, or
+ *   Depressive episode + 3+ manic symptoms
  */
 
-// Behavior weights: how much each checked behavior contributes to manic or depressive score
-const BEHAVIOR_WEIGHTS: Record<string, { manic: number; depressive: number }> = {
+// Map each behavior item to the DSM-5 criterion it satisfies.
+// A behavior can satisfy exactly one manic and/or one depressive criterion.
+const DSM5_MAPPING: Record<string, { manicCriterion?: number; depressiveCriterion?: number }> = {
   // SLEEP
-  "very-little-sleep":    { manic: 2, depressive: 0 },
-  "slept-too-much":       { manic: 0, depressive: 2 },
-  "irregular-sleep":      { manic: 1, depressive: 1 },
+  "very-little-sleep":    { manicCriterion: 2 },                // Decreased need for sleep
+  "slept-too-much":       { depressiveCriterion: 4 },           // Hypersomnia
+  "irregular-sleep":      { manicCriterion: 2, depressiveCriterion: 4 }, // Sleep disruption (either pole)
 
   // ENERGY
-  "no-energy":            { manic: 0, depressive: 2 },
-  "high-energy":          { manic: 2, depressive: 0 },
-  "selective-energy":     { manic: 0, depressive: 1 },
-  "psychosomatic":        { manic: 0, depressive: 1 },
+  "no-energy":            { depressiveCriterion: 6 },           // Fatigue / loss of energy
+  "high-energy":          { manicCriterion: 6 },                // Increase in goal-directed activity
+  "selective-energy":     { depressiveCriterion: 6 },           // Fatigue (variant)
+  "psychosomatic":        { depressiveCriterion: 5 },           // Psychomotor (somatic expression)
 
-  // MANIC (core symptoms weighted 2, supporting 1)
-  "pressured-speech":     { manic: 2, depressive: 0 },
-  "racing-thoughts":      { manic: 2, depressive: 0 },
-  "euphoria":             { manic: 2, depressive: 0 },
-  "grandiose":            { manic: 2, depressive: 0 },
-  "nonstop-activity":     { manic: 2, depressive: 0 },
-  "restless-agitation":   { manic: 1, depressive: 0 },
-  "disproportionate-rage":{ manic: 1, depressive: 0 },
-  "reckless-choices":     { manic: 2, depressive: 0 },
-  "bizarre-behavior":     { manic: 2, depressive: 0 },
-  "denies-anything-wrong":{ manic: 1, depressive: 0 },
+  // MANIC
+  "pressured-speech":     { manicCriterion: 3 },                // Pressure of speech
+  "racing-thoughts":      { manicCriterion: 4 },                // Flight of ideas / racing thoughts
+  "euphoria":             {},                                    // Criterion A (mood) — counted separately
+  "grandiose":            { manicCriterion: 1 },                // Inflated self-esteem / grandiosity
+  "nonstop-activity":     { manicCriterion: 6 },                // Increase in goal-directed activity
+  "restless-agitation":   { manicCriterion: 6 },                // Psychomotor agitation
+  "disproportionate-rage":{},                                    // Criterion A (irritable mood) — counted separately
+  "reckless-choices":     { manicCriterion: 7 },                // Excessive involvement in risky activities
+  "bizarre-behavior":     { manicCriterion: 7 },                // Risky / out-of-character (variant)
+  "denies-anything-wrong":{},                                    // Insight deficit — not a B criterion but clinically relevant
 
-  // DEPRESSIVE (core symptoms weighted 2, supporting 1)
-  "sad-empty-hopeless":   { manic: 0, depressive: 2 },
-  "lost-interest":        { manic: 0, depressive: 2 },
-  "eating-more":          { manic: 0, depressive: 1 },
-  "eating-less":          { manic: 0, depressive: 1 },
-  "withdrawn":            { manic: 0, depressive: 2 },
-  "worthless-guilt":      { manic: 0, depressive: 2 },
-  "cant-focus":           { manic: 0, depressive: 1 },
-  "mentioned-death":      { manic: 0, depressive: 3 }, // highest weight — safety signal
+  // DEPRESSIVE
+  "sad-empty-hopeless":   { depressiveCriterion: 1 },           // Depressed mood
+  "lost-interest":        { depressiveCriterion: 2 },           // Diminished interest / pleasure
+  "eating-more":          { depressiveCriterion: 3 },           // Appetite/weight change
+  "eating-less":          { depressiveCriterion: 3 },           // Appetite/weight change
+  "withdrawn":            { depressiveCriterion: 2 },           // Diminished interest (social variant)
+  "worthless-guilt":      { depressiveCriterion: 7 },           // Worthlessness / excessive guilt
+  "cant-focus":           { manicCriterion: 5, depressiveCriterion: 8 }, // Distractibility (manic) / can't concentrate (depressive)
+  "mentioned-death":      { depressiveCriterion: 9 },           // Thoughts of death / suicidal ideation
 
-  // MIXED / CYCLING (contribute to both)
-  "mood-swings":          { manic: 1, depressive: 1 },
-  "agitated-depressed":   { manic: 1, depressive: 2 },
-  "unprovoked-temper":    { manic: 1, depressive: 1 },
-  "unusual-anxiety":      { manic: 0, depressive: 1 },
-  "aggressive-destructive":{ manic: 1, depressive: 1 },
+  // MIXED / CYCLING
+  "mood-swings":          {},                                    // Not a single criterion — signals mixed features
+  "agitated-depressed":   { manicCriterion: 6, depressiveCriterion: 1 }, // Agitation (manic) + depressed mood
+  "unprovoked-temper":    {},                                    // Irritable mood — Criterion A for mania
+  "unusual-anxiety":      {},                                    // Comorbid feature, not a DSM criterion per se
+  "aggressive-destructive":{ manicCriterion: 7 },               // Risky/destructive behavior
 };
 
 export type DayClassification = "MANIC" | "DEPRESSIVE" | "MIXED" | "NEUTRAL";
 
 export interface DailyScore {
-  manicScore: number;
-  depressiveScore: number;
+  /** Count of distinct DSM-5 manic B criteria met */
+  manicCriteriaCount: number;
+  /** Count of distinct DSM-5 depressive criteria met */
+  depressiveCriteriaCount: number;
+  /** Whether Criterion A for mania is met (elevated/expansive/irritable mood) */
+  manicMoodPresent: boolean;
+  /** Whether core depressive criterion met (depressed mood OR loss of interest) */
+  depressiveCoreMet: boolean;
   classification: DayClassification;
   severity: "NONE" | "MILD" | "MODERATE" | "SEVERE";
   /** Net score for wave graph: positive = manic, negative = depressive */
@@ -78,91 +100,107 @@ export interface DailyScoringInput {
 }
 
 export function scoreDailyEntry(input: DailyScoringInput): DailyScore {
-  let manicScore = 0;
-  let depressiveScore = 0;
+  // Track which DSM criteria are satisfied (using Sets to avoid double-counting)
+  const manicCriteria = new Set<number>();
+  const depressiveCriteria = new Set<number>();
   let safetyConcern = false;
 
-  // Score behaviors
   for (const key of input.behaviorKeys) {
-    const weight = BEHAVIOR_WEIGHTS[key];
-    if (weight) {
-      manicScore += weight.manic;
-      depressiveScore += weight.depressive;
-    }
-    if (key === "mentioned-death") {
-      safetyConcern = true;
-    }
+    const mapping = DSM5_MAPPING[key];
+    if (!mapping) continue;
+    if (mapping.manicCriterion) manicCriteria.add(mapping.manicCriterion);
+    if (mapping.depressiveCriterion) depressiveCriteria.add(mapping.depressiveCriterion);
+    if (key === "mentioned-death") safetyConcern = true;
   }
 
-  // Mood descriptor adds base context
-  if (input.mood === "MANIC") manicScore += 2;
-  if (input.mood === "DEPRESSIVE") depressiveScore += 2;
-  if (input.mood === "MIXED") {
-    manicScore += 1;
-    depressiveScore += 1;
+  // Criterion A for mania: elevated, expansive, or irritable mood
+  const manicMoodBehaviors = ["euphoria", "disproportionate-rage", "unprovoked-temper"];
+  const manicMoodPresent =
+    input.mood === "MANIC" ||
+    input.mood === "MIXED" ||
+    input.behaviorKeys.some((k) => manicMoodBehaviors.includes(k));
+
+  // Core depressive criteria: depressed mood (#1) or loss of interest (#2)
+  const depressiveCoreMet =
+    depressiveCriteria.has(1) || depressiveCriteria.has(2);
+
+  // Mood descriptor can add criteria
+  if (input.mood === "MANIC" || input.mood === "MIXED") {
+    // Elevated mood itself doesn't add a B criterion, but confirms Criterion A
+  }
+  if (input.mood === "DEPRESSIVE" || input.mood === "MIXED") {
+    depressiveCriteria.add(1); // Depressed mood
   }
 
-  // Day quality adds mild signal
-  if (input.dayQuality === "BAD") {
-    depressiveScore += 1;
-  }
-
-  // Impairment amplifier: severe impairments indicate higher episode severity
-  const severeCount = input.impairments.filter((i) => i.severity === "SEVERE").length;
-  const presentCount = input.impairments.filter((i) => i.severity === "PRESENT").length;
-  const impairmentBoost = severeCount * 1.5 + presentCount * 0.5;
+  const manicCriteriaCount = manicCriteria.size;
+  const depressiveCriteriaCount = depressiveCriteria.size;
 
   // Safety concern from impairment domain
   if (input.impairments.some((i) => i.domain === "SAFETY_CONCERN" && i.severity !== "NONE")) {
     safetyConcern = true;
   }
 
-  // Apply impairment boost to the dominant score
-  if (manicScore >= depressiveScore && manicScore > 0) {
-    manicScore += impairmentBoost;
-  }
-  if (depressiveScore >= manicScore && depressiveScore > 0) {
-    depressiveScore += impairmentBoost;
-  }
+  // Classification based on DSM-5 thresholds
+  // Manic: Criterion A + 3+ B criteria (4 if only irritable)
+  const manicThreshold = manicMoodPresent ? 3 : 4;
+  const meetsManic = manicMoodPresent && manicCriteriaCount >= manicThreshold;
 
-  // Classify
-  const totalScore = manicScore + depressiveScore;
+  // Depressive: 5+ criteria with at least one core criterion
+  const meetsDepressive = depressiveCoreMet && depressiveCriteriaCount >= 5;
+
+  // Mixed features specifier: primary episode + 3+ symptoms from opposite pole
+  const meetsMixed =
+    (meetsManic && depressiveCriteriaCount >= 3) ||
+    (meetsDepressive && manicCriteriaCount >= 3);
+
+  // Subthreshold classifications for prodromal tracking
+  const subthresholdManic = manicMoodPresent && manicCriteriaCount >= 2;
+  const subthresholdDepressive = depressiveCoreMet && depressiveCriteriaCount >= 3;
+
   let classification: DayClassification;
-
-  if (totalScore < 3) {
-    classification = "NEUTRAL";
-  } else if (manicScore >= 3 && depressiveScore >= 3) {
+  if (meetsMixed) {
     classification = "MIXED";
-  } else if (manicScore > depressiveScore) {
+  } else if (meetsManic) {
     classification = "MANIC";
-  } else if (depressiveScore > manicScore) {
+  } else if (meetsDepressive) {
+    classification = "DEPRESSIVE";
+  } else if (subthresholdManic && subthresholdDepressive) {
+    classification = "MIXED";
+  } else if (subthresholdManic) {
+    classification = "MANIC";
+  } else if (subthresholdDepressive) {
     classification = "DEPRESSIVE";
   } else {
-    classification = "MIXED";
+    classification = "NEUTRAL";
   }
 
-  // Severity based on the dominant score
-  const dominantScore = Math.max(manicScore, depressiveScore);
+  // Severity based on criteria count + impairment
+  const severeImpairments = input.impairments.filter((i) => i.severity === "SEVERE").length;
+  const presentImpairments = input.impairments.filter((i) => i.severity === "PRESENT").length;
+  const maxCriteria = Math.max(manicCriteriaCount, depressiveCriteriaCount);
+
   let severity: DailyScore["severity"];
-  if (dominantScore < 3) {
+  if (classification === "NEUTRAL") {
     severity = "NONE";
-  } else if (dominantScore < 6) {
-    severity = "MILD";
-  } else if (dominantScore < 10) {
-    severity = "MODERATE";
+  } else if (meetsManic || meetsDepressive) {
+    // Full DSM threshold met
+    severity = severeImpairments >= 2 ? "SEVERE" : "MODERATE";
   } else {
-    severity = "SEVERE";
+    // Subthreshold
+    severity = severeImpairments >= 1 || maxCriteria >= 3 ? "MODERATE" : "MILD";
   }
 
-  // Wave score: positive = manic, negative = depressive
-  const waveScore = manicScore - depressiveScore;
+  // Wave score for graphing: manic criteria positive, depressive negative
+  const waveScore = manicCriteriaCount - depressiveCriteriaCount;
 
   return {
-    manicScore: Math.round(manicScore * 10) / 10,
-    depressiveScore: Math.round(depressiveScore * 10) / 10,
+    manicCriteriaCount,
+    depressiveCriteriaCount,
+    manicMoodPresent,
+    depressiveCoreMet,
     classification,
     severity,
-    waveScore: Math.round(waveScore * 10) / 10,
+    waveScore,
     safetyConcern,
   };
 }

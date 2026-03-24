@@ -75,12 +75,12 @@ export async function getAnalysis(tenantId: string, days = 30): Promise<Analysis
     if (!scored) continue;
 
     const current = byDate.get(dateStr);
-    const totalScore = scored.score.manicScore + scored.score.depressiveScore;
+    const totalCriteria = scored.score.manicCriteriaCount + scored.score.depressiveCriteriaCount;
     const currentTotal = current
-      ? current.score.manicScore + current.score.depressiveScore
+      ? current.score.manicCriteriaCount + current.score.depressiveCriteriaCount
       : 0;
 
-    if (!current || totalScore > currentTotal) {
+    if (!current || totalCriteria > currentTotal) {
       byDate.set(dateStr, { date: dateStr, score: scored.score });
     }
   }

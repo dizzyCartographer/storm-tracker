@@ -115,18 +115,18 @@ export function detectProdromeSignals(
   // 4. Social withdrawal trend — depressive score increasing over 14 days
   if (last14.length >= 6) {
     const firstAvg =
-      firstHalf.reduce((s, d) => s + d.score.depressiveScore, 0) /
+      firstHalf.reduce((s, d) => s + d.score.depressiveCriteriaCount, 0) /
       (firstHalf.length || 1);
     const secondAvg =
-      secondHalf.reduce((s, d) => s + d.score.depressiveScore, 0) /
+      secondHalf.reduce((s, d) => s + d.score.depressiveCriteriaCount, 0) /
       (secondHalf.length || 1);
 
-    if (secondAvg >= 4 && secondAvg > firstAvg * 1.5) {
+    if (secondAvg >= 3 && secondAvg > firstAvg * 1.5) {
       signals.push({
         id: "withdrawal-trend",
         level: "WARNING",
         title: "Increasing depressive symptoms",
-        description: `Depressive scores are trending up (avg ${firstAvg.toFixed(1)} → ${secondAvg.toFixed(1)}). Watch for withdrawal and loss of interest.`,
+        description: `Depressive criteria trending up (avg ${firstAvg.toFixed(1)} → ${secondAvg.toFixed(1)} criteria/day). Watch for withdrawal and loss of interest.`,
         relatedDates: secondHalf.map((d) => d.date),
       });
     }
