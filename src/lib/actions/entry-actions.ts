@@ -192,6 +192,49 @@ export async function getEntryForEdit(entryId: string) {
   };
 }
 
+export async function getEntryByDate(tenantId: string, dateStr: string) {
+  const user = await requireUser();
+
+  const date = new Date(dateStr);
+  const dateOnly = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+
+  const entry = await prisma.entry.findUnique({
+    where: {
+      userId_tenantId_date: {
+        userId: user.id,
+        tenantId,
+        date: dateOnly,
+      },
+    },
+    include: {
+      behaviorChecks: true,
+      customChecks: true,
+      impairments: true,
+      menstrualLog: true,
+    },
+  });
+
+  if (!entry) return null;
+
+  return {
+    id: entry.id,
+    tenantId: entry.tenantId,
+    date: entry.date.toISOString().slice(0, 10),
+    mood: entry.mood,
+    dayQuality: entry.dayQuality,
+    notes: entry.notes,
+    behaviorKeys: entry.behaviorChecks.map((bc) => bc.itemKey),
+    customItemIds: entry.customChecks.map((cc) => cc.itemId),
+    impairments: entry.impairments.map((imp) => ({
+      domain: imp.domain,
+      severity: imp.severity,
+    })),
+    menstrualSeverity: entry.menstrualLog?.severity ?? null,
+  };
+}
+
 export async function deleteEntry(entryId: string) {
   const user = await requireUser();
 

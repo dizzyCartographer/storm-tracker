@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { saveDailyLog } from "@/lib/actions/entry-actions";
+import { useState, useEffect, useCallback } from "react";
+import { saveDailyLog, getEntryByDate } from "@/lib/actions/entry-actions";
 import { useRouter } from "next/navigation";
 import { BehaviorChecklist } from "./behavior-checklist";
 import { CustomChecklist } from "./custom-checklist";
@@ -110,7 +110,54 @@ export function DailyLogForm({
   const [notes, setNotes] = useState(initialData?.notes ?? "");
   const [menstrual, setMenstrual] = useState<string | null>(initialData?.menstrualSeverity ?? null);
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [isExisting, setIsExisting] = useState(isEdit);
   const [error, setError] = useState("");
+
+  const populateFrom = useCallback((data: InitialData) => {
+    setMood(data.mood);
+    setDayQuality(data.dayQuality);
+    setCheckedBehaviors(new Set(data.behaviorKeys));
+    setCheckedCustom(new Set(data.customItemIds));
+    setImpairments(
+      data.impairments.length > 0
+        ? { ...defaultImpairments, ...Object.fromEntries(data.impairments.map((i) => [i.domain, i.severity])) }
+        : defaultImpairments
+    );
+    setNotes(data.notes ?? "");
+    setMenstrual(data.menstrualSeverity);
+    setIsExisting(true);
+  }, []);
+
+  const clearForm = useCallback(() => {
+    setMood("");
+    setDayQuality("");
+    setCheckedBehaviors(new Set());
+    setCheckedCustom(new Set());
+    setImpairments(defaultImpairments);
+    setNotes("");
+    setMenstrual(null);
+    setIsExisting(false);
+  }, []);
+
+  // Check for existing entry when date changes (new entries only)
+  useEffect(() => {
+    if (isEdit) return;
+    let cancelled = false;
+    async function check() {
+      setChecking(true);
+      const existing = await getEntryByDate(tenantId, date);
+      if (cancelled) return;
+      if (existing) {
+        populateFrom(existing);
+      } else {
+        clearForm();
+      }
+      setChecking(false);
+    }
+    check();
+    return () => { cancelled = true; };
+  }, [date, tenantId, isEdit, populateFrom, clearForm]);
 
   function toggleBehavior(key: string) {
     setCheckedBehaviors((prev) => {
@@ -264,14 +311,24 @@ export function DailyLogForm({
         <MenstrualTracking value={menstrual} onChange={setMenstrual} />
       </CollapsibleSection>
 
+      {checking && (
+        <p className="text-xs text-gray-400">Checking for existing entry...</p>
+      )}
+
+      {!isEdit && isExisting && !checking && (
+        <p className="rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+          An entry already exists for this date. Your changes will update the existing entry.
+        </p>
+      )}
+
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <button
         type="submit"
-        disabled={loading || !mood || !dayQuality}
+        disabled={loading || checking || !mood || !dayQuality}
         className="w-full rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
       >
-        {loading ? "Saving..." : isEdit ? "Update log" : "Save log"}
+        {loading ? "Saving..." : isEdit || isExisting ? "Update log" : "Save log"}
       </button>
     </form>
   );
