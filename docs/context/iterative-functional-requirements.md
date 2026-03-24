@@ -42,4 +42,6 @@ Enhancements, refinements, edge cases, and polish items to address as features a
 
 - option to view emoji/icons only on the pills toggles, this condenses the log page even more, less scrolling
 
-- <br />
+- solid lightning with outline of cloud as a logo that changes color based on selected project
+
+- single project selector dropdown that sits right under menu

@@ -16,8 +16,8 @@ storm-tracker/
 │       ├── conventions.md           # Coding conventions and patterns
 │       ├── diagnostic-resources.md  # Clinical scales (YMRS, KSADS-PL, GBI)
 │       ├── development-plan.md      # Phased development roadmap
-│       ├── branding.md              # Style guide, colors, typography
-│       └── punch-list.md            # Small refinements and polish items
+│       ├── branding-style-guide.md  # Style guide, colors, typography
+│       └── ui-requirements.md       # UI/UX specifications
 └── CLAUDE.md         # This file — loaded into every Claude session
 ```
 
@@ -28,12 +28,19 @@ Every `.md` file in `docs/context/` is loaded into every session (subdirectories
 Before making significant changes, consult the relevant context files.
 When adding a new context file, add an `@` import below **and** update the tree above.
 
-@docs/context/overview\.md
+@docs/context/overview.md
 @docs/context/features.md
 @docs/context/architecture.md
 @docs/context/data-sources.md
 @docs/context/conventions.md
 @docs/context/diagnostic-resources.md
-@docs/context/development-plan.md
-@docs/context/branding.md
-@docs/context/punch-list.md @docs/context/functional-requirements.md @docs/context/iterative-functional-requirements.md
+@docs/context/branding-style-guide.md
+@docs/context/functional-requirements.md
+@docs/context/iterative-functional-requirements.md
+@docs/context/ui-requirements.md
+@docs/context/data-architecture.md
+@docs/context/storm-tracker-development-plan.md
+
+## Workflow Rules
+
+- **Commit and push after every phase.** When a development plan phase is complete, create a commit and push to `origin/main` immediately. Do not wait for the user to ask.
