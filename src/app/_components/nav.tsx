@@ -9,7 +9,7 @@ const links = [
   { href: "/log", label: "Log" },
   { href: "/history", label: "History" },
   { href: "/reports", label: "Reports" },
-  { href: "/settings", label: "Settings" },
+  { href: "/projects", label: "Projects" },
 ];
 
 export function Nav() {

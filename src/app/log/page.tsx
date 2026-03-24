@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth-utils";
-import { getUserTenants } from "@/lib/actions/tenant-actions";
+import { getUserTenants, getDefaultTenantId } from "@/lib/actions/tenant-actions";
 import { getCustomItems } from "@/lib/actions/custom-item-actions";
 import { getEntryForEdit } from "@/lib/actions/entry-actions";
 import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
@@ -17,10 +17,11 @@ export default async function LogPage({
   const params = await searchParams;
 
   if (tenants.length === 0) {
-    redirect("/settings/create-project");
+    redirect("/projects/create");
   }
 
-  const activeTenantId = params.tenant ?? tenants[0].id;
+  const defaultTenantId = await getDefaultTenantId();
+  const activeTenantId = params.tenant ?? defaultTenantId ?? tenants[0].id;
   const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
   const customItems = await getCustomItems(activeTenant.id);
   const { items: behaviorItems } = await getTenantBehaviorItems(activeTenant.id);

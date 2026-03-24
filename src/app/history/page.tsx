@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth-utils";
-import { getUserTenants } from "@/lib/actions/tenant-actions";
+import { getUserTenants, getDefaultTenantId } from "@/lib/actions/tenant-actions";
 import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
 import { Nav } from "@/app/_components/nav";
 import Link from "next/link";
@@ -16,10 +16,11 @@ export default async function HistoryPage({
   const params = await searchParams;
 
   if (tenants.length === 0) {
-    redirect("/settings/create-project");
+    redirect("/projects/create");
   }
 
-  const activeTenantId = params.tenant ?? tenants[0].id;
+  const defaultTenantId = await getDefaultTenantId();
+  const activeTenantId = params.tenant ?? defaultTenantId ?? tenants[0].id;
   const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
   const { items: behaviorItems } = await getTenantBehaviorItems(activeTenant.id);
   const behaviorLabelMap = Object.fromEntries(behaviorItems.map((i) => [i.key, i.label]));
