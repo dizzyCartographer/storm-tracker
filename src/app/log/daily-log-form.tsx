@@ -178,14 +178,19 @@ export function DailyLogForm({
       {/* Date picker */}
       <fieldset>
         <legend className="text-sm font-medium">Date</legend>
-        <input
-          type="date"
-          value={date}
-          max={todayStr}
-          disabled={isEdit}
-          onChange={(e) => setDate(e.target.value)}
-          className="mt-2 rounded-md border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-500"
-        />
+        {isEdit ? (
+          <p className="mt-2 text-sm text-gray-500">
+            {new Date(date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          </p>
+        ) : (
+          <input
+            type="date"
+            value={date}
+            max={todayStr}
+            onChange={(e) => setDate(e.target.value)}
+            className="mt-2 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+        )}
       </fieldset>
 
       {/* Quick Log — always visible */}
