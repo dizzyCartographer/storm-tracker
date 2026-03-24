@@ -42,12 +42,18 @@ export default async function ReportsPage({
               <Link
                 key={t.id}
                 href={`/reports?tenant=${t.id}`}
-                className={`rounded-full px-3 py-1 text-sm font-medium ${
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${
                   t.id === activeTenant.id
                     ? "bg-gray-900 text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
+                {t.teenFavoriteColor && (
+                  <span
+                    className="inline-block h-2 w-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: t.teenFavoriteColor }}
+                  />
+                )}
                 {t.name}
               </Link>
             ))}

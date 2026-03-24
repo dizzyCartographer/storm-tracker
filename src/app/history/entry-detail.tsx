@@ -72,6 +72,12 @@ export function EntryDetail({
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href={`/log/${entry.id}`}
+            className="text-xs text-gray-500 hover:text-gray-900 underline"
+          >
+            View
+          </Link>
           {entry.user.id === currentUserId && (
             <Link
               href={`/log?tenant=${entry.tenantId}&entry=${entry.id}`}

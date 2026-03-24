@@ -142,25 +142,25 @@ Teen's favorite color stored as hex. Colored accent bar on dashboard when set. P
 
 ***
 
-## Phase 9: UI & Navigation Improvements ⬜
+## Phase 9: UI & Navigation Improvements ✅
 
 _From iterative requirements: navigation and view enhancements._
 
-### 9.1 — Navigation restructure ⬜
+### 9.1 — Navigation restructure ✅
 
-"Log" becomes a button (not a nav link) since it goes to an edit page. "Sign Out" also becomes a button. Remaining nav items link to data views.
+"+ Log" is now a dark button at the start of the nav bar. "Sign Out" is a bordered button separated by a divider. Remaining nav items (Dashboard, History, Reports, Projects) are styled as view links with active-state highlighting.
 
-### 9.2 — "Mixed" day quality option ⬜
+### 9.2 — "Mixed" day quality option ✅
 
-Add `MIXED` to the `DayQuality` enum alongside GOOD/NEUTRAL/BAD.
+Added `MIXED` to the `DayQuality` enum. Migration applied. Log form and dashboard display updated.
 
-### 9.3 — Log detail view (read-only) ⬜
+### 9.3 — Log detail view (read-only) ✅
 
-A dedicated view of a single log entry that is not the edit screen. Accessible from history calendar and dashboard.
+New `/log/[id]` page shows a full read-only view of a single entry: mood classification (with override/quick-log indicators), behaviors, custom items, impairments, menstrual data, and notes. Edit link for own entries. Linked from dashboard entry cards and history "View" links.
 
-### 9.4 — Project selector on reports ⬜
+### 9.4 — Project selector on reports ✅
 
-Reports page should allow selecting which project to generate a report for (already partially done with tabs, but needs to match the enriched project detail pattern).
+Reports project tabs now show favorite color dots matching the enriched project pattern. Already used default tenant from Phase 8.3.
 
 ***
 

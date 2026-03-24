@@ -172,6 +172,7 @@ enum DayQuality {
   GOOD
   NEUTRAL
   BAD
+  MIXED
 }
 
 model Entry {

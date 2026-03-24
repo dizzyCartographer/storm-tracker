@@ -275,6 +275,56 @@ export async function getEntryByDate(tenantId: string, dateStr: string) {
   };
 }
 
+export async function getEntryDetail(entryId: string) {
+  const user = await requireUser();
+
+  const entry = await prisma.entry.findUnique({
+    where: { id: entryId },
+    include: {
+      user: { select: { id: true, name: true } },
+      behaviorChecks: true,
+      customChecks: { include: { item: true } },
+      impairments: true,
+      menstrualLog: true,
+      tenant: { select: { id: true, name: true } },
+    },
+  });
+
+  if (!entry) return null;
+
+  // Verify membership
+  const membership = await prisma.tenantMember.findUnique({
+    where: { userId_tenantId: { userId: user.id, tenantId: entry.tenantId } },
+  });
+  if (!membership) return null;
+
+  const hasBehaviorDetail = entry.behaviorChecks.length > 0;
+  let displayMood: string = entry.mood;
+
+  if (hasBehaviorDetail) {
+    const framework = await loadTenantFramework(entry.tenantId);
+    const input: DailyScoringInput = {
+      behaviorKeys: entry.behaviorChecks.map((bc) => bc.itemKey),
+      mood: entry.mood,
+      dayQuality: entry.dayQuality,
+      impairments: entry.impairments.map((imp) => ({
+        domain: imp.domain,
+        severity: imp.severity,
+      })),
+    };
+    const score = scoreDailyEntry(input, framework ?? undefined);
+    displayMood = score.classification;
+  }
+
+  return {
+    ...entry,
+    date: entry.date.toISOString().slice(0, 10),
+    displayMood,
+    hasBehaviorDetail,
+    isOwn: entry.user.id === user.id,
+  };
+}
+
 export async function deleteEntry(entryId: string) {
   const user = await requireUser();
 

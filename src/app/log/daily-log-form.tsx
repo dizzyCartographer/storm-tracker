@@ -10,7 +10,7 @@ import { NotesField } from "./notes-field";
 import { MenstrualTracking } from "./menstrual-tracking";
 
 const moods = ["MANIC", "DEPRESSIVE", "NEUTRAL", "MIXED"] as const;
-const dayQualities = ["GOOD", "NEUTRAL", "BAD"] as const;
+const dayQualities = ["GOOD", "NEUTRAL", "BAD", "MIXED"] as const;
 
 const moodLabels: Record<string, string> = {
   MANIC: "Manic",
@@ -23,6 +23,7 @@ const dayQualityLabels: Record<string, string> = {
   GOOD: "Good",
   NEUTRAL: "Neutral",
   BAD: "Bad",
+  MIXED: "Mixed",
 };
 
 interface CustomItem {

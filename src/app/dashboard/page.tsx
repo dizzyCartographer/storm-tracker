@@ -17,6 +17,7 @@ const dayQualityIcons: Record<string, string> = {
   GOOD: "Good",
   NEUTRAL: "Neutral",
   BAD: "Bad",
+  MIXED: "Mixed",
 };
 
 function formatDate(date: Date) {
@@ -106,9 +107,10 @@ export default async function DashboardPage({
               Recent entries
             </h2>
             {entries.map((entry) => (
-              <div
+              <Link
                 key={entry.id}
-                className="rounded-md border border-gray-200 px-4 py-3"
+                href={`/log/${entry.id}`}
+                className="block rounded-md border border-gray-200 px-4 py-3 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -163,7 +165,7 @@ export default async function DashboardPage({
                     {entry.notes}
                   </p>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
         )}
