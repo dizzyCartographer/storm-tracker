@@ -85,6 +85,8 @@ export function DailyLogForm({
 }) {
   const router = useRouter();
   const isEdit = !!initialData;
+  const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
+  const [date, setDate] = useState<string>(initialData?.date ?? todayStr);
   const [mood, setMood] = useState<string>(initialData?.mood ?? "");
   const [dayQuality, setDayQuality] = useState<string>(initialData?.dayQuality ?? "");
   const [checkedBehaviors, setCheckedBehaviors] = useState<Set<string>>(
@@ -152,7 +154,7 @@ export function DailyLogForm({
       impairments: impairmentEntries.length > 0 ? impairmentEntries : undefined,
       notes: notes.trim() || undefined,
       menstrualSeverity: menstrual as "LIGHT" | "MEDIUM" | "HEAVY" | null,
-      date: initialData?.date,
+      date,
     });
 
     setLoading(false);
@@ -166,6 +168,19 @@ export function DailyLogForm({
 
   return (
     <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+      {/* Date picker */}
+      <fieldset>
+        <legend className="text-sm font-medium">Date</legend>
+        <input
+          type="date"
+          value={date}
+          max={todayStr}
+          disabled={isEdit}
+          onChange={(e) => setDate(e.target.value)}
+          className="mt-2 rounded-md border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+        />
+      </fieldset>
+
       {/* Quick Log — always visible */}
       <fieldset>
         <legend className="text-sm font-medium">Overall mood</legend>
