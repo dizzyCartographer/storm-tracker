@@ -129,7 +129,7 @@ export function HistoryView({ tenantId, currentUserId, behaviorLabelMap }: { ten
                   {dayEntries.map((e) => (
                     <span
                       key={e.id}
-                      className={`inline-block h-2 w-2 rounded-full ${moodColors[e.mood]}`}
+                      className={`inline-block h-2 w-2 rounded-full ${moodColors[e.displayMood] ?? moodColors.NEUTRAL}`}
                     />
                   ))}
                 </div>

@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth-utils";
-import { getUserTenants } from "@/lib/actions/tenant-actions";
+import { getUserTenants, getDefaultTenantId } from "@/lib/actions/tenant-actions";
 import { getRecentEntries } from "@/lib/actions/entry-actions";
 import { Nav } from "@/app/_components/nav";
 import { AnalysisPanel } from "./analysis-panel";
@@ -37,10 +37,11 @@ export default async function DashboardPage({
   const params = await searchParams;
 
   if (tenants.length === 0) {
-    redirect("/settings/create-project");
+    redirect("/projects/create");
   }
 
-  const activeTenantId = params.tenant ?? tenants[0].id;
+  const defaultTenantId = await getDefaultTenantId();
+  const activeTenantId = params.tenant ?? defaultTenantId ?? tenants[0].id;
   const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
   const entries = await getRecentEntries(activeTenant.id);
 
@@ -48,6 +49,12 @@ export default async function DashboardPage({
     <>
       <Nav />
       <main className="mx-auto max-w-4xl p-6">
+        {activeTenant.teenFavoriteColor && (
+          <div
+            className="mb-4 h-1 rounded-full"
+            style={{ backgroundColor: activeTenant.teenFavoriteColor }}
+          />
+        )}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">{activeTenant.name}</h1>
@@ -69,12 +76,18 @@ export default async function DashboardPage({
               <Link
                 key={t.id}
                 href={`/dashboard?tenant=${t.id}`}
-                className={`rounded-md px-3 py-1.5 text-sm ${
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm ${
                   t.id === activeTenant.id
                     ? "bg-gray-900 text-white"
                     : "border border-gray-300 hover:bg-gray-50"
                 }`}
               >
+                {t.teenFavoriteColor && (
+                  <span
+                    className="inline-block h-2 w-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: t.teenFavoriteColor }}
+                  />
+                )}
                 {t.name}
               </Link>
             ))}
@@ -103,10 +116,20 @@ export default async function DashboardPage({
                       {formatDate(entry.date)}
                     </span>
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${moodColors[entry.mood]}`}
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${moodColors[entry.displayMood] ?? moodColors.NEUTRAL}`}
                     >
-                      {entry.mood.charAt(0) + entry.mood.slice(1).toLowerCase()}
+                      {entry.displayMood.charAt(0) + entry.displayMood.slice(1).toLowerCase()}
                     </span>
+                    {entry.hasBehaviorDetail && entry.displayMood !== entry.mood && (
+                      <span className="text-xs text-gray-400 italic">
+                        reported {entry.mood.toLowerCase()}
+                      </span>
+                    )}
+                    {!entry.hasBehaviorDetail && (
+                      <span className="text-xs text-amber-500" title="No detailed behaviors logged">
+                        quick log only
+                      </span>
+                    )}
                     <span className="text-xs text-gray-500">
                       {dayQualityIcons[entry.dayQuality]} day
                     </span>

@@ -38,10 +38,12 @@ export function EntryDetail({
   currentUserId,
   behaviorLabelMap,
 }: {
-  entry: Entry;
+  entry: Entry & { displayMood?: string; hasBehaviorDetail?: boolean };
   currentUserId: string;
   behaviorLabelMap?: Record<string, string>;
 }) {
+  const displayMood = entry.displayMood ?? entry.mood;
+  const hasBehaviorDetail = entry.hasBehaviorDetail ?? entry.behaviorChecks.length > 0;
   const behaviorLabels = entry.behaviorChecks.map((bc) => {
     return behaviorLabelMap?.[bc.itemKey] ?? bc.itemKey;
   });
@@ -54,9 +56,17 @@ export function EntryDetail({
     <div className="rounded-md border border-gray-200 p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${moodColors[entry.mood]}`}>
-            {moodLabels[entry.mood]}
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${moodColors[displayMood] ?? moodColors.NEUTRAL}`}>
+            {moodLabels[displayMood] ?? displayMood.charAt(0) + displayMood.slice(1).toLowerCase()}
           </span>
+          {hasBehaviorDetail && displayMood !== entry.mood && (
+            <span className="text-xs text-gray-400 italic">
+              reported {(moodLabels[entry.mood] ?? entry.mood).toLowerCase()}
+            </span>
+          )}
+          {!hasBehaviorDetail && (
+            <span className="text-xs text-amber-500">quick log only</span>
+          )}
           <span className="text-xs text-gray-500">
             {entry.dayQuality.charAt(0) + entry.dayQuality.slice(1).toLowerCase()} day
           </span>

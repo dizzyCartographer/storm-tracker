@@ -11,6 +11,7 @@ import {
   BleedingSeverity,
 } from "@/generated/prisma/client";
 import { loadTenantFramework } from "@/lib/analysis/framework-loader";
+import { scoreDailyEntry, type DailyScoringInput } from "@/lib/analysis/daily-score";
 
 interface ImpairmentInput {
   domain: ImpairmentDomain;
@@ -154,7 +155,7 @@ export async function getEntriesByMonth(tenantId: string, year: number, month: n
   const start = new Date(Date.UTC(year, month - 1, 1));
   const end = new Date(Date.UTC(year, month, 1));
 
-  return prisma.entry.findMany({
+  const entries = await prisma.entry.findMany({
     where: {
       tenantId,
       date: { gte: start, lt: end },
@@ -167,6 +168,33 @@ export async function getEntriesByMonth(tenantId: string, year: number, month: n
       menstrualLog: true,
     },
     orderBy: { date: "asc" },
+  });
+
+  const framework = await loadTenantFramework(tenantId);
+
+  return entries.map((entry) => {
+    const hasBehaviorDetail = entry.behaviorChecks.length > 0;
+    let displayMood: string = entry.mood;
+
+    if (hasBehaviorDetail) {
+      const input: DailyScoringInput = {
+        behaviorKeys: entry.behaviorChecks.map((bc) => bc.itemKey),
+        mood: entry.mood,
+        dayQuality: entry.dayQuality,
+        impairments: entry.impairments.map((imp) => ({
+          domain: imp.domain,
+          severity: imp.severity,
+        })),
+      };
+      const score = scoreDailyEntry(input, framework ?? undefined);
+      displayMood = score.classification;
+    }
+
+    return {
+      ...entry,
+      displayMood,
+      hasBehaviorDetail,
+    };
   });
 }
 
@@ -270,7 +298,7 @@ export async function getRecentEntries(tenantId: string, limit = 14) {
   });
   if (!membership) return [];
 
-  return prisma.entry.findMany({
+  const entries = await prisma.entry.findMany({
     where: { tenantId },
     include: {
       user: { select: { id: true, name: true } },
@@ -280,5 +308,32 @@ export async function getRecentEntries(tenantId: string, limit = 14) {
     },
     orderBy: { date: "desc" },
     take: limit,
+  });
+
+  const framework = await loadTenantFramework(tenantId);
+
+  return entries.map((entry) => {
+    const hasBehaviorDetail = entry.behaviorChecks.length > 0;
+    let displayMood: string = entry.mood;
+
+    if (hasBehaviorDetail) {
+      const input: DailyScoringInput = {
+        behaviorKeys: entry.behaviorChecks.map((bc) => bc.itemKey),
+        mood: entry.mood,
+        dayQuality: entry.dayQuality,
+        impairments: entry.impairments.map((imp) => ({
+          domain: imp.domain,
+          severity: imp.severity,
+        })),
+      };
+      const score = scoreDailyEntry(input, framework ?? undefined);
+      displayMood = score.classification;
+    }
+
+    return {
+      ...entry,
+      displayMood,
+      hasBehaviorDetail,
+    };
   });
 }
