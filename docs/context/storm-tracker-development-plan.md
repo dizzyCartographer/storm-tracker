@@ -2,130 +2,165 @@
 
 Tickets are roughly ordered by dependency. Each ticket should be a deployable increment.
 
-***
+Status key: ✅ Done | 🔧 In Progress | ⬜ Not Started
 
-## Phase 1: Foundation
+---
 
-### 1.1 — Database schema and ORM setup
+## Phase 1: Foundation ✅
 
-Choose and configure a database (e.g. Supabase/Postgres) and ORM (e.g. Prisma). Define core tables: `users`, `tenants`, `tenant_members`, `entries`. Set up migrations.
+### 1.1 — Database schema and ORM setup ✅
+Neon Postgres via Vercel Storage, Prisma ORM with `@prisma/adapter-pg`. Core tables: users, tenants, tenant_members, entries. Migrations via `prisma migrate dev`.
 
-### 1.2 — Authentication
+### 1.2 — Authentication ✅
+Better Auth with email/password. Session management integrated with multi-tenant model. Sign-in/sign-up pages with redirect support.
 
-Implement sign-up, login, and session management. Integrate with the multi-tenant model so every authenticated user is scoped to their tenant(s).
+### 1.3 — Tenant management ✅
+Create tenants, invite system with token-based links (7-day expiry), role assignment (Owner/Caregiver/Teen-Self). CRUD permissions enforced via server actions.
 
-### 1.3 — Tenant management
+---
 
-Create/join/leave a tenant. Owner can invite users, assign roles (owner, caregiver, teen-self). CRUD permissions enforced at the API layer.
+## Phase 2: Daily Logging ✅
 
-***
+### 2.1 — Quick Log entry ✅
+### 2.2 — Behavior Checklist entry ✅
+### 2.3 — Custom behavior items ✅
+### 2.4 — Impairment Tracking entry ✅
+### 2.5 — Freeform Notes entry ✅
+### 2.6 — Menstrual Tracking entry ✅
+### 2.7 — Combined daily entry form ✅
+Date picker for backdating. Pre-populates when date has existing entry. Edit/delete with ownership checks. Compact pill-style behavior toggles with info tooltips.
 
-## Phase 2: Daily Logging
+---
 
-### 2.1 — Quick Log entry
+## Phase 3: History & Timeline ✅
 
-Form with two required fields: mood descriptor (Manic / Depressive / Neutral / Mixed) and day quality (Good / Neutral / Bad). Saves with timestamp and user attribution. This is the minimum viable entry — optimized for speed.
+### 3.1 — Entry list / calendar view ✅
+Calendar grid with mood-colored dots. Tap date to expand full entry details. Project switcher tabs.
 
-### 2.2 — Behavior Checklist entry
+### 3.2 — User attribution and discrepancy view ✅
+Flags when multiple observers logged same day. Discrepancy detection in analysis panel compares classifications.
 
-Boolean checklist grouped by category (Sleep, Energy, Manic, Depressive, Mixed/Cycling). Items are static and derived from DSM criteria defined in `features.md`. Render from a shared config so the list is maintained in one place.
+---
 
-### 2.3 — Custom behavior items
+## Phase 4: Data Analysis ✅
 
-Allow caregivers to add/edit/delete their own boolean checklist items within a "Custom" section on the behavior checklist. Scoped per tenant.
+### 4.1 — Daily classification engine ✅
+Database-driven diagnostic frameworks. Behavior→criterion mappings, classification rules, and scoring all stored in PostgreSQL. DSM-5 Bipolar seeded. See `data-architecture.md`.
 
-### 2.4 — Impairment Tracking entry
+### 4.2 — Episode detection ✅
+Framework-driven duration thresholds. DSM5_MET vs PRODROMAL_CONCERN confidence levels.
 
-Five domains (School/work, Family life, Friendships, Self-care, Safety concern), each rated None / Present / Severe.
+### 4.3 — Prodrome signal detection ✅
+Framework-driven signal rules (sleep disruption, escalating irritability, energy volatility, safety concern) plus framework-independent signals (mood instability, withdrawal trend).
 
-### 2.5 — Freeform Notes entry
+---
 
-Rich text / markdown editor for long-form notes. Must handle substantial text comfortably on mobile.
+## Phase 5: Reporting & Visualization ✅
 
-### 2.6 — Menstrual Tracking entry
+### 5.1 — Symptom wave graph ✅
+Recharts-powered wave graph. Manic criteria positive, depressive negative. Dot colors by classification.
 
-Log period days with bleeding severity (Light / Medium / Heavy). Stored as date-level records alongside mood entries.
+### 5.2 — Menstrual cycle overlay ⬜
+Pink bars show period days on wave graph. Still needs generic cycle wave overlay anchored to last period date.
 
-### 2.7 — Combined daily entry form
+### 5.3 — PDF export ✅
+Browser print with print-specific styles. Date range picker with generate button.
 
-Compose all entry types (2.1–2.6) into a single daily log screen. Quick Log is always visible at the top; remaining sections expand/collapse. A caregiver can submit just the Quick Log or fill in as much as they want.
+---
 
-***
+## Phase 6: Insights & Alerts ✅
 
-## Phase 3: History & Timeline
+### 6.1 — Pattern-based predictions ✅
+Cycle length estimation, trend detection (escalating/resolving), day-of-week patterns, mood state forecasting.
 
-### 3.1 — Entry list / calendar view
+### 6.2 — Caregiver suggestions ✅
+Context-aware tips organized by category (Safety, Communication, Environment, Self-Care, Clinical).
 
-Browse past entries by date. Show mood color-coding on a calendar grid. Tap a date to view/edit that day's full entry.
+### 6.3 — Observer discrepancy detection ✅
+Flags dates where multiple caregivers logged conflicting mood classifications.
 
-### 3.2 — User attribution and discrepancy view
+---
 
-Display who logged each entry. When both a caregiver and the teen logged for the same day, surface the differences side-by-side.
+## Phase 7: Algorithmic Mood Override ⬜
+_From iterative requirements: when specific behaviors are logged, the algorithmically produced classification should take precedence over the caregiver's manual mood entry._
 
-***
+### 7.1 — Computed mood classification ⬜
+When behavior data is logged, the scoring engine's classification overrides the manual mood descriptor for display on reports, dashboard, and history. Manual entry is preserved as `reportedMood` and only shown when no behaviors are logged.
 
-## Phase 4: Data Analysis
+### 7.2 — No-detail indicator ⬜
+When no behaviors are logged for a day, show a visual indicator that detailed data wasn't captured. Entries with only Quick Log data are visually distinct from fully detailed entries.
 
-### 4.1 — Daily classification engine
+---
 
-Score each day's entries and classify as manic, depressive, mixed, or neutral based on the behavior checklist data.
+## Phase 8: Project Enrichment ⬜
+_From iterative requirements: projects need more context for the data being tracked._
 
-### 4.2 — Episode detection
+### 8.1 — Project CRUD ⬜
+Full create/read/update/delete for projects. Rename "Settings" to "Projects" with a project detail page per selected project.
 
-Evaluate consecutive day classifications against clinical criteria for manic, hypomanic, and depressive episodes. Flag episodes in the timeline.
+### 8.2 — Project profile fields ⬜
+Add to Tenant model:
+- Freeform description
+- Project purpose (ongoing tracking vs diagnostic data collection)
+- Teen info: photo upload, full name, nickname, birthday, favorite color, interests, school, favorite subject, IEP yes/no, psychiatric diagnosis, other health issues
+- Background: date of onset / first suspected, family history of mental illness
 
-### 4.3 — Prodrome signal detection
+### 8.3 — Default project selection ⬜
+User can set a default project. Dashboard/log/history load that project by default instead of first tenant.
 
-Flag when logged symptoms are consistent with early bipolar signs even when they don't meet full episode criteria. Reference the diagnostic scales in `diagnostic-resources.md`.
+### 8.4 — Copy project data ⬜
+When creating a new project, option to copy description/profile data from an existing project.
 
-***
+### 8.5 — Project theming ⬜
+UI color scheme changes based on teen's favorite color. Project selector shows teen's photo. Visual customization to reduce emotional friction.
 
-## Phase 5: Reporting & Visualization
+---
 
-### 5.1 — Symptom wave graph
+## Phase 9: UI & Navigation Improvements ⬜
+_From iterative requirements: navigation and view enhancements._
 
-Plot a symptom score over time — manic symptoms positive, depressive symptoms negative — to visualize the bipolar cycle as a wave.
+### 9.1 — Navigation restructure ⬜
+"Log" becomes a button (not a nav link) since it goes to an edit page. "Sign Out" also becomes a button. Remaining nav items link to data views.
 
-### 5.2 — Menstrual cycle overlay
+### 9.2 — "Mixed" day quality option ⬜
+Add `MIXED` to the `DayQuality` enum alongside GOOD/NEUTRAL/BAD.
 
-For users with menstrual data: overlay a generic cycle wave anchored to the last logged period date on the symptom wave graph.
+### 9.3 — Log detail view (read-only) ⬜
+A dedicated view of a single log entry that is not the edit screen. Accessible from history calendar and dashboard.
 
-### 5.3 — PDF export
+### 9.4 — Project selector on reports ⬜
+Reports page should allow selecting which project to generate a report for (already partially done with tabs, but needs to match the enriched project detail pattern).
 
-Generate a PDF report for a user-selected date range. Include: entry summaries, symptom frequency counts, impairment domain breakdown, and the symptom wave graph.
+---
 
-***
+## Phase 10: Document Management ⬜
+_From iterative requirements: attach documents to logs and browse them._
 
-## Phase 6: Reminders & Notifications
+### 10.1 — File attachments on log entries ⬜
+Upload and attach documents (PDF, images) to a daily log entry. Store via Vercel Blob or similar.
 
-### 6.1 — Pattern-based predictions
+### 10.2 — Document library ⬜
+Browse all uploaded documents across entries. Filter by date, entry, or document type.
 
-Analyze historical data to predict likely upcoming mood states based on cycle patterns and known triggers.
+---
 
-### 6.2 — Caregiver alerts
+## Phase 11: Polish & Hardening ⬜
 
-Notify caregivers to watch for specific behaviors based on predicted mood states and past patterns.
+### 11.1 — Mobile optimization ⬜
+Every screen works well on small viewports. Tap targets, font sizes, and form flow optimized for one-handed phone use.
 
-### 6.3 — Supportive activity suggestions
+### 11.2 — Privacy controls ⬜
+Enforce separation between teen-facing and caregiver-facing data.
 
-During predicted difficult periods, surface suggestions for activities that have historically helped or are clinically recommended.
-
-***
-
-## Phase 7: Polish & Hardening
-
-### 7.1 — Mobile optimization
-
-Ensure every screen works well on small viewports. Tap targets, font sizes, and form flow optimized for one-handed phone use.
-
-### 7.2 — Privacy controls
-
-Enforce separation between teen-facing and caregiver-facing data. 
-
-### 7.3 — Onboarding flow
-
+### 11.3 — Onboarding flow ⬜
 First-run experience: create a tenant, name the teen, invite co-caregivers, optionally invite the teen.
 
-### 7.4 — Error handling and edge cases
-
+### 11.4 — Error handling and edge cases ⬜
 Offline resilience, input validation, empty states, loading skeletons, and graceful error messages throughout.
+
+---
+
+## Architecture Milestone (Completed)
+
+### Database-driven diagnostic frameworks ✅
+All behavior definitions, DSM-5 criteria, classification rules, episode thresholds, and signal rules moved from hardcoded TypeScript to 11 database tables. New frameworks (ADHD, anxiety, etc.) can be added by inserting rows — no code changes needed. See `data-architecture.md` for full details.
