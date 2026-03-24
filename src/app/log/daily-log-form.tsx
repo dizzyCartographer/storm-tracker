@@ -30,16 +30,30 @@ interface CustomItem {
   label: string;
 }
 
+interface InitialData {
+  id: string;
+  date: string;
+  mood: string;
+  dayQuality: string;
+  behaviorKeys: string[];
+  customItemIds: string[];
+  impairments: { domain: string; severity: string }[];
+  notes: string | null;
+  menstrualSeverity: string | null;
+}
+
 function CollapsibleSection({
   title,
   badge,
+  defaultOpen,
   children,
 }: {
   title: string;
   badge?: number;
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen ?? false);
   return (
     <div>
       <button
@@ -63,18 +77,29 @@ function CollapsibleSection({
 export function DailyLogForm({
   tenantId,
   customItems,
+  initialData,
 }: {
   tenantId: string;
   customItems: CustomItem[];
+  initialData?: InitialData;
 }) {
   const router = useRouter();
-  const [mood, setMood] = useState<string>("");
-  const [dayQuality, setDayQuality] = useState<string>("");
-  const [checkedBehaviors, setCheckedBehaviors] = useState<Set<string>>(new Set());
-  const [checkedCustom, setCheckedCustom] = useState<Set<string>>(new Set());
-  const [impairments, setImpairments] = useState<Record<string, string>>({});
-  const [notes, setNotes] = useState("");
-  const [menstrual, setMenstrual] = useState<string | null>(null);
+  const isEdit = !!initialData;
+  const [mood, setMood] = useState<string>(initialData?.mood ?? "");
+  const [dayQuality, setDayQuality] = useState<string>(initialData?.dayQuality ?? "");
+  const [checkedBehaviors, setCheckedBehaviors] = useState<Set<string>>(
+    new Set(initialData?.behaviorKeys ?? [])
+  );
+  const [checkedCustom, setCheckedCustom] = useState<Set<string>>(
+    new Set(initialData?.customItemIds ?? [])
+  );
+  const [impairments, setImpairments] = useState<Record<string, string>>(
+    initialData?.impairments
+      ? Object.fromEntries(initialData.impairments.map((i) => [i.domain, i.severity]))
+      : {}
+  );
+  const [notes, setNotes] = useState(initialData?.notes ?? "");
+  const [menstrual, setMenstrual] = useState<string | null>(initialData?.menstrualSeverity ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -127,6 +152,7 @@ export function DailyLogForm({
       impairments: impairmentEntries.length > 0 ? impairmentEntries : undefined,
       notes: notes.trim() || undefined,
       menstrualSeverity: menstrual as "LIGHT" | "MEDIUM" | "HEAVY" | null,
+      date: initialData?.date,
     });
 
     setLoading(false);
@@ -185,6 +211,7 @@ export function DailyLogForm({
       <CollapsibleSection
         title="Behavior checklist"
         badge={checkedBehaviors.size + checkedCustom.size}
+        defaultOpen={isEdit && (checkedBehaviors.size > 0 || checkedCustom.size > 0)}
       >
         <BehaviorChecklist checked={checkedBehaviors} onToggle={toggleBehavior} />
         {customItems.length > 0 && (
@@ -198,15 +225,15 @@ export function DailyLogForm({
         )}
       </CollapsibleSection>
 
-      <CollapsibleSection title="Impairment tracking" badge={impairmentCount}>
+      <CollapsibleSection title="Impairment tracking" badge={impairmentCount} defaultOpen={isEdit && impairmentCount > 0}>
         <ImpairmentTracking values={impairments} onChange={setImpairment} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Notes">
+      <CollapsibleSection title="Notes" defaultOpen={isEdit && !!notes}>
         <NotesField value={notes} onChange={setNotes} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Menstrual tracking">
+      <CollapsibleSection title="Menstrual tracking" defaultOpen={isEdit && !!menstrual}>
         <MenstrualTracking value={menstrual} onChange={setMenstrual} />
       </CollapsibleSection>
 
@@ -217,7 +244,7 @@ export function DailyLogForm({
         disabled={loading || !mood || !dayQuality}
         className="w-full rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
       >
-        {loading ? "Saving..." : "Save log"}
+        {loading ? "Saving..." : isEdit ? "Update log" : "Save log"}
       </button>
     </form>
   );

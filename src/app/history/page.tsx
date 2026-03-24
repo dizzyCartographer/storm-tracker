@@ -9,7 +9,7 @@ export default async function HistoryPage({
 }: {
   searchParams: Promise<{ tenant?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const tenants = await getUserTenants();
   const params = await searchParams;
 
@@ -28,7 +28,7 @@ export default async function HistoryPage({
         <p className="mt-1 text-sm text-gray-500">
           Viewing entries for {activeTenant.name}
         </p>
-        <HistoryView tenantId={activeTenant.id} />
+        <HistoryView tenantId={activeTenant.id} currentUserId={user.id} />
       </main>
     </>
   );

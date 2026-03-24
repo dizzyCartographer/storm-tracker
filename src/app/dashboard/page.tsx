@@ -108,9 +108,19 @@ export default async function DashboardPage({
                       {dayQualityIcons[entry.dayQuality]} day
                     </span>
                   </div>
-                  <span className="text-xs text-gray-400">
-                    by {entry.user.name}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {entry.user.id === user.id && (
+                      <Link
+                        href={`/log?tenant=${activeTenant.id}&entry=${entry.id}`}
+                        className="text-xs text-gray-500 hover:text-gray-900 underline"
+                      >
+                        Edit
+                      </Link>
+                    )}
+                    <span className="text-xs text-gray-400">
+                      by {entry.user.name}
+                    </span>
+                  </div>
                 </div>
                 {entry.behaviorChecks.length > 0 && (
                   <p className="mt-1.5 text-xs text-gray-500">

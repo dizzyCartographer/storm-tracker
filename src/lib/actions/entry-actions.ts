@@ -158,6 +158,55 @@ export async function getEntriesByMonth(tenantId: string, year: number, month: n
   });
 }
 
+export async function getEntryForEdit(entryId: string) {
+  const user = await requireUser();
+
+  const entry = await prisma.entry.findUnique({
+    where: { id: entryId },
+    include: {
+      user: { select: { id: true } },
+      behaviorChecks: true,
+      customChecks: true,
+      impairments: true,
+      menstrualLog: true,
+    },
+  });
+
+  if (!entry) return null;
+  if (entry.user.id !== user.id) return null;
+
+  return {
+    id: entry.id,
+    tenantId: entry.tenantId,
+    date: entry.date.toISOString().slice(0, 10),
+    mood: entry.mood,
+    dayQuality: entry.dayQuality,
+    notes: entry.notes,
+    behaviorKeys: entry.behaviorChecks.map((bc) => bc.itemKey),
+    customItemIds: entry.customChecks.map((cc) => cc.itemId),
+    impairments: entry.impairments.map((imp) => ({
+      domain: imp.domain,
+      severity: imp.severity,
+    })),
+    menstrualSeverity: entry.menstrualLog?.severity ?? null,
+  };
+}
+
+export async function deleteEntry(entryId: string) {
+  const user = await requireUser();
+
+  const entry = await prisma.entry.findUnique({
+    where: { id: entryId },
+    select: { userId: true, tenantId: true },
+  });
+
+  if (!entry) return { error: "Entry not found" };
+  if (entry.userId !== user.id) return { error: "You can only delete your own entries" };
+
+  await prisma.entry.delete({ where: { id: entryId } });
+  return { success: true, tenantId: entry.tenantId };
+}
+
 export async function getRecentEntries(tenantId: string, limit = 14) {
   const user = await requireUser();
 
@@ -169,7 +218,7 @@ export async function getRecentEntries(tenantId: string, limit = 14) {
   return prisma.entry.findMany({
     where: { tenantId },
     include: {
-      user: { select: { name: true } },
+      user: { select: { id: true, name: true } },
       behaviorChecks: true,
       impairments: true,
       menstrualLog: true,

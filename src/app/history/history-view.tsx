@@ -16,7 +16,7 @@ const moodColors: Record<string, string> = {
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function HistoryView({ tenantId }: { tenantId: string }) {
+export function HistoryView({ tenantId, currentUserId }: { tenantId: string; currentUserId: string }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -154,7 +154,7 @@ export function HistoryView({ tenantId }: { tenantId: string }) {
             </p>
           )}
           {selectedEntries.map((entry) => (
-            <EntryDetail key={entry.id} entry={entry} />
+            <EntryDetail key={entry.id} entry={entry} currentUserId={currentUserId} />
           ))}
         </div>
       )}

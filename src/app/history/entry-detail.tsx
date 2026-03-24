@@ -2,6 +2,7 @@
 
 import { getEntriesByMonth } from "@/lib/actions/entry-actions";
 import { BEHAVIOR_ITEMS } from "@/lib/behavior-items";
+import Link from "next/link";
 
 type Entry = Awaited<ReturnType<typeof getEntriesByMonth>>[number];
 
@@ -33,7 +34,7 @@ const domainLabels: Record<string, string> = {
   SAFETY_CONCERN: "Safety Concern",
 };
 
-export function EntryDetail({ entry }: { entry: Entry }) {
+export function EntryDetail({ entry, currentUserId }: { entry: Entry; currentUserId: string }) {
   const behaviorLabels = entry.behaviorChecks.map((bc) => {
     const item = BEHAVIOR_ITEMS.find((i) => i.key === bc.itemKey);
     return item ? item.label : bc.itemKey;
@@ -54,9 +55,19 @@ export function EntryDetail({ entry }: { entry: Entry }) {
             {entry.dayQuality.charAt(0) + entry.dayQuality.slice(1).toLowerCase()} day
           </span>
         </div>
-        <span className="text-xs text-gray-400">
-          by {entry.user.name}
-        </span>
+        <div className="flex items-center gap-2">
+          {entry.user.id === currentUserId && (
+            <Link
+              href={`/log?tenant=${entry.tenantId}&entry=${entry.id}`}
+              className="text-xs text-gray-500 hover:text-gray-900 underline"
+            >
+              Edit
+            </Link>
+          )}
+          <span className="text-xs text-gray-400">
+            by {entry.user.name}
+          </span>
+        </div>
       </div>
 
       {behaviorLabels.length > 0 && (
