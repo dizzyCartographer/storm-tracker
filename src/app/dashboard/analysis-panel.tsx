@@ -3,6 +3,32 @@
 import { useState, useEffect } from "react";
 import { getAnalysis, type AnalysisResult } from "@/lib/actions/analysis-actions";
 
+function InfoTip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-500 hover:bg-gray-300"
+      >
+        i
+      </button>
+      {open && (
+        <>
+          <span
+            className="fixed inset-0 z-10"
+            onClick={() => setOpen(false)}
+          />
+          <span className="absolute left-0 top-6 z-20 w-64 rounded-md border border-gray-200 bg-white p-3 text-xs text-gray-600 shadow-lg leading-relaxed">
+            {text}
+          </span>
+        </>
+      )}
+    </span>
+  );
+}
+
 const classColors: Record<string, string> = {
   MANIC: "bg-orange-100 text-orange-800",
   DEPRESSIVE: "bg-blue-100 text-blue-800",
@@ -74,6 +100,7 @@ export function AnalysisPanel({ tenantId }: { tenantId: string }) {
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
             Signals
+            <InfoTip text="Signals are early warning patterns detected across recent entries. They flag behavioral trends — like sleep disruption or escalating irritability — that research links to emerging bipolar episodes. These are not diagnoses, but patterns worth discussing with a clinician." />
           </h2>
           <div className="mt-2 space-y-2">
             {data.signals.map((signal) => (
@@ -101,6 +128,7 @@ export function AnalysisPanel({ tenantId }: { tenantId: string }) {
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
             Detected Episodes
+            <InfoTip text="An episode is a sustained period of manic or depressive symptoms. The DSM-5 (Diagnostic and Statistical Manual) defines specific duration and symptom thresholds: manic episodes require 7+ days, hypomanic 4+ days, and depressive episodes 14+ days. Episodes labeled 'Prodromal concern' haven't met the full DSM-5 criteria yet but show an emerging pattern." />
           </h2>
           <div className="mt-2 space-y-2">
             {data.episodes.map((ep, i) => (
@@ -115,6 +143,11 @@ export function AnalysisPanel({ tenantId }: { tenantId: string }) {
                     </p>
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${confidenceStyles[ep.confidence]}`}>
                       {confidenceLabels[ep.confidence]}
+                      <InfoTip text={
+                        ep.confidence === "DSM5_MET"
+                          ? "This pattern meets the DSM-5 diagnostic criteria for this type of episode based on both symptom count and duration. Share this with your clinician."
+                          : "This pattern shows concerning signs but doesn't yet meet the full DSM-5 criteria — either the duration is too short or not enough distinct symptoms were logged. Continue monitoring."
+                      } />
                     </span>
                   </div>
                   <span className="text-xs text-gray-500">
@@ -144,6 +177,7 @@ export function AnalysisPanel({ tenantId }: { tenantId: string }) {
       <section>
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
           Last {recent7.length} Days
+          <InfoTip text="Each column represents one day. The numbers show how many DSM-5 diagnostic criteria were observed that day. Orange numbers are manic criteria (out of 7 possible). Blue numbers are depressive criteria (out of 9 possible). The color of each cell shows the day's overall classification. Severity reflects how many criteria were met combined with functional impairment." />
         </h2>
         <div className="mt-2 flex gap-1">
           {recent7.map((day) => (
