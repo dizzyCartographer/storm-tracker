@@ -119,6 +119,8 @@ model Tenant {
   invites      Invite[]
   frameworks   TenantFramework[]
   attachments  Attachment[]
+  medications  Medication[]
+  strategies   Strategy[]
   defaultFor   User[]           @relation("defaultTenant")
 
   @@map("tenants")
@@ -202,6 +204,7 @@ model Entry {
   impairments     Impairment[]
   menstrualLog    MenstrualLog?
   attachments     Attachment[]
+  strategyUsages  StrategyUsage[]
 
   @@unique([userId, tenantId, date])
   @@map("entries")
@@ -332,6 +335,63 @@ model Attachment {
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("attachments")
+}
+
+// ──────────────────────────────────────────────
+// Medication Tracking
+// ──────────────────────────────────────────────
+
+model Medication {
+  id              String    @id @default(uuid())
+  name            String
+  dosage          String?                  // e.g. "50mg"
+  frequency       String?                  // e.g. "twice daily"
+  instructions    String?   @db.Text       // special instructions
+  startDate       DateTime? @db.Date
+  endDate         DateTime? @db.Date       // null = currently active
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("medications")
+}
+
+// ──────────────────────────────────────────────
+// Strategy Tracking
+// ──────────────────────────────────────────────
+
+model Strategy {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+  category    String?                      // e.g. "Sleep", "Communication", "De-escalation"
+  isDefault   Boolean  @default(false)     // pre-seeded strategies
+  createdAt   DateTime @default(now())
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  usages StrategyUsage[]
+
+  @@map("strategies")
+}
+
+model StrategyUsage {
+  id             String   @id @default(uuid())
+  date           DateTime @db.Date
+  effectiveness  Int?                      // 1-5 scale, null if not rated
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+
+  strategyId String
+  strategy   Strategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  entryId    String?
+  entry      Entry?   @relation(fields: [entryId], references: [id], onDelete: SetNull)
+
+  @@map("strategy_usages")
 }
 
 // ──────────────────────────────────────────────

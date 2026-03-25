@@ -2,11 +2,15 @@ import { requireUser } from "@/lib/auth-utils";
 import { getTenantDetail, getDefaultTenantId } from "@/lib/actions/tenant-actions";
 import { getCustomItems } from "@/lib/actions/custom-item-actions";
 import { getInvites } from "@/lib/actions/invite-actions";
+import { getMedications } from "@/lib/actions/medication-actions";
+import { getStrategies } from "@/lib/actions/strategy-actions";
 import { Nav } from "@/app/_components/nav";
 import { CustomItemsManager } from "@/app/settings/custom-items";
 import { InviteManager } from "@/app/settings/invite-manager";
 import { ProjectProfileForm } from "./project-profile-form";
 import { ProjectActions } from "./project-actions";
+import { MedicationManager } from "./medication-manager";
+import { StrategyManager } from "./strategy-manager";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -21,10 +25,12 @@ export default async function ProjectDetailPage({
 
   if (!tenant) notFound();
 
-  const [customItems, invites, defaultTenantId] = await Promise.all([
+  const [customItems, invites, defaultTenantId, medications, strategies] = await Promise.all([
     getCustomItems(id),
     tenant.role === "OWNER" ? getInvites(id) : Promise.resolve([]),
     getDefaultTenantId(),
+    getMedications(id),
+    getStrategies(id),
   ]);
 
   const isOwner = tenant.role === "OWNER";
@@ -89,12 +95,18 @@ export default async function ProjectDetailPage({
           </div>
         )}
 
+        {/* Medications */}
+        <MedicationManager tenantId={id} medications={medications} isOwner={isOwner} />
+
+        {/* Strategies */}
+        <StrategyManager tenantId={id} strategies={strategies} isOwner={isOwner} />
+
         {/* Custom behavior items */}
         <div className="mt-8">
           <CustomItemsManager
             tenantId={id}
             tenantName={tenant.name}
-            items={customItems.map((i) => ({ id: i.id, label: i.label }))}
+            items={customItems.map((i: { id: string; label: string }) => ({ id: i.id, label: i.label }))}
           />
         </div>
 

@@ -222,15 +222,15 @@ Category-level emojis (sleep, energy, manic, depressive, mixed) and per-behavior
 
 ***
 
-## Phase 14: Treatment Tracking ⬜
+## Phase 14: Treatment Tracking ✅
 
 _From iterative requirements: medication and strategy management._
 
-### 14.1 — Medication tracking ⬜
-New `Medication` model. Log current meds with name, dosage, frequency, and special instructions. Entered by user. Track start/stop dates. Display on entry detail and reports. Future: API integration for standard medication database.
+### 14.1 — Medication tracking ✅
+`Medication` model with name, dosage, frequency, instructions, start/end dates, active status. Full CRUD server actions with membership checks. `MedicationManager` component on project detail page: add, edit, discontinue (sets end date + inactive), delete. Active meds shown prominently with green badge; discontinued meds collapsed under a `<details>` toggle.
 
-### 14.2 — Strategy tracking ⬜
-New `Strategy` model. Pre-seeded management strategies (sleep hygiene, de-escalation techniques, communication scripts, etc.) plus custom user entries. Track which strategies were used on a given day and their perceived effectiveness. Surface in caregiver suggestions.
+### 14.2 — Strategy tracking ✅
+`Strategy` model with name, description, category, and default flag. `StrategyUsage` model links strategies to dates and entries with 1-5 effectiveness rating. 8 pre-seeded default strategies (Sleep, Communication, De-escalation, Environment, Self-Care) loaded via "Load defaults" button. `StrategyManager` component on project detail page: add custom strategies, delete, view grouped by category. Server actions for CRUD, seeding, and usage logging.
 
 ***
 
