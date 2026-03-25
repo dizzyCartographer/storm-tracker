@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { ProjectPurpose } from "@/generated/prisma/client";
+import { autoLinkDefaultFramework } from "./framework-actions";
 
 export interface TenantProfileInput {
   name: string;
@@ -124,6 +125,9 @@ export async function createTenantWithProfile(input: TenantProfileInput & { copy
       },
     },
   });
+
+  // Auto-link to the default DSM-5 bipolar framework so behaviors appear immediately
+  await autoLinkDefaultFramework(tenant.id);
 
   return { success: true, tenantId: tenant.id };
 }
