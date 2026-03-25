@@ -20,8 +20,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  defaultTenantId String?
-  defaultTenant   Tenant?  @relation("defaultTenant", fields: [defaultTenantId], references: [id], onDelete: SetNull)
+  defaultTenantId     String?
+  defaultTenant       Tenant?   @relation("defaultTenant", fields: [defaultTenantId], references: [id], onDelete: SetNull)
+
+  disclaimerAcceptedAt DateTime?
 
   memberships TenantMember[]
   entries     Entry[]
