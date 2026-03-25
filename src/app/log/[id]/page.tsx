@@ -69,7 +69,7 @@ export default async function LogDetailPage({
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-2xl p-6">
+      <main className="mx-auto max-w-2xl p-4 md:p-6">
         <div className="mb-6">
           <Link href={`/history?tenant=${entry.tenantId}`} className="text-sm text-gray-500 hover:text-gray-900">
             &larr; Back to history

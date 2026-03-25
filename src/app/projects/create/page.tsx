@@ -10,7 +10,7 @@ export default async function CreateProjectPage() {
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-md p-6">
+      <main className="mx-auto max-w-md p-4 md:p-6">
         <h1 className="text-2xl font-bold">Create a Tracking Project</h1>
         <p className="mt-2 text-sm text-gray-600">
           A project tracks one teen. You can invite other caregivers later.

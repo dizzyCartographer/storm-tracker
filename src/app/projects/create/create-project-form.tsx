@@ -20,8 +20,15 @@ export function CreateProjectForm({
     setBusy(true);
     setError("");
 
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError("Project name is required");
+      setBusy(false);
+      return;
+    }
+
     const result = await createTenantWithProfile({
-      name,
+      name: trimmedName,
       copyFromTenantId: copyFromId || undefined,
     });
 
@@ -78,7 +85,7 @@ export function CreateProjectForm({
 
       <button
         type="submit"
-        disabled={busy}
+        disabled={busy || !name.trim()}
         className="w-full rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
       >
         {busy ? "Creating..." : "Create project"}

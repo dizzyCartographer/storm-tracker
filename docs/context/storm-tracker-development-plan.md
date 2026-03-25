@@ -176,23 +176,19 @@ New `/documents` page with "Docs" nav link. Filterable by file type (images/PDFs
 
 ***
 
-## Phase 11: Polish & Hardening ⬜
+## Phase 11: Polish & Hardening ✅
 
-### 11.1 — Mobile optimization ⬜
-
-Every screen works well on small viewports. Tap targets, font sizes, and form flow optimized for one-handed phone use.
+### 11.1 — Mobile optimization ✅
+Responsive hamburger menu for small screens (< md breakpoint). "+ Log" button always visible on mobile. All page containers use responsive padding (`p-4 md:p-6`). Nav links collapse into a dropdown menu on mobile with proper touch targets.
 
 ### 11.2 — Privacy controls ⬜
-
 Enforce separation between teen-facing and caregiver-facing data.
 
 ### 11.3 — Onboarding flow ⬜
-
 First-run experience: create a tenant, name the teen, invite co-caregivers, optionally invite the teen.
 
-### 11.4 — Error handling and edge cases ⬜
-
-Offline resilience, input validation, empty states, loading skeletons, and graceful error messages throughout.
+### 11.4 — Error handling and edge cases ✅
+Global error boundary (`error.tsx`), 404 page (`not-found.tsx`), and root loading state. Per-route loading skeletons with animated placeholders for dashboard, history, reports, log, projects, and documents. Network error handling in file upload and log form submission. Form validation improvements (trimmed inputs, disabled submit for empty fields). Server error messages surfaced to users instead of generic failures.
 
 ***
 

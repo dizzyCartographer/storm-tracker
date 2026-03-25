@@ -49,7 +49,7 @@ export default async function DashboardPage({
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-4xl p-6">
+      <main className="mx-auto max-w-4xl p-4 md:p-6">
         {activeTenant.teenFavoriteColor && (
           <div
             className="mb-4 h-1 rounded-full"

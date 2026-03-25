@@ -33,7 +33,7 @@ export default async function ProjectDetailPage({
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-4xl p-6">
+      <main className="mx-auto max-w-4xl p-4 md:p-6">
         <div className="mb-6">
           <Link href="/projects" className="text-sm text-gray-500 hover:text-gray-900">
             &larr; All projects

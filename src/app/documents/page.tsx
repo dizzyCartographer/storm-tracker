@@ -25,7 +25,7 @@ export default async function DocumentsPage({
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-4xl p-6">
+      <main className="mx-auto max-w-4xl p-4 md:p-6">
         <h1 className="text-2xl font-bold">Documents</h1>
         <p className="mt-1 text-sm text-gray-500">
           All uploaded files for <strong>{activeTenant.name}</strong>.

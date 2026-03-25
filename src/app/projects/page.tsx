@@ -11,7 +11,7 @@ export default async function ProjectsPage() {
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-4xl p-6">
+      <main className="mx-auto max-w-4xl p-4 md:p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Projects</h1>
           <Link

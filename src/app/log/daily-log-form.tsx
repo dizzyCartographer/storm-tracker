@@ -205,25 +205,29 @@ export function DailyLogForm({
         severity: severity as "NONE" | "PRESENT" | "SEVERE",
       }));
 
-    const result = await saveDailyLog({
-      tenantId,
-      mood: mood as "MANIC" | "DEPRESSIVE" | "NEUTRAL" | "MIXED",
-      dayQuality: dayQuality as "GOOD" | "NEUTRAL" | "BAD",
-      behaviorKeys: Array.from(checkedBehaviors),
-      customItemIds: Array.from(checkedCustom),
-      impairments: impairmentEntries.length > 0 ? impairmentEntries : undefined,
-      notes: notes.trim() || undefined,
-      menstrualSeverity: menstrual as "LIGHT" | "MEDIUM" | "HEAVY" | null,
-      date,
-    });
+    try {
+      const result = await saveDailyLog({
+        tenantId,
+        mood: mood as "MANIC" | "DEPRESSIVE" | "NEUTRAL" | "MIXED",
+        dayQuality: dayQuality as "GOOD" | "NEUTRAL" | "BAD",
+        behaviorKeys: Array.from(checkedBehaviors),
+        customItemIds: Array.from(checkedCustom),
+        impairments: impairmentEntries.length > 0 ? impairmentEntries : undefined,
+        notes: notes.trim() || undefined,
+        menstrualSeverity: menstrual as "LIGHT" | "MEDIUM" | "HEAVY" | null,
+        date,
+      });
+
+      if (result.error) {
+        setError(result.error);
+      } else {
+        router.push(`/dashboard?tenant=${tenantId}`);
+      }
+    } catch {
+      setError("Failed to save — check your connection and try again.");
+    }
 
     setLoading(false);
-
-    if (result.error) {
-      setError(result.error);
-    } else {
-      router.push(`/dashboard?tenant=${tenantId}`);
-    }
   }
 
   return (

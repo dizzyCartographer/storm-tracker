@@ -29,7 +29,7 @@ export default async function ReportsPage({
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-4xl p-6">
+      <main className="mx-auto max-w-4xl p-4 md:p-6">
         <h1 className="text-2xl font-bold">Reports</h1>
         <p className="mt-1 text-sm text-gray-500">
           Symptom wave graph, behavior frequency, and clinical summary for{" "}

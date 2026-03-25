@@ -28,7 +28,7 @@ export default async function HistoryPage({
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-4xl p-6">
+      <main className="mx-auto max-w-4xl p-4 md:p-6">
         <h1 className="text-2xl font-bold">History</h1>
         <p className="mt-1 text-sm text-gray-500">
           Viewing entries for {activeTenant.name}
