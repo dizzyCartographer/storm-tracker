@@ -3,6 +3,8 @@ import { put, del } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-utils";
 
+export const runtime = "nodejs";
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -71,8 +73,10 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, attachment });
-  } catch {
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+  } catch (err) {
+    console.error("Attachment upload failed:", err);
+    const message = err instanceof Error ? err.message : "Upload failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -110,7 +114,9 @@ export async function DELETE(request: NextRequest) {
     await prisma.attachment.delete({ where: { id: attachmentId } });
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+  } catch (err) {
+    console.error("Attachment delete failed:", err);
+    const message = err instanceof Error ? err.message : "Delete failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

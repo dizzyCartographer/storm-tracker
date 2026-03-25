@@ -48,13 +48,17 @@ export function AttachmentManager({
     formData.append("entryId", entryId);
     formData.append("tenantId", tenantId);
 
-    const res = await fetch("/api/attachments", { method: "POST", body: formData });
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/attachments", { method: "POST", body: formData });
+      const data = await res.json();
 
-    if (data.error) {
-      setError(data.error);
-    } else {
-      setAttachments((prev) => [data.attachment, ...prev]);
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setAttachments((prev) => [data.attachment, ...prev]);
+      }
+    } catch {
+      setError("Upload failed — check your connection and try again.");
     }
 
     setUploading(false);
