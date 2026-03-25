@@ -49,7 +49,7 @@ export default async function DashboardPage({
 
   return (
     <>
-      <Nav />
+      <Nav accentColor={activeTenant.teenFavoriteColor} />
       <ProjectSelector projects={tenants} activeProjectId={activeTenant.id} />
       <main className="mx-auto max-w-4xl p-4 md:p-6">
         {activeTenant.teenFavoriteColor && (

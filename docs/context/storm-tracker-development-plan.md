@@ -207,18 +207,18 @@ New `/profile` page with `ProfileForm` client component. Update display name via
 
 ***
 
-## Phase 13: Branding & Visual Identity ⬜
+## Phase 13: Branding & Visual Identity ✅
 
 _From iterative requirements: logo, icons, and visual customization._
 
-### 13.1 — App logo ⬜
-Solid lightning bolt with cloud outline. Color changes based on the selected project's favorite color. Replaces "Storm Tracker" text in the nav.
+### 13.1 — App logo ✅
+SVG `Logo` component: cloud outline with solid lightning bolt. Renders in nav alongside "Storm Tracker" text. Accepts `accentColor` prop — pages with an active tenant pass `teenFavoriteColor` so the logo changes color per project. Defaults to gray-800 when no color set.
 
-### 13.2 — Symptom icons/emojis ⬜
-Add icons or emojis to each behavior definition. Default set provided, customizable per project. Displayed alongside pill labels on the behavior checklist.
+### 13.2 — Symptom icons/emojis ✅
+Category-level emojis (sleep, energy, manic, depressive, mixed) and per-behavior emojis for all 28 DSM-5 behavior definitions. Emojis display inline on pill labels in both normal and compact modes. Mapped by `itemKey` in `behavior-checklist.tsx`.
 
-### 13.3 — Icon-only pill toggle mode ⬜
-Option to collapse behavior pills to icon/emoji only. Reduces scrolling on the log page. Togglable via a compact/expanded switch on the checklist section.
+### 13.3 — Icon-only pill toggle mode ✅
+"Compact view" / "Show labels" toggle on the behavior checklist. When compact, pills show only the emoji with the full label as a tooltip. Reduces vertical scrolling on the log page significantly. State managed in `DailyLogForm`.
 
 ***
 

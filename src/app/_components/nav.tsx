@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "./sign-out-button";
+import { Logo } from "./logo";
 
 const viewLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -13,15 +14,16 @@ const viewLinks = [
   { href: "/projects", label: "Projects" },
 ];
 
-export function Nav() {
+export function Nav({ accentColor }: { accentColor?: string | null } = {}) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <nav className="border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-        <Link href="/dashboard" className="text-lg font-bold">
-          Storm Tracker
+        <Link href="/dashboard" className="flex items-center gap-2 text-lg font-bold">
+          <Logo color={accentColor} />
+          <span>Storm Tracker</span>
         </Link>
 
         {/* Desktop nav */}

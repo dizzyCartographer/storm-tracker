@@ -27,7 +27,7 @@ export default async function HistoryPage({
 
   return (
     <>
-      <Nav />
+      <Nav accentColor={activeTenant.teenFavoriteColor} />
       <ProjectSelector projects={tenants} activeProjectId={activeTenant.id} />
       <main className="mx-auto max-w-4xl p-4 md:p-6">
         <h1 className="text-2xl font-bold">History</h1>
