@@ -117,7 +117,6 @@ export function DailyLogForm({
   const [menstrual, setMenstrual] = useState<string | null>(initialData?.menstrualSeverity ?? null);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [compactBehaviors, setCompactBehaviors] = useState(false);
   const [isExisting, setIsExisting] = useState(isEdit);
   const [error, setError] = useState("");
 
@@ -302,8 +301,6 @@ export function DailyLogForm({
           checked={checkedBehaviors}
           onToggle={toggleBehavior}
           items={behaviorItems ?? []}
-          compact={compactBehaviors}
-          onToggleCompact={() => setCompactBehaviors(!compactBehaviors)}
         />
         {customItems.length > 0 && (
           <div className="mt-4">

@@ -16,8 +16,6 @@ interface BehaviorChecklistProps {
   checked: Set<string>;
   onToggle: (itemKey: string) => void;
   items: BehaviorItem[];
-  compact?: boolean;
-  onToggleCompact?: () => void;
 }
 
 // Category-level emojis
@@ -92,7 +90,7 @@ function InfoTip({ text }: { text: string }) {
   );
 }
 
-export function BehaviorChecklist({ checked, onToggle, items, compact, onToggleCompact }: BehaviorChecklistProps) {
+export function BehaviorChecklist({ checked, onToggle, items }: BehaviorChecklistProps) {
   // Group items by category, preserving sort order
   const categories = new Map<string, { name: string; sortOrder: number; items: BehaviorItem[] }>();
   for (const item of items) {
@@ -107,23 +105,12 @@ export function BehaviorChecklist({ checked, onToggle, items, compact, onToggleC
 
   return (
     <div className="space-y-4">
-      {onToggleCompact && (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onToggleCompact}
-            className="text-xs text-gray-400 hover:text-gray-600"
-          >
-            {compact ? "Show labels" : "Compact view"}
-          </button>
-        </div>
-      )}
       {sortedCategories.map(([catSlug, cat]) => (
-        <fieldset key={catSlug}>
-          <legend className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+        <div key={catSlug} className="w-full min-w-0">
+          <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
             {categoryEmojis[catSlug] && <span className="mr-1">{categoryEmojis[catSlug]}</span>}
             {cat.name}
-          </legend>
+          </p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {cat.items
               .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -132,7 +119,6 @@ export function BehaviorChecklist({ checked, onToggle, items, compact, onToggleC
                 return (
                   <label
                     key={item.key}
-                    title={compact ? item.label : undefined}
                     className={`flex cursor-pointer items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                       checked.has(item.key)
                         ? "bg-gray-900 text-white"
@@ -145,20 +131,14 @@ export function BehaviorChecklist({ checked, onToggle, items, compact, onToggleC
                       onChange={() => onToggle(item.key)}
                       className="sr-only"
                     />
-                    {compact && emoji ? (
-                      <span className="text-sm">{emoji}</span>
-                    ) : (
-                      <>
-                        {emoji && <span className="text-sm">{emoji}</span>}
-                        {item.label}
-                        <InfoTip text={item.description} />
-                      </>
-                    )}
+                    {emoji && <span className="text-sm">{emoji}</span>}
+                    {item.label}
+                    <InfoTip text={item.description} />
                   </label>
                 );
               })}
           </div>
-        </fieldset>
+        </div>
       ))}
     </div>
   );
