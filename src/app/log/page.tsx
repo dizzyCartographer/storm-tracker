@@ -34,7 +34,7 @@ export default async function LogPage({
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-md p-4 md:p-6">
+      <main className="mx-auto w-full px-4 py-4 sm:max-w-lg sm:px-6 md:max-w-xl md:px-6">
         <h1 className="text-2xl font-bold">
           {entryData ? "Edit Log" : "Daily Log"}
         </h1>

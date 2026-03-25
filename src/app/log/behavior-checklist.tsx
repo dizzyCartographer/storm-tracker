@@ -119,7 +119,7 @@ export function BehaviorChecklist({ checked, onToggle, items }: BehaviorChecklis
                 return (
                   <label
                     key={item.key}
-                    className={`flex cursor-pointer items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                    className={`flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
                       checked.has(item.key)
                         ? "bg-gray-900 text-white"
                         : "border border-gray-300 hover:bg-gray-50"
@@ -131,8 +131,8 @@ export function BehaviorChecklist({ checked, onToggle, items }: BehaviorChecklis
                       onChange={() => onToggle(item.key)}
                       className="sr-only"
                     />
-                    {emoji && <span className="text-sm">{emoji}</span>}
-                    {item.label}
+                    {emoji && <span className="text-sm leading-none">{emoji}</span>}
+                    <span className="leading-tight">{item.label}</span>
                     <InfoTip text={item.description} />
                   </label>
                 );
