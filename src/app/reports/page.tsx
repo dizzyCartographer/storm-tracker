@@ -2,8 +2,8 @@ import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants, getDefaultTenantId } from "@/lib/actions/tenant-actions";
 import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
 import { Nav } from "@/app/_components/nav";
+import { ProjectSelector } from "@/app/_components/project-selector";
 import { ReportView } from "./report-view";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function ReportsPage({
@@ -29,36 +29,13 @@ export default async function ReportsPage({
   return (
     <>
       <Nav />
+      <ProjectSelector projects={tenants} activeProjectId={activeTenant.id} />
       <main className="mx-auto max-w-4xl p-4 md:p-6">
         <h1 className="text-2xl font-bold">Reports</h1>
         <p className="mt-1 text-sm text-gray-500">
           Symptom wave graph, behavior frequency, and clinical summary for{" "}
           <strong>{activeTenant.name}</strong>.
         </p>
-
-        {tenants.length > 1 && (
-          <div className="mt-4 flex gap-2">
-            {tenants.map((t) => (
-              <Link
-                key={t.id}
-                href={`/reports?tenant=${t.id}`}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${
-                  t.id === activeTenant.id
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {t.teenFavoriteColor && (
-                  <span
-                    className="inline-block h-2 w-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: t.teenFavoriteColor }}
-                  />
-                )}
-                {t.name}
-              </Link>
-            ))}
-          </div>
-        )}
 
         <div className="mt-6">
           <ReportView tenantId={activeTenant.id} tenantName={activeTenant.name} behaviorLabelMap={behaviorLabelMap} />

@@ -45,7 +45,17 @@ export function Nav() {
               {link.label}
             </Link>
           ))}
-          <div className="ml-2 border-l border-gray-200 pl-2">
+          <div className="ml-2 flex items-center gap-1 border-l border-gray-200 pl-2">
+            <Link
+              href="/profile"
+              className={`rounded-md px-3 py-1.5 text-sm ${
+                pathname === "/profile"
+                  ? "font-medium text-gray-900 bg-gray-100"
+                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              Profile
+            </Link>
             <SignOutButton />
           </div>
         </div>
@@ -94,7 +104,18 @@ export function Nav() {
                 {link.label}
               </Link>
             ))}
-            <div className="mt-1 border-t border-gray-100 pt-2">
+            <div className="mt-1 flex flex-col gap-1 border-t border-gray-100 pt-2">
+              <Link
+                href="/profile"
+                onClick={() => setMenuOpen(false)}
+                className={`rounded-md px-3 py-2 text-sm ${
+                  pathname === "/profile"
+                    ? "font-medium text-gray-900 bg-gray-100"
+                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                Profile
+              </Link>
               <SignOutButton />
             </div>
           </div>

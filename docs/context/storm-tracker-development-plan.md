@@ -192,18 +192,18 @@ Global error boundary (`error.tsx`), 404 page (`not-found.tsx`), and root loadin
 
 ***
 
-## Phase 12: UX Refinements ⬜
+## Phase 12: UX Refinements ✅
 
 _From iterative requirements: navigation, form, and visual polish._
 
-### 12.1 — Global project selector ⬜
-Single project selector dropdown that sits right under the nav on all authenticated pages (dashboard, history, reports, docs). Replaces per-page project tabs. Shows teen photo and favorite color dot.
+### 12.1 — Global project selector ✅
+New `ProjectSelector` client component renders a dropdown below the nav on dashboard, history, reports, and documents. Shows favorite color dot per project. Replaces per-page inline tab bars. Uses `useRouter` to navigate with `?tenant=` param while preserving the current page.
 
-### 12.2 — Date picker fix ⬜
-Replace native date inputs for birthday and onset date on the project profile form with a picker that supports month/year navigation (no clicking back one month at a time).
+### 12.2 — Date picker fix ✅
+Custom `DatePicker` component with month and year dropdown selectors. Replaces native `<input type="date">` on the project profile form for birthday and onset date fields. Supports year range 2000–current, clear button, and click-outside-to-close.
 
-### 12.3 — User profile page ⬜
-New `/profile` page. View/edit display name, email, and password. Accessible from nav or a user avatar menu.
+### 12.3 — User profile page ✅
+New `/profile` page with `ProfileForm` client component. Update display name via `authClient.updateUser`. Change password with current/new/confirm fields and 8-character minimum. Profile link added to nav (desktop divider section + mobile dropdown). Email displayed read-only.
 
 ***
 

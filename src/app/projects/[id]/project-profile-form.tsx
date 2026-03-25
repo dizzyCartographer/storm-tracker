@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { updateTenantProfile, type TenantProfileInput } from "@/lib/actions/tenant-actions";
 import { useRouter } from "next/navigation";
+import { DatePicker } from "@/app/_components/date-picker";
 
 type ProfileData = {
   name: string;
@@ -159,11 +160,11 @@ export function ProjectProfileForm({
           </div>
           <div>
             <label className={labelClass}>Birthday</label>
-            <input
-              type="date"
+            <DatePicker
               value={form.teenBirthday}
-              onChange={(e) => set("teenBirthday", e.target.value)}
-              className={inputClass}
+              onChange={(v) => set("teenBirthday", v)}
+              minYear={2000}
+              placeholder="Select birthday"
             />
           </div>
           <div>
@@ -251,11 +252,11 @@ export function ProjectProfileForm({
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={labelClass}>Date of onset / first suspected</label>
-            <input
-              type="date"
+            <DatePicker
               value={form.onsetDate}
-              onChange={(e) => set("onsetDate", e.target.value)}
-              className={inputClass}
+              onChange={(v) => set("onsetDate", v)}
+              minYear={2000}
+              placeholder="Select date"
             />
           </div>
           <div className="sm:col-span-2">
