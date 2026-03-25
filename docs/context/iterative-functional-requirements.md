@@ -36,12 +36,18 @@ Enhancements, refinements, edge cases, and polish items to address as features a
 
 - ~~Ability to copy project description data from another project when creating a new project~~ → Phase 8.4
 
-- User profile page
+- ~~User profile page~~ → Phase 12.3
 
-- icons or emojis that coordinate with the symptoms (customizable)
+- ~~icons or emojis that coordinate with the symptoms (customizable)~~ → Phase 13.2
 
-- option to view emoji/icons only on the pills toggles, this condenses the log page even more, less scrolling
+- ~~option to view emoji/icons only on the pills toggles, this condenses the log page even more, less scrolling~~ → Phase 13.3
 
-- solid lightning with outline of cloud as a logo that changes color based on selected project
+- ~~solid lightning with outline of cloud as a logo that changes color based on selected project~~ → Phase 13.1
 
-- single project selector dropdown that sits right under menu
+- ~~single project selector dropdown that sits right under menu~~ → Phase 12.1
+
+- ~~Add med tracking, dosage, special instructions, entered by user, would eventually like to add an api call to standard meds available~~ → Phase 14.1
+
+- ~~add strategy tracking, should have some basic initial management strategies, but allow for custom entry~~ → Phase 14.2
+
+- ~~fix the date picker on project... birthday is almost impossible to enter since you have to click backwards one month at a time. should have a year picker.~~ → Phase 12.2

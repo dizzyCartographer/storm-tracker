@@ -192,6 +192,48 @@ Global error boundary (`error.tsx`), 404 page (`not-found.tsx`), and root loadin
 
 ***
 
+## Phase 12: UX Refinements ⬜
+
+_From iterative requirements: navigation, form, and visual polish._
+
+### 12.1 — Global project selector ⬜
+Single project selector dropdown that sits right under the nav on all authenticated pages (dashboard, history, reports, docs). Replaces per-page project tabs. Shows teen photo and favorite color dot.
+
+### 12.2 — Date picker fix ⬜
+Replace native date inputs for birthday and onset date on the project profile form with a picker that supports month/year navigation (no clicking back one month at a time).
+
+### 12.3 — User profile page ⬜
+New `/profile` page. View/edit display name, email, and password. Accessible from nav or a user avatar menu.
+
+***
+
+## Phase 13: Branding & Visual Identity ⬜
+
+_From iterative requirements: logo, icons, and visual customization._
+
+### 13.1 — App logo ⬜
+Solid lightning bolt with cloud outline. Color changes based on the selected project's favorite color. Replaces "Storm Tracker" text in the nav.
+
+### 13.2 — Symptom icons/emojis ⬜
+Add icons or emojis to each behavior definition. Default set provided, customizable per project. Displayed alongside pill labels on the behavior checklist.
+
+### 13.3 — Icon-only pill toggle mode ⬜
+Option to collapse behavior pills to icon/emoji only. Reduces scrolling on the log page. Togglable via a compact/expanded switch on the checklist section.
+
+***
+
+## Phase 14: Treatment Tracking ⬜
+
+_From iterative requirements: medication and strategy management._
+
+### 14.1 — Medication tracking ⬜
+New `Medication` model. Log current meds with name, dosage, frequency, and special instructions. Entered by user. Track start/stop dates. Display on entry detail and reports. Future: API integration for standard medication database.
+
+### 14.2 — Strategy tracking ⬜
+New `Strategy` model. Pre-seeded management strategies (sleep hygiene, de-escalation techniques, communication scripts, etc.) plus custom user entries. Track which strategies were used on a given day and their perceived effectiveness. Surface in caregiver suggestions.
+
+***
+
 ## Architecture Milestone (Completed)
 
 ### Database-driven diagnostic frameworks ✅
