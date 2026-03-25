@@ -4,6 +4,7 @@ import { getCustomItems } from "@/lib/actions/custom-item-actions";
 import { getInvites } from "@/lib/actions/invite-actions";
 import { getMedications } from "@/lib/actions/medication-actions";
 import { getStrategies } from "@/lib/actions/strategy-actions";
+import { getAvailableFrameworks, getTenantFrameworks } from "@/lib/actions/framework-actions";
 import { Nav } from "@/app/_components/nav";
 import { CustomItemsManager } from "@/app/settings/custom-items";
 import { InviteManager } from "@/app/settings/invite-manager";
@@ -11,6 +12,7 @@ import { ProjectProfileForm } from "./project-profile-form";
 import { ProjectActions } from "./project-actions";
 import { MedicationManager } from "./medication-manager";
 import { StrategyManager } from "./strategy-manager";
+import { FrameworkManager } from "./framework-manager";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -25,12 +27,14 @@ export default async function ProjectDetailPage({
 
   if (!tenant) notFound();
 
-  const [customItems, invites, defaultTenantId, medications, strategies] = await Promise.all([
+  const [customItems, invites, defaultTenantId, medications, strategies, availableFrameworks, linkedFrameworkIds] = await Promise.all([
     getCustomItems(id),
     tenant.role === "OWNER" ? getInvites(id) : Promise.resolve([]),
     getDefaultTenantId(),
     getMedications(id),
     getStrategies(id),
+    getAvailableFrameworks(),
+    getTenantFrameworks(id),
   ]);
 
   const isOwner = tenant.role === "OWNER";
@@ -100,6 +104,14 @@ export default async function ProjectDetailPage({
 
         {/* Strategies */}
         <StrategyManager tenantId={id} strategies={strategies} isOwner={isOwner} />
+
+        {/* Diagnostic frameworks */}
+        <FrameworkManager
+          tenantId={id}
+          available={availableFrameworks}
+          linked={linkedFrameworkIds}
+          isOwner={isOwner}
+        />
 
         {/* Custom behavior items */}
         <div className="mt-8">
