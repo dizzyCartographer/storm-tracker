@@ -234,6 +234,22 @@ _From iterative requirements: medication and strategy management._
 
 ***
 
+## Phase 15: Reference & Transparency ✅
+
+_From iterative requirements: explain how behavior data maps to diagnostic criteria._
+
+### 15.1 — Diagnostic reference page ✅
+
+New `/reference` page linked from the disclaimer footer ("How it works"). Public page (no auth required) that pulls framework data from the database and renders:
+- Every behavior checkbox grouped by category (Sleep, Energy, Manic, Depressive, Mixed/Cycling) with colored badges showing which DSM-5 criterion each behavior satisfies, including cross-pole mappings (e.g., "Can't focus" → Manic B5 + Depressive #8).
+- Full DSM-5 criteria reference for both manic and depressive poles, with gate/core/standard type explanations.
+- Classification rules showing how days are scored (gate + criteria count thresholds, irritable-mood adjustment, mixed features).
+- Episode detection table with duration thresholds for DSM-5 met vs. prodromal concern confidence levels.
+- Wave score explanation (manic +1, depressive -1).
+Server action `getReferenceData()` in `reference-actions.ts` fetches all active frameworks with poles, criteria, behavior categories, classification rules, and episode thresholds in a single query.
+
+***
+
 ## Architecture Milestone (Completed)
 
 ### Database-driven diagnostic frameworks ✅
