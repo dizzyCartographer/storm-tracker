@@ -76,9 +76,7 @@ Framework-driven signal rules (sleep disruption, escalating irritability, energy
 
 Recharts-powered wave graph. Manic criteria positive, depressive negative. Dot colors by classification.
 
-### 5.2 — Menstrual cycle overlay ⬜
-
-Pink bars show period days on wave graph. Still needs generic cycle wave overlay anchored to last period date.
+### 5.2 — Menstrual cycle overlay ↩️ Deferred
 
 ### 5.3 — PDF export ✅
 
@@ -181,11 +179,9 @@ New `/documents` page with "Docs" nav link. Filterable by file type (images/PDFs
 ### 11.1 — Mobile optimization ✅
 Responsive hamburger menu for small screens (< md breakpoint). "+ Log" button always visible on mobile. All page containers use responsive padding (`p-4 md:p-6`). Nav links collapse into a dropdown menu on mobile with proper touch targets.
 
-### 11.2 — Privacy controls ⬜
-Enforce separation between teen-facing and caregiver-facing data.
+### 11.2 — Privacy controls ↩️ Deferred
 
-### 11.3 — Onboarding flow ⬜
-First-run experience: create a tenant, name the teen, invite co-caregivers, optionally invite the teen.
+### 11.3 — Onboarding flow ↩️ Deferred
 
 ### 11.4 — Error handling and edge cases ✅
 Global error boundary (`error.tsx`), 404 page (`not-found.tsx`), and root loading state. Per-route loading skeletons with animated placeholders for dashboard, history, reports, log, projects, and documents. Network error handling in file upload and log form submission. Form validation improvements (trimmed inputs, disabled submit for empty fields). Server error messages surfaced to users instead of generic failures.
@@ -250,8 +246,80 @@ Server action `getReferenceData()` in `reference-actions.ts` fetches all active 
 
 ***
 
+## Phase 16: Behavior Checklist Restructure ✅
+
+_From clinical reference docs: restructure the checklist to align one checkbox per DSM-5 criterion instead of one checkbox per observable behavior._
+
+### 16.1 — Criterion-level checklist model ✅
+
+Replaced 25 observable-behavior checkboxes with 17 criterion-level checkboxes (Manic gate + B1–B7, Depressive core #1–#2 + standard #3–#9). Each has a `recognitionExamples` JSON field with teen-focused "this might look like" bullets. Two categories only: Manic and Depressive. Three former observational items (denies-anything-wrong, mood-swings, unusual-anxiety) moved to custom checklist as default items seeded per tenant. Schema migration added `recognitionExamples` to `BehaviorDefinition`. Seed script and framework loader updated.
+
+### 16.2 — Log form and UI updates ✅
+
+Behavior checklist component rewritten with two pole sections (🔴 Manic, 🔵 Depressive), sub-group labels (Gate/B Criteria, Core/Standard Criteria), and expandable "This might look like:" example panels. Log detail page groups checked criteria by pole with color-coded badges. Reference page updated to show criterion-level structure with recognition examples. All display surfaces (dashboard, history, reports) work via existing data paths.
+
+### 16.3 — Migration and data backfill ✅
+
+Migration script (`scripts/migrate-checklist-to-criteria.ts`) maps 25 old behavior itemKeys to 17 new criterion-level keys, handling splits (e.g., `irregular-sleep` → two checks) and deduplication. Observational items converted to CustomCheck records. Run result: 127 old checks → 99 migrated, 24 deduped, 11 moved to custom.
+
+***
+
+## Phase 17: Bug Fixes & Persistence ⬜
+
+_From iterative requirements: fix upload errors and project selection persistence._
+
+### 17.1 — Vercel Blob token fix ✅
+
+`BLOB_READ_WRITE_TOKEN` already configured in Vercel (all environments). Added to local `.env` and documented in `.env.example`.
+
+### 17.2 — Project selection persistence ↩️ Deferred
+
+***
+
+## Phase 18: Project Views & Reporting Enhancements ⬜
+
+_From iterative requirements: read-only project view and project info in clinician printout._
+
+### 18.1 — Project read-only view ⬜
+
+Add a read-only detail view for projects (similar to log detail at `/log/[id]`). Non-owners already see read-only profile data, but this should be a dedicated view screen with a polished layout showing all project info, active medications, strategies, and members.
+
+### 18.2 — Project info in clinician PDF export ⬜
+
+Include the full project profile (teen info, background, active medications, strategies) in the PDF export so clinicians receive complete context alongside the behavioral data. Add a cover/summary page to the report with project details before the entry data.
+
+***
+
+## Phase 19: Medication Logging ⬜
+
+_From iterative requirements: track missed medication days._
+
+### 19.1 — Missed medication day logging ⬜
+
+Add the ability to flag a day when meds were missed. Default assumption is meds were taken — only missed days need to be logged. Add a "missed meds" toggle to the daily log form (per active medication). Display missed-med days on dashboard, history, and reports. Surface patterns (e.g., correlation between missed meds and mood shifts).
+
+***
+
 ## Architecture Milestone (Completed)
 
 ### Database-driven diagnostic frameworks ✅
 
 All behavior definitions, DSM-5 criteria, classification rules, episode thresholds, and signal rules moved from hardcoded TypeScript to 11 database tables. New frameworks (ADHD, anxiety, etc.) can be added by inserting rows — no code changes needed. See `data-architecture.md` for full details.
+
+***
+
+## Deferred
+
+_Tickets moved here are still planned but deprioritized. Pull them back into the active plan when ready._
+
+### 5.2 — Menstrual cycle overlay
+Pink bars show period days on wave graph. Still needs generic cycle wave overlay anchored to last period date.
+
+### 11.2 — Privacy controls
+Enforce separation between teen-facing and caregiver-facing data.
+
+### 11.3 — Onboarding flow
+First-run experience: create a tenant, name the teen, invite co-caregivers, optionally invite the teen.
+
+### 17.2 — Project selection persistence
+Selected project should persist when navigating between dashboard, history, reports, and documents. Store the active project in a client-side mechanism (URL param propagation, cookie, or context) so switching pages doesn't reset the selection.

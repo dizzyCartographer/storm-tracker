@@ -12,6 +12,7 @@ export interface ReferenceBehavior {
   itemKey: string;
   label: string;
   description: string;
+  recognitionExamples: string[] | null;
   isSafetyConcern: boolean;
   criterionMappings: {
     poleSlug: string;
@@ -119,10 +120,16 @@ export async function getReferenceData(): Promise<ReferenceFramework[]> {
     behaviorCategories: fw.behaviorCategories.map((cat) => ({
       slug: cat.slug,
       name: cat.name,
-      behaviors: cat.behaviors.map((beh) => ({
+      behaviors: cat.behaviors.map((beh) => {
+        let parsedExamples: string[] | null = null;
+        if (beh.recognitionExamples) {
+          try { parsedExamples = JSON.parse(beh.recognitionExamples); } catch { parsedExamples = null; }
+        }
+        return {
         itemKey: beh.itemKey,
         label: beh.label,
         description: beh.description,
+        recognitionExamples: parsedExamples,
         isSafetyConcern: beh.isSafetyConcern,
         criterionMappings: beh.criterionMappings.map((m) => ({
           poleSlug: m.criterion.pole.slug,
@@ -131,7 +138,8 @@ export async function getReferenceData(): Promise<ReferenceFramework[]> {
           criterionName: m.criterion.name,
           criterionType: m.criterion.criterionType,
         })),
-      })),
+      };
+      }),
     })),
     classificationRules: fw.classificationRules.map((r) => ({
       classificationLabel: r.classificationLabel,

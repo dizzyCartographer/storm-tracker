@@ -474,9 +474,10 @@ model FrameworkBehaviorCategory {
 
 model BehaviorDefinition {
   id              String  @id @default(uuid())
-  itemKey         String                    // "very-little-sleep" — stable key
-  label           String                    // "Very little sleep"
-  description     String                    // "Got much less sleep than normal"
+  itemKey         String                    // "elevated-expansive-irritable-mood" — stable key
+  label           String                    // "Mood is abnormally elevated, expansive, or irritable"
+  description     String                    // Short clinical description
+  recognitionExamples String? @db.Text      // JSON array of "this might look like" examples
   isSafetyConcern Boolean @default(false)
   sortOrder       Int     @default(0)
 

@@ -52,16 +52,18 @@ Enhancements, refinements, edge cases, and polish items to address as features a
 
 - ~~fix the date picker on project... birthday is almost impossible to enter since you have to click backwards one month at a time. should have a year picker.~~ → Phase 12.2
 
-- Add all project info to print out for clinician
+- ~~Add all project info to print out for clinician~~ → Phase 18.2
 
-- View screen for projects, like logs
+- ~~View screen for projects, like logs~~ → Phase 18.1
 
-- selected project should persist across dashboard history reports and docs
+- ~~selected project should persist across dashboard history reports and docs~~ → Phase 17.2
 
-- upload error: Vercel Blob: No token found. Either configure the `BLOB_READ_WRITE_TOKEN` environment variable, or pass a `token` option to your calls.
+- ~~upload error: Vercel Blob: No token found. Either configure the `BLOB_READ_WRITE_TOKEN` environment variable, or pass a `token` option to your calls.~~ → Phase 17.1
 
   - BLOB\_READ\_WRITE\_TOKEN="vercel\_blob\_rw\_4l1RRfxlqFRYu8LL\_3vn2klZygNb9rdPLsDBsceYBg0f3x1"
 
-- Need to log a day when meds were missed, otherwise assume meds were taken, logging missed days is easier than logging something so repetitive.
+- ~~Need to log a day when meds were missed, otherwise assume meds were taken, logging missed days is easier than logging something so repetitive.~~ → Phase 19.1
 
 - ~~need to add a reference page that is linked in the footer that describes how the various data points are used to quantify manic and depressive behaviors. specifically show how each behavior checkbox maps to a diagnostic criteria~~ → Phase 15.1
+
+- <br />

@@ -84,15 +84,16 @@ export async function saveDailyLog(input: DailyLogInput) {
         const behavior = framework?.behaviorMap.get(key);
         // Map framework category slug to BehaviorCategory enum
         const categoryMap: Record<string, BehaviorCategory> = {
-          sleep: "SLEEP",
-          energy: "ENERGY",
           manic: "MANIC",
           depressive: "DEPRESSIVE",
+          // Legacy mappings (pre-Phase 16)
+          sleep: "SLEEP",
+          energy: "ENERGY",
           "mixed-cycling": "MIXED_CYCLING",
         };
         const category = behavior
-          ? (categoryMap[behavior.categorySlug] ?? "MIXED_CYCLING")
-          : "MIXED_CYCLING";
+          ? (categoryMap[behavior.categorySlug] ?? "MANIC")
+          : "MANIC";
         return {
           entryId: entry.id,
           category,

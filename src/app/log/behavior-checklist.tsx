@@ -8,6 +8,7 @@ export interface BehaviorItem {
   categoryName: string;
   label: string;
   description: string;
+  recognitionExamples: string[] | null;
   sortOrder: number;
   categorySortOrder: number;
 }
@@ -18,80 +19,80 @@ interface BehaviorChecklistProps {
   items: BehaviorItem[];
 }
 
-// Category-level emojis
-const categoryEmojis: Record<string, string> = {
-  sleep: "\u{1F4A4}",
-  energy: "\u{26A1}",
-  manic: "\u{1F525}",
-  depressive: "\u{1F4A7}",
-  "mixed-cycling": "\u{1F300}",
+// Category-level emojis and colors
+const categoryConfig: Record<string, { emoji: string; color: string; bgActive: string }> = {
+  manic: { emoji: "\u{1F534}", color: "text-red-600", bgActive: "bg-red-700" },
+  depressive: { emoji: "\u{1F535}", color: "text-blue-600", bgActive: "bg-blue-700" },
 };
 
-// Per-behavior emojis for compact mode
-const behaviorEmojis: Record<string, string> = {
-  // Sleep
-  "very-little-sleep": "\u{1F971}",
-  "slept-too-much": "\u{1F634}",
-  "irregular-sleep-pattern": "\u{1F503}",
-  // Energy
-  "no-energy": "\u{1F50B}",
-  "unusually-high-energy": "\u{1F3C3}",
-  "selective-energy": "\u{1F3AF}",
-  "psychosomatic-complaints": "\u{1FA7A}",
+// Per-criterion emojis
+const criterionEmojis: Record<string, string> = {
   // Manic
-  "pressured-rapid-speech": "\u{1F5E3}",
-  "racing-jumping-thoughts": "\u{1F4AD}",
-  "euphoria-without-cause": "\u{1F929}",
-  "grandiose-invincible": "\u{1F451}",
-  "nonstop-goal-activity": "\u{1F680}",
-  "physical-restless-agitation": "\u{1F3C3}",
-  "disproportionate-rage": "\u{1F4A2}",
-  "reckless-dangerous-choices": "\u{26A0}",
-  "bizarre-out-of-character": "\u{1F3AD}",
-  "denies-anything-wrong": "\u{1F648}",
+  "elevated-expansive-irritable-mood": "\u{1F525}", // 🔥
+  "inflated-self-image": "\u{1F451}", // 👑
+  "decreased-need-for-sleep": "\u{1F971}", // 🥱
+  "pressured-speech": "\u{1F5E3}\u{FE0F}", // 🗣️
+  "racing-thoughts": "\u{1F4AD}", // 💭
+  "distractibility": "\u{1F4A5}", // 💥
+  "goal-directed-activity": "\u{1F680}", // 🚀
+  "risky-reckless-activities": "\u{26A0}\u{FE0F}", // ⚠️
   // Depressive
-  "sad-empty-hopeless": "\u{1F614}",
-  "lost-all-interest": "\u{1F6AB}",
-  "eating-way-more": "\u{1F354}",
-  "eating-way-less": "\u{1F6AB}",
-  "withdrawn-from-people": "\u{1F6AA}",
-  "worthless-excessive-guilt": "\u{1F494}",
-  "cant-focus-decide": "\u{1F635}",
-  "mentioned-death-dying": "\u{26A0}",
-  // Mixed
-  "mood-energy-swings": "\u{1F3A2}",
-  "agitated-but-depressed": "\u{1F616}",
-  "unprovoked-temper-explosion": "\u{1F4A5}",
-  "unusual-anxiety-panic": "\u{1F630}",
-  "aggressive-or-destructive": "\u{1F4A3}",
+  "depressed-mood": "\u{1F614}", // 😔
+  "diminished-interest": "\u{1F6AB}", // 🚫
+  "weight-appetite-change": "\u{1F37D}\u{FE0F}", // 🍽️
+  "insomnia-hypersomnia": "\u{1F634}", // 😴
+  "psychomotor-change": "\u{1FA7A}", // 🩺
+  "fatigue-loss-of-energy": "\u{1F50B}", // 🔋
+  "worthlessness-guilt": "\u{1F494}", // 💔
+  "diminished-concentration": "\u{1F635}", // 😵
+  "thoughts-of-death": "\u{1F6A8}", // 🚨
 };
 
-function InfoTip({ text }: { text: string }) {
-  const [open, setOpen] = useState(false);
+// Sub-group labels based on criterion type
+const criterionSubGroups: Record<string, { items: string[]; label: string }[]> = {
+  manic: [
+    { items: ["elevated-expansive-irritable-mood"], label: "Gate Criterion (required)" },
+    { items: ["inflated-self-image", "decreased-need-for-sleep", "pressured-speech", "racing-thoughts", "distractibility", "goal-directed-activity", "risky-reckless-activities"], label: "B Criteria" },
+  ],
+  depressive: [
+    { items: ["depressed-mood", "diminished-interest"], label: "Core Criteria (at least one required)" },
+    { items: ["weight-appetite-change", "insomnia-hypersomnia", "psychomotor-change", "fatigue-loss-of-energy", "worthlessness-guilt", "diminished-concentration", "thoughts-of-death"], label: "Standard Criteria" },
+  ],
+};
+
+function ExamplesPanel({ examples, isOpen, onToggle }: { examples: string[]; isOpen: boolean; onToggle: () => void }) {
   return (
-    <span className="relative inline-block">
+    <>
       <button
         type="button"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setOpen(!open);
+          onToggle();
         }}
-        className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-500 hover:bg-gray-300"
+        className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-500 hover:bg-gray-300 shrink-0"
+        title="This might look like..."
       >
-        i
+        ?
       </button>
-      {open && (
-        <span className="absolute left-0 top-6 z-10 w-52 rounded-md border border-gray-200 bg-white p-2 text-xs text-gray-600 shadow-md">
-          {text}
-        </span>
+      {isOpen && (
+        <div className="mt-1.5 w-full rounded-md border border-gray-200 bg-gray-50 p-2.5 text-xs text-gray-600">
+          <p className="mb-1 font-medium text-gray-500 italic">This might look like:</p>
+          <ul className="space-y-0.5 list-disc pl-4">
+            {examples.map((ex, i) => (
+              <li key={i}>{ex}</li>
+            ))}
+          </ul>
+        </div>
       )}
-    </span>
+    </>
   );
 }
 
 export function BehaviorChecklist({ checked, onToggle, items }: BehaviorChecklistProps) {
-  // Group items by category, preserving sort order
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
+
+  // Group items by category
   const categories = new Map<string, { name: string; sortOrder: number; items: BehaviorItem[] }>();
   for (const item of items) {
     if (!categories.has(item.category)) {
@@ -104,42 +105,112 @@ export function BehaviorChecklist({ checked, onToggle, items }: BehaviorChecklis
     .sort(([, a], [, b]) => a.sortOrder - b.sortOrder);
 
   return (
-    <div className="space-y-4">
-      {sortedCategories.map(([catSlug, cat]) => (
-        <div key={catSlug} className="w-full min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-            {categoryEmojis[catSlug] && <span className="mr-1">{categoryEmojis[catSlug]}</span>}
-            {cat.name}
-          </p>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {cat.items
-              .sort((a, b) => a.sortOrder - b.sortOrder)
-              .map((item) => {
-                const emoji = behaviorEmojis[item.key];
-                return (
-                  <label
-                    key={item.key}
-                    className={`flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
-                      checked.has(item.key)
-                        ? "bg-gray-900 text-white"
-                        : "border border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked.has(item.key)}
-                      onChange={() => onToggle(item.key)}
-                      className="sr-only"
-                    />
-                    {emoji && <span className="text-sm leading-none">{emoji}</span>}
-                    <span className="leading-tight">{item.label}</span>
-                    <InfoTip text={item.description} />
-                  </label>
-                );
-              })}
+    <div className="space-y-6">
+      {sortedCategories.map(([catSlug, cat]) => {
+        const config = categoryConfig[catSlug] || { emoji: "", color: "text-gray-600", bgActive: "bg-gray-900" };
+        const subGroups = criterionSubGroups[catSlug];
+        const itemsByKey = new Map(cat.items.map((item) => [item.key, item]));
+
+        return (
+          <div key={catSlug} className="w-full min-w-0">
+            <p className={`text-sm font-semibold uppercase tracking-wide ${config.color}`}>
+              {config.emoji && <span className="mr-1">{config.emoji}</span>}
+              {cat.name}
+            </p>
+
+            {subGroups ? (
+              // Render with sub-group labels
+              <div className="mt-2 space-y-3">
+                {subGroups.map((group) => {
+                  const groupItems = group.items
+                    .map((key) => itemsByKey.get(key))
+                    .filter((item): item is BehaviorItem => !!item);
+
+                  if (groupItems.length === 0) return null;
+
+                  return (
+                    <div key={group.label}>
+                      <p className="mb-1 text-[11px] font-medium uppercase tracking-wider text-gray-400">
+                        {group.label}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {groupItems.map((item) => {
+                          const emoji = criterionEmojis[item.key];
+                          const isChecked = checked.has(item.key);
+                          const isExpanded = expandedItem === item.key;
+                          const isSafety = item.key === "thoughts-of-death";
+
+                          return (
+                            <div key={item.key} className="flex flex-wrap items-start">
+                              <label
+                                className={`flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
+                                  isChecked
+                                    ? isSafety
+                                      ? "bg-red-600 text-white"
+                                      : `${config.bgActive} text-white`
+                                    : isSafety
+                                      ? "border border-red-300 text-red-700 hover:bg-red-50"
+                                      : "border border-gray-300 hover:bg-gray-50"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => onToggle(item.key)}
+                                  className="sr-only"
+                                />
+                                {emoji && <span className="text-sm leading-none">{emoji}</span>}
+                                <span className="leading-tight">{item.label}</span>
+                                {item.recognitionExamples && item.recognitionExamples.length > 0 && (
+                                  <ExamplesPanel
+                                    examples={item.recognitionExamples}
+                                    isOpen={isExpanded}
+                                    onToggle={() => setExpandedItem(isExpanded ? null : item.key)}
+                                  />
+                                )}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              // Fallback: flat list
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {cat.items
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map((item) => {
+                    const emoji = criterionEmojis[item.key];
+                    const isChecked = checked.has(item.key);
+
+                    return (
+                      <label
+                        key={item.key}
+                        className={`flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
+                          isChecked
+                            ? `${config.bgActive} text-white`
+                            : "border border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => onToggle(item.key)}
+                          className="sr-only"
+                        />
+                        {emoji && <span className="text-sm leading-none">{emoji}</span>}
+                        <span className="leading-tight">{item.label}</span>
+                      </label>
+                    );
+                  })}
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

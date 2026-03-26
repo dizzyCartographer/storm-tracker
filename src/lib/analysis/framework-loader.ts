@@ -19,6 +19,7 @@ export interface LoadedBehavior {
   itemKey: string;
   label: string;
   description: string;
+  recognitionExamples: string[] | null;
   isSafetyConcern: boolean;
   categorySlug: string;
   categoryName: string;
@@ -156,11 +157,16 @@ export async function loadFramework(frameworkId: string): Promise<LoadedFramewor
   const behaviors: LoadedBehavior[] = [];
   for (const cat of fw.behaviorCategories) {
     for (const beh of cat.behaviors) {
+      let parsedExamples: string[] | null = null;
+      if (beh.recognitionExamples) {
+        try { parsedExamples = JSON.parse(beh.recognitionExamples); } catch { parsedExamples = null; }
+      }
       behaviors.push({
         id: beh.id,
         itemKey: beh.itemKey,
         label: beh.label,
         description: beh.description,
+        recognitionExamples: parsedExamples,
         isSafetyConcern: beh.isSafetyConcern,
         categorySlug: cat.slug,
         categoryName: cat.name,
@@ -257,10 +263,10 @@ export async function loadTenantFrameworks(tenantId: string): Promise<LoadedFram
 
 /** Get behavior items for rendering in the UI (from tenant's active frameworks) */
 export async function getTenantBehaviorItems(tenantId: string): Promise<{
-  items: { key: string; category: string; categoryName: string; label: string; description: string; sortOrder: number; categorySortOrder: number }[];
+  items: { key: string; category: string; categoryName: string; label: string; description: string; recognitionExamples: string[] | null; sortOrder: number; categorySortOrder: number }[];
 }> {
   const frameworks = await loadTenantFrameworks(tenantId);
-  const items: { key: string; category: string; categoryName: string; label: string; description: string; sortOrder: number; categorySortOrder: number }[] = [];
+  const items: { key: string; category: string; categoryName: string; label: string; description: string; recognitionExamples: string[] | null; sortOrder: number; categorySortOrder: number }[] = [];
 
   for (const fw of frameworks) {
     for (const beh of fw.behaviors) {
@@ -270,6 +276,7 @@ export async function getTenantBehaviorItems(tenantId: string): Promise<{
         categoryName: beh.categoryName,
         label: beh.label,
         description: beh.description,
+        recognitionExamples: beh.recognitionExamples,
         sortOrder: beh.sortOrder,
         categorySortOrder: beh.categorySortOrder,
       });

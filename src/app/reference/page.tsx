@@ -3,11 +3,8 @@ import type { ReferenceFramework, ReferenceBehavior } from "@/lib/actions/refere
 import Link from "next/link";
 
 const categoryEmojis: Record<string, string> = {
-  sleep: "\u{1F4A4}",
-  energy: "\u{26A1}",
-  manic: "\u{1F525}",
-  depressive: "\u{1F4A7}",
-  "mixed-cycling": "\u{1F300}",
+  manic: "\u{1F534}",
+  depressive: "\u{1F535}",
 };
 
 const classificationColors: Record<string, string> = {
@@ -57,14 +54,22 @@ function BehaviorRow({ behavior }: { behavior: ReferenceBehavior }) {
           <p className="text-xs text-gray-500">{behavior.description}</p>
         </div>
       </div>
-      {behavior.criterionMappings.length > 0 ? (
+      {behavior.criterionMappings.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {behavior.criterionMappings.map((m, i) => (
             <CriterionBadge key={i} mapping={m} />
           ))}
         </div>
-      ) : (
-        <p className="text-xs italic text-gray-400">Observational only — not mapped to a specific DSM criterion</p>
+      )}
+      {behavior.recognitionExamples && behavior.recognitionExamples.length > 0 && (
+        <div className="mt-1">
+          <p className="text-[11px] font-medium text-gray-400 italic mb-0.5">This might look like:</p>
+          <ul className="text-xs text-gray-500 list-disc pl-4 space-y-0">
+            {behavior.recognitionExamples.map((ex, i) => (
+              <li key={i}>{ex}</li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
@@ -75,11 +80,11 @@ function FrameworkSection({ framework }: { framework: ReferenceFramework }) {
     <div className="space-y-10">
       {/* Behavior-to-Criteria Mappings */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Behavior checklist &amp; diagnostic criteria</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Criterion checklist</h2>
         <p className="text-sm text-gray-500 mb-6">
-          Each behavior you can log in Storm Tracker maps to one or more DSM-5 diagnostic criteria.
-          The badges show which criterion each behavior satisfies and whether it counts toward the
-          manic or depressive pole.
+          Each checkbox in Storm Tracker corresponds directly to a DSM-5 diagnostic criterion.
+          The &ldquo;this might look like&rdquo; examples under each checkbox help you recognize
+          the criterion in everyday teen behavior — check the box if any of the examples fit.
         </p>
 
         <div className="space-y-8">

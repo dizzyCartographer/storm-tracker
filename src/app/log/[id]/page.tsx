@@ -111,19 +111,54 @@ export default async function LogDetailPage({
           </span>
         </div>
 
-        {/* Behaviors */}
-        {entry.behaviorChecks.length > 0 && (
-          <section className="mt-6">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Behaviors</h2>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {entry.behaviorChecks.map((bc) => (
-                <span key={bc.id} className="rounded-md bg-gray-100 px-2.5 py-1 text-sm">
-                  {behaviorLabelMap[bc.itemKey] ?? bc.itemKey}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Behaviors — grouped by pole */}
+        {entry.behaviorChecks.length > 0 && (() => {
+          const categoryForItem = Object.fromEntries(behaviorItems.map((i) => [i.key, i.category]));
+          const manicChecks = entry.behaviorChecks.filter((bc) => categoryForItem[bc.itemKey] === "manic");
+          const depressiveChecks = entry.behaviorChecks.filter((bc) => categoryForItem[bc.itemKey] === "depressive");
+          const otherChecks = entry.behaviorChecks.filter((bc) => !categoryForItem[bc.itemKey] || (categoryForItem[bc.itemKey] !== "manic" && categoryForItem[bc.itemKey] !== "depressive"));
+
+          return (
+            <section className="mt-6">
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Criteria</h2>
+              {manicChecks.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs font-medium text-red-600 uppercase tracking-wider mb-1">Manic</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {manicChecks.map((bc) => (
+                      <span key={bc.id} className="rounded-md bg-red-50 text-red-800 px-2.5 py-1 text-sm">
+                        {behaviorLabelMap[bc.itemKey] ?? bc.itemKey}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {depressiveChecks.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs font-medium text-blue-600 uppercase tracking-wider mb-1">Depressive</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {depressiveChecks.map((bc) => (
+                      <span key={bc.id} className="rounded-md bg-blue-50 text-blue-800 px-2.5 py-1 text-sm">
+                        {behaviorLabelMap[bc.itemKey] ?? bc.itemKey}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {otherChecks.length > 0 && (
+                <div className="mt-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {otherChecks.map((bc) => (
+                      <span key={bc.id} className="rounded-md bg-gray-100 px-2.5 py-1 text-sm">
+                        {behaviorLabelMap[bc.itemKey] ?? bc.itemKey}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          );
+        })()}
 
         {/* Custom items */}
         {entry.customChecks.length > 0 && (
