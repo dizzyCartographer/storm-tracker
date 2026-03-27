@@ -15,7 +15,7 @@ export interface ReportDay {
   mood: string;
   dayQuality: string;
   behaviors: string[];
-  impairments: { domain: string; severity: string }[];
+  impairments: Record<string, string>;
   hasPeriod: boolean;
   periodSeverity: string | null;
   hasNotes: boolean;
@@ -61,22 +61,18 @@ export async function getReportData(
     },
     include: {
       user: { select: { id: true, name: true } },
-      behaviorChecks: true,
-      impairments: true,
-      menstrualLog: true,
     },
     orderBy: { date: "asc" },
   });
 
   const days: ReportDay[] = entries.map((entry) => {
+    const behaviorKeys = (entry.behaviorKeys as string[]) ?? [];
+    const impairments = (entry.impairments as Record<string, string>) ?? {};
     const input: DailyScoringInput = {
-      behaviorKeys: entry.behaviorChecks.map((bc) => bc.itemKey),
+      behaviorKeys,
       mood: entry.mood,
       dayQuality: entry.dayQuality,
-      impairments: entry.impairments.map((imp) => ({
-        domain: imp.domain,
-        severity: imp.severity,
-      })),
+      impairments,
     };
     return {
       date: entry.date.toISOString().slice(0, 10),
@@ -85,13 +81,10 @@ export async function getReportData(
       userName: entry.user.name,
       mood: entry.mood,
       dayQuality: entry.dayQuality,
-      behaviors: entry.behaviorChecks.map((bc) => bc.itemKey),
-      impairments: entry.impairments.map((imp) => ({
-        domain: imp.domain,
-        severity: imp.severity,
-      })),
-      hasPeriod: !!entry.menstrualLog,
-      periodSeverity: entry.menstrualLog?.severity ?? null,
+      behaviors: behaviorKeys,
+      impairments,
+      hasPeriod: !!entry.menstrualSeverity,
+      periodSeverity: entry.menstrualSeverity,
       hasNotes: !!entry.notes,
     };
   });
@@ -140,12 +133,9 @@ export async function getReportData(
     let presentCount = 0;
     let severeCount = 0;
     for (const day of days) {
-      for (const imp of day.impairments) {
-        if (imp.domain === domain) {
-          if (imp.severity === "PRESENT") presentCount++;
-          if (imp.severity === "SEVERE") severeCount++;
-        }
-      }
+      const severity = day.impairments[domain];
+      if (severity === "PRESENT") presentCount++;
+      if (severity === "SEVERE") severeCount++;
     }
     return { domain, presentCount, severeCount };
   });

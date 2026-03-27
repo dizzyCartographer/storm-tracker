@@ -17,7 +17,8 @@ storm-tracker/
 │       ├── diagnostic-resources.md  # Clinical scales (YMRS, KSADS-PL, GBI)
 │       ├── development-plan.md      # Phased development roadmap
 │       ├── branding-style-guide.md  # Style guide, colors, typography
-│       └── ui-requirements.md       # UI/UX specifications
+│       ├── ui-requirements.md       # UI/UX specifications
+│       └── ios-conversion-plan.md   # iOS conversion roadmap
 └── CLAUDE.md         # This file — loaded into every Claude session
 ```
 
@@ -40,6 +41,7 @@ When adding a new context file, add an `@` import below **and** update the tree 
 @docs/context/ui-requirements.md
 @docs/context/data-architecture.md
 @docs/context/storm-tracker-development-plan.md
+@docs/context/ios-conversion-plan.md
 
 ## Workflow Rules
 

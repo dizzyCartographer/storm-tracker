@@ -43,7 +43,7 @@ export interface DailyScoringInput {
   behaviorKeys: string[];
   mood: string;
   dayQuality: string;
-  impairments: { domain: string; severity: string }[];
+  impairments: Record<string, string>;  // e.g. {"SCHOOL_WORK": "PRESENT", "SAFETY_CONCERN": "SEVERE"}
 }
 
 export function scoreDailyEntry(input: DailyScoringInput, framework?: LoadedFramework): DailyScore {
@@ -133,7 +133,7 @@ function scoreDailyEntryGeneric(input: DailyScoringInput, fw: LoadedFramework): 
   }
 
   // Safety concern from impairment domain
-  if (input.impairments.some((i) => i.domain === "SAFETY_CONCERN" && i.severity !== "NONE")) {
+  if (input.impairments["SAFETY_CONCERN"] && input.impairments["SAFETY_CONCERN"] !== "NONE") {
     safetyConcern = true;
   }
 
@@ -186,7 +186,7 @@ function scoreDailyEntryGeneric(input: DailyScoringInput, fw: LoadedFramework): 
   }
 
   // Severity
-  const severeImpairments = input.impairments.filter((i) => i.severity === "SEVERE").length;
+  const severeImpairments = Object.values(input.impairments).filter((s) => s === "SEVERE").length;
   const maxCriteria = Math.max(...Object.values(criteriaCounts), 0);
 
   let severity: DailyScore["severity"];

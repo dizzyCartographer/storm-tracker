@@ -128,14 +128,14 @@ export default async function DashboardPage({
                     </span>
                   </div>
                 </div>
-                {entry.behaviorChecks.length > 0 && (
+                {entry.behaviorKeys.length > 0 && (
                   <p className="mt-1.5 text-xs text-gray-500">
-                    {entry.behaviorChecks.length} behavior{entry.behaviorChecks.length !== 1 ? "s" : ""} logged
+                    {entry.behaviorKeys.length} behavior{entry.behaviorKeys.length !== 1 ? "s" : ""} logged
                   </p>
                 )}
-                {entry.impairments.filter((i) => i.severity !== "NONE").length > 0 && (
+                {Object.values(entry.impairments).filter((s) => s !== "NONE").length > 0 && (
                   <p className="mt-0.5 text-xs text-gray-500">
-                    {entry.impairments.filter((i) => i.severity !== "NONE").length} impairment{entry.impairments.filter((i) => i.severity !== "NONE").length !== 1 ? "s" : ""}
+                    {Object.values(entry.impairments).filter((s) => s !== "NONE").length} impairment{Object.values(entry.impairments).filter((s) => s !== "NONE").length !== 1 ? "s" : ""}
                   </p>
                 )}
                 {entry.notes && (

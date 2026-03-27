@@ -43,13 +43,15 @@ export function EntryDetail({
   behaviorLabelMap?: Record<string, string>;
 }) {
   const displayMood = entry.displayMood ?? entry.mood;
-  const hasBehaviorDetail = entry.hasBehaviorDetail ?? entry.behaviorChecks.length > 0;
-  const behaviorLabels = entry.behaviorChecks.map((bc) => {
-    return behaviorLabelMap?.[bc.itemKey] ?? bc.itemKey;
+  const behaviorKeys = entry.behaviorKeys;
+  const hasBehaviorDetail = entry.hasBehaviorDetail ?? behaviorKeys.length > 0;
+  const behaviorLabels = behaviorKeys.map((key) => {
+    return behaviorLabelMap?.[key] ?? key;
   });
 
-  const activeImpairments = entry.impairments.filter(
-    (i) => i.severity !== "NONE"
+  const impairments = entry.impairments;
+  const activeImpairments = Object.entries(impairments).filter(
+    ([, severity]) => severity !== "NONE"
   );
 
   return (
@@ -108,32 +110,16 @@ export function EntryDetail({
         </div>
       )}
 
-      {entry.customChecks.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase">Custom</p>
-          <div className="mt-1 flex flex-wrap gap-1">
-            {entry.customChecks.map((cc) => (
-              <span
-                key={cc.id}
-                className="rounded bg-gray-100 px-2 py-0.5 text-xs"
-              >
-                {cc.item.label}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
       {activeImpairments.length > 0 && (
         <div className="mt-3">
           <p className="text-xs font-semibold text-gray-500 uppercase">Impairments</p>
           <div className="mt-1 space-y-0.5">
-            {activeImpairments.map((imp) => (
-              <p key={imp.id} className="text-xs">
-                <span className="font-medium">{domainLabels[imp.domain]}</span>
+            {activeImpairments.map(([domain, severity]) => (
+              <p key={domain} className="text-xs">
+                <span className="font-medium">{domainLabels[domain]}</span>
                 {" — "}
-                <span className={imp.severity === "SEVERE" ? "text-red-600 font-medium" : ""}>
-                  {severityLabels[imp.severity]}
+                <span className={severity === "SEVERE" ? "text-red-600 font-medium" : ""}>
+                  {severityLabels[severity]}
                 </span>
               </p>
             ))}
@@ -141,9 +127,9 @@ export function EntryDetail({
         </div>
       )}
 
-      {entry.menstrualLog && (
+      {entry.menstrualSeverity && (
         <p className="mt-3 text-xs text-gray-500">
-          Period: {entry.menstrualLog.severity.toLowerCase()}
+          Period: {entry.menstrualSeverity.toLowerCase()}
         </p>
       )}
 

@@ -44,22 +44,19 @@ export async function getAnalysis(tenantId: string, days = 30): Promise<Analysis
     },
     include: {
       user: { select: { id: true, name: true } },
-      behaviorChecks: true,
-      impairments: true,
     },
     orderBy: { date: "asc" },
   });
 
   // Score each entry using the framework
   const dailyScores = entries.map((entry) => {
+    const behaviorKeys = (entry.behaviorKeys as string[]) ?? [];
+    const impairments = (entry.impairments as Record<string, string>) ?? {};
     const input: DailyScoringInput = {
-      behaviorKeys: entry.behaviorChecks.map((bc) => bc.itemKey),
+      behaviorKeys,
       mood: entry.mood,
       dayQuality: entry.dayQuality,
-      impairments: entry.impairments.map((imp) => ({
-        domain: imp.domain,
-        severity: imp.severity,
-      })),
+      impairments,
     };
     return {
       date: entry.date.toISOString().slice(0, 10),
@@ -75,7 +72,7 @@ export async function getAnalysis(tenantId: string, days = 30): Promise<Analysis
 
   for (const entry of entries) {
     const dateStr = entry.date.toISOString().slice(0, 10);
-    const behaviors = entry.behaviorChecks.map((bc) => bc.itemKey);
+    const behaviors = (entry.behaviorKeys as string[]) ?? [];
 
     const existing = behaviorsByDate.get(dateStr) ?? [];
     behaviorsByDate.set(dateStr, [...new Set([...existing, ...behaviors])]);

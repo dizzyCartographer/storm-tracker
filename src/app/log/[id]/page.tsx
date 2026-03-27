@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth-utils";
 import { getEntryDetail } from "@/lib/actions/entry-actions";
 import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
+import { getCustomItems } from "@/lib/actions/custom-item-actions";
 import { Nav } from "@/app/_components/nav";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -63,8 +64,21 @@ export default async function LogDetailPage({
 
   const { items: behaviorItems } = await getTenantBehaviorItems(entry.tenantId);
   const behaviorLabelMap = Object.fromEntries(behaviorItems.map((i) => [i.key, i.label]));
+  const categoryForItem = Object.fromEntries(behaviorItems.map((i) => [i.key, i.category]));
 
-  const activeImpairments = entry.impairments.filter((i) => i.severity !== "NONE");
+  const behaviorKeys = entry.behaviorKeys;
+  const customItemIds = entry.customItemIds;
+  const impairments = entry.impairments;
+
+  const activeImpairments = Object.entries(impairments).filter(([, severity]) => severity !== "NONE");
+
+  // Load custom item labels
+  const customItems = customItemIds.length > 0 ? await getCustomItems(entry.tenantId) : [];
+  const customLabelMap = Object.fromEntries(customItems.map((i) => [i.id, i.label]));
+
+  const manicKeys = behaviorKeys.filter((key) => categoryForItem[key] === "manic");
+  const depressiveKeys = behaviorKeys.filter((key) => categoryForItem[key] === "depressive");
+  const otherKeys = behaviorKeys.filter((key) => !categoryForItem[key] || (categoryForItem[key] !== "manic" && categoryForItem[key] !== "depressive"));
 
   return (
     <>
@@ -112,62 +126,55 @@ export default async function LogDetailPage({
         </div>
 
         {/* Behaviors — grouped by pole */}
-        {entry.behaviorChecks.length > 0 && (() => {
-          const categoryForItem = Object.fromEntries(behaviorItems.map((i) => [i.key, i.category]));
-          const manicChecks = entry.behaviorChecks.filter((bc) => categoryForItem[bc.itemKey] === "manic");
-          const depressiveChecks = entry.behaviorChecks.filter((bc) => categoryForItem[bc.itemKey] === "depressive");
-          const otherChecks = entry.behaviorChecks.filter((bc) => !categoryForItem[bc.itemKey] || (categoryForItem[bc.itemKey] !== "manic" && categoryForItem[bc.itemKey] !== "depressive"));
-
-          return (
-            <section className="mt-6">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Criteria</h2>
-              {manicChecks.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-xs font-medium text-red-600 uppercase tracking-wider mb-1">Manic</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {manicChecks.map((bc) => (
-                      <span key={bc.id} className="rounded-md bg-red-50 text-red-800 px-2.5 py-1 text-sm">
-                        {behaviorLabelMap[bc.itemKey] ?? bc.itemKey}
-                      </span>
-                    ))}
-                  </div>
+        {behaviorKeys.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Criteria</h2>
+            {manicKeys.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs font-medium text-red-600 uppercase tracking-wider mb-1">Manic</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {manicKeys.map((key) => (
+                    <span key={key} className="rounded-md bg-red-50 text-red-800 px-2.5 py-1 text-sm">
+                      {behaviorLabelMap[key] ?? key}
+                    </span>
+                  ))}
                 </div>
-              )}
-              {depressiveChecks.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-xs font-medium text-blue-600 uppercase tracking-wider mb-1">Depressive</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {depressiveChecks.map((bc) => (
-                      <span key={bc.id} className="rounded-md bg-blue-50 text-blue-800 px-2.5 py-1 text-sm">
-                        {behaviorLabelMap[bc.itemKey] ?? bc.itemKey}
-                      </span>
-                    ))}
-                  </div>
+              </div>
+            )}
+            {depressiveKeys.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs font-medium text-blue-600 uppercase tracking-wider mb-1">Depressive</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {depressiveKeys.map((key) => (
+                    <span key={key} className="rounded-md bg-blue-50 text-blue-800 px-2.5 py-1 text-sm">
+                      {behaviorLabelMap[key] ?? key}
+                    </span>
+                  ))}
                 </div>
-              )}
-              {otherChecks.length > 0 && (
-                <div className="mt-2">
-                  <div className="flex flex-wrap gap-1.5">
-                    {otherChecks.map((bc) => (
-                      <span key={bc.id} className="rounded-md bg-gray-100 px-2.5 py-1 text-sm">
-                        {behaviorLabelMap[bc.itemKey] ?? bc.itemKey}
-                      </span>
-                    ))}
-                  </div>
+              </div>
+            )}
+            {otherKeys.length > 0 && (
+              <div className="mt-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {otherKeys.map((key) => (
+                    <span key={key} className="rounded-md bg-gray-100 px-2.5 py-1 text-sm">
+                      {behaviorLabelMap[key] ?? key}
+                    </span>
+                  ))}
                 </div>
-              )}
-            </section>
-          );
-        })()}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Custom items */}
-        {entry.customChecks.length > 0 && (
+        {customItemIds.length > 0 && (
           <section className="mt-6">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Custom</h2>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {entry.customChecks.map((cc) => (
-                <span key={cc.id} className="rounded-md bg-gray-100 px-2.5 py-1 text-sm">
-                  {cc.item.label}
+              {customItemIds.map((itemId) => (
+                <span key={itemId} className="rounded-md bg-gray-100 px-2.5 py-1 text-sm">
+                  {customLabelMap[itemId] ?? itemId}
                 </span>
               ))}
             </div>
@@ -179,12 +186,12 @@ export default async function LogDetailPage({
           <section className="mt-6">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Impairments</h2>
             <div className="mt-2 space-y-1">
-              {activeImpairments.map((imp) => (
-                <p key={imp.id} className="text-sm">
-                  <span className="font-medium">{domainLabels[imp.domain] ?? imp.domain}</span>
+              {activeImpairments.map(([domain, severity]) => (
+                <p key={domain} className="text-sm">
+                  <span className="font-medium">{domainLabels[domain] ?? domain}</span>
                   {" — "}
-                  <span className={imp.severity === "SEVERE" ? "text-red-600 font-medium" : ""}>
-                    {severityLabels[imp.severity]}
+                  <span className={severity === "SEVERE" ? "text-red-600 font-medium" : ""}>
+                    {severityLabels[severity]}
                   </span>
                 </p>
               ))}
@@ -193,10 +200,10 @@ export default async function LogDetailPage({
         )}
 
         {/* Menstrual */}
-        {entry.menstrualLog && (
+        {entry.menstrualSeverity && (
           <section className="mt-6">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Menstrual</h2>
-            <p className="mt-2 text-sm">Period: {entry.menstrualLog.severity.toLowerCase()}</p>
+            <p className="mt-2 text-sm">Period: {entry.menstrualSeverity.toLowerCase()}</p>
           </section>
         )}
 

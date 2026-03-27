@@ -191,6 +191,16 @@ model Entry {
   // Freeform Notes
   notes String? @db.Text
 
+  // Flattened sub-entry data (JSONB)
+  behaviorKeys      Json?   @default("[]")    // string[] of checked behavior item keys
+  customItemIds     Json?   @default("[]")    // string[] of checked custom checklist item IDs
+  impairments       Json?   @default("{}")    // Record<string, string> e.g. {"SCHOOL_WORK": "PRESENT"}
+  menstrualSeverity String?                   // "LIGHT" | "MEDIUM" | "HEAVY" | null
+
+  // Computed fields (persisted at write time)
+  computedMood  String?  // algorithmic classification: "MANIC", "DEPRESSIVE", "MIXED", "NEUTRAL"
+  computedScore Float?   // wave graph score
+
   // Timestamps & attribution
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -200,44 +210,12 @@ model Entry {
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  // Related sub-entries
-  behaviorChecks  BehaviorCheck[]
-  customChecks    CustomCheck[]
-  impairments     Impairment[]
-  menstrualLog    MenstrualLog?
+  // Relations (kept)
   attachments     Attachment[]
   strategyUsages  StrategyUsage[]
 
   @@unique([userId, tenantId, date])
   @@map("entries")
-}
-
-// ──────────────────────────────────────────────
-// Behavior Checklist (DSM-based, static items)
-// ──────────────────────────────────────────────
-
-enum BehaviorCategory {
-  SLEEP
-  ENERGY
-  MANIC
-  DEPRESSIVE
-  MIXED_CYCLING
-}
-
-model BehaviorCheck {
-  id       String           @id @default(uuid())
-  category BehaviorCategory
-  itemKey  String           // e.g. "very-little-sleep", matches a static registry
-  checked  Boolean          @default(true)
-
-  entryId String
-  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
-
-  behaviorDefinitionId String?
-  behaviorDefinition   BehaviorDefinition? @relation(fields: [behaviorDefinitionId], references: [id])
-
-  @@unique([entryId, itemKey])
-  @@map("behavior_checks")
 }
 
 // ──────────────────────────────────────────────
@@ -251,72 +229,7 @@ model CustomChecklistItem {
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  checks CustomCheck[]
-
   @@map("custom_checklist_items")
-}
-
-model CustomCheck {
-  id      String  @id @default(uuid())
-  checked Boolean @default(true)
-
-  entryId String
-  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
-  itemId  String
-  item    CustomChecklistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@unique([entryId, itemId])
-  @@map("custom_checks")
-}
-
-// ──────────────────────────────────────────────
-// Impairment Tracking
-// ──────────────────────────────────────────────
-
-enum ImpairmentDomain {
-  SCHOOL_WORK
-  FAMILY_LIFE
-  FRIENDSHIPS
-  SELF_CARE
-  SAFETY_CONCERN
-}
-
-enum ImpairmentSeverity {
-  NONE
-  PRESENT
-  SEVERE
-}
-
-model Impairment {
-  id       String             @id @default(uuid())
-  domain   ImpairmentDomain
-  severity ImpairmentSeverity
-
-  entryId String
-  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
-
-  @@unique([entryId, domain])
-  @@map("impairments")
-}
-
-// ──────────────────────────────────────────────
-// Menstrual Tracking
-// ──────────────────────────────────────────────
-
-enum BleedingSeverity {
-  LIGHT
-  MEDIUM
-  HEAVY
-}
-
-model MenstrualLog {
-  id       String           @id @default(uuid())
-  severity BleedingSeverity
-
-  entryId String @unique
-  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
-
-  @@map("menstrual_logs")
 }
 
 // ──────────────────────────────────────────────
@@ -486,7 +399,6 @@ model BehaviorDefinition {
 
   criterionMappings BehaviorCriterionMapping[]
   signalBehaviors   SignalBehavior[]
-  behaviorChecks    BehaviorCheck[]
 
   @@unique([categoryId, itemKey])
   @@map("behavior_definitions")

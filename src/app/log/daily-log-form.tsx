@@ -39,7 +39,7 @@ interface InitialData {
   dayQuality: string;
   behaviorKeys: string[];
   customItemIds: string[];
-  impairments: { domain: string; severity: string }[];
+  impairments: Record<string, string>;
   notes: string | null;
   menstrualSeverity: string | null;
 }
@@ -110,7 +110,7 @@ export function DailyLogForm({
   };
   const [impairments, setImpairments] = useState<Record<string, string>>(
     initialData?.impairments
-      ? { ...defaultImpairments, ...Object.fromEntries(initialData.impairments.map((i) => [i.domain, i.severity])) }
+      ? { ...defaultImpairments, ...initialData.impairments }
       : defaultImpairments
   );
   const [notes, setNotes] = useState(initialData?.notes ?? "");
@@ -126,8 +126,8 @@ export function DailyLogForm({
     setCheckedBehaviors(new Set(data.behaviorKeys));
     setCheckedCustom(new Set(data.customItemIds));
     setImpairments(
-      data.impairments.length > 0
-        ? { ...defaultImpairments, ...Object.fromEntries(data.impairments.map((i) => [i.domain, i.severity])) }
+      Object.keys(data.impairments).length > 0
+        ? { ...defaultImpairments, ...data.impairments }
         : defaultImpairments
     );
     setNotes(data.notes ?? "");
@@ -198,13 +198,6 @@ export function DailyLogForm({
     setError("");
     setLoading(true);
 
-    const impairmentEntries = Object.entries(impairments)
-      .filter(([, sev]) => sev)
-      .map(([domain, severity]) => ({
-        domain: domain as "SCHOOL_WORK" | "FAMILY_LIFE" | "FRIENDSHIPS" | "SELF_CARE" | "SAFETY_CONCERN",
-        severity: severity as "NONE" | "PRESENT" | "SEVERE",
-      }));
-
     try {
       const result = await saveDailyLog({
         tenantId,
@@ -212,9 +205,9 @@ export function DailyLogForm({
         dayQuality: dayQuality as "GOOD" | "NEUTRAL" | "BAD",
         behaviorKeys: Array.from(checkedBehaviors),
         customItemIds: Array.from(checkedCustom),
-        impairments: impairmentEntries.length > 0 ? impairmentEntries : undefined,
+        impairments,
         notes: notes.trim() || undefined,
-        menstrualSeverity: menstrual as "LIGHT" | "MEDIUM" | "HEAVY" | null,
+        menstrualSeverity: menstrual,
         date,
       });
 
