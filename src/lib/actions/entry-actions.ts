@@ -15,6 +15,7 @@ interface DailyLogInput {
   dayQuality: DayQuality;
   behaviorKeys?: string[];
   customItemIds?: string[];
+  strategyIds?: string[];
   impairments?: Record<string, string>;
   notes?: string;
   menstrualSeverity?: string | null;
@@ -44,6 +45,7 @@ export async function saveDailyLog(input: DailyLogInput) {
 
   const behaviorKeys = input.behaviorKeys ?? [];
   const customItemIds = input.customItemIds ?? [];
+  const strategyIds = input.strategyIds ?? [];
   const impairments = input.impairments ?? {};
   const menstrualSeverity = input.menstrualSeverity ?? null;
 
@@ -78,6 +80,7 @@ export async function saveDailyLog(input: DailyLogInput) {
       notes: input.notes ?? null,
       behaviorKeys,
       customItemIds,
+      strategyIds,
       impairments,
       menstrualSeverity,
       computedMood,
@@ -92,6 +95,7 @@ export async function saveDailyLog(input: DailyLogInput) {
       tenantId: input.tenantId,
       behaviorKeys,
       customItemIds,
+      strategyIds,
       impairments,
       menstrualSeverity,
       computedMood,
@@ -166,6 +170,7 @@ export async function getEntryForEdit(entryId: string) {
     notes: entry.notes,
     behaviorKeys: (entry.behaviorKeys as string[]) ?? [],
     customItemIds: (entry.customItemIds as string[]) ?? [],
+    strategyIds: (entry.strategyIds as string[]) ?? [],
     impairments: (entry.impairments as Record<string, string>) ?? {},
     menstrualSeverity: entry.menstrualSeverity ?? null,
   };
@@ -200,6 +205,7 @@ export async function getEntryByDate(tenantId: string, dateStr: string) {
     notes: entry.notes,
     behaviorKeys: (entry.behaviorKeys as string[]) ?? [],
     customItemIds: (entry.customItemIds as string[]) ?? [],
+    strategyIds: (entry.strategyIds as string[]) ?? [],
     impairments: (entry.impairments as Record<string, string>) ?? {},
     menstrualSeverity: entry.menstrualSeverity ?? null,
   };

@@ -194,6 +194,7 @@ model Entry {
   // Flattened sub-entry data (JSONB)
   behaviorKeys      Json?   @default("[]")    // string[] of checked behavior item keys
   customItemIds     Json?   @default("[]")    // string[] of checked custom checklist item IDs
+  strategyIds       Json?   @default("[]")    // string[] of strategy IDs used that day
   impairments       Json?   @default("{}")    // Record<string, string> e.g. {"SCHOOL_WORK": "PRESENT"}
   menstrualSeverity String?                   // "LIGHT" | "MEDIUM" | "HEAVY" | null
 
@@ -212,7 +213,6 @@ model Entry {
 
   // Relations (kept)
   attachments     Attachment[]
-  strategyUsages  StrategyUsage[]
 
   @@unique([userId, tenantId, date])
   @@map("entries")
@@ -289,24 +289,7 @@ model Strategy {
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  usages StrategyUsage[]
-
   @@map("strategies")
-}
-
-model StrategyUsage {
-  id             String   @id @default(uuid())
-  date           DateTime @db.Date
-  effectiveness  Int?                      // 1-5 scale, null if not rated
-  notes          String?  @db.Text
-  createdAt      DateTime @default(now())
-
-  strategyId String
-  strategy   Strategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
-  entryId    String?
-  entry      Entry?   @relation(fields: [entryId], references: [id], onDelete: SetNull)
-
-  @@map("strategy_usages")
 }
 
 // ──────────────────────────────────────────────

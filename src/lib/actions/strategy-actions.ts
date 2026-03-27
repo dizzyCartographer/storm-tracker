@@ -78,39 +78,3 @@ export async function deleteStrategy(id: string) {
   return { success: true };
 }
 
-export async function logStrategyUsage(
-  strategyId: string,
-  data: { date: string; effectiveness?: number; notes?: string; entryId?: string }
-) {
-  const strategy = await prisma.strategy.findUnique({ where: { id: strategyId } });
-  if (!strategy) return { error: "Not found" };
-  await requireMembership(strategy.tenantId);
-
-  const usage = await prisma.strategyUsage.create({
-    data: {
-      strategyId,
-      date: new Date(data.date),
-      effectiveness: data.effectiveness ?? null,
-      notes: data.notes?.trim() || null,
-      entryId: data.entryId ?? null,
-    },
-  });
-
-  return { id: usage.id };
-}
-
-export async function getRecentStrategyUsages(tenantId: string, days = 30) {
-  await requireMembership(tenantId);
-
-  const since = new Date();
-  since.setDate(since.getDate() - days);
-
-  return prisma.strategyUsage.findMany({
-    where: {
-      strategy: { tenantId },
-      date: { gte: since },
-    },
-    include: { strategy: { select: { name: true, category: true } } },
-    orderBy: { date: "desc" },
-  });
-}
