@@ -32,6 +32,12 @@ interface CustomItem {
   label: string;
 }
 
+interface StrategyItem {
+  id: string;
+  name: string;
+  category: string | null;
+}
+
 interface InitialData {
   id: string;
   date: string;
@@ -39,6 +45,7 @@ interface InitialData {
   dayQuality: string;
   behaviorKeys: string[];
   customItemIds: string[];
+  strategyIds: string[];
   impairments: Record<string, string>;
   notes: string | null;
   menstrualSeverity: string | null;
@@ -79,12 +86,14 @@ function CollapsibleSection({
 export function DailyLogForm({
   tenantId,
   customItems,
+  strategies,
   initialData,
   behaviorItems,
   initialAttachments,
 }: {
   tenantId: string;
   customItems: CustomItem[];
+  strategies: StrategyItem[];
   initialData?: InitialData;
   behaviorItems?: BehaviorItem[];
   initialAttachments?: { id: string; fileName: string; fileType: string; fileSize: number; url: string }[];
@@ -100,6 +109,9 @@ export function DailyLogForm({
   );
   const [checkedCustom, setCheckedCustom] = useState<Set<string>>(
     new Set(initialData?.customItemIds ?? [])
+  );
+  const [checkedStrategies, setCheckedStrategies] = useState<Set<string>>(
+    new Set(initialData?.strategyIds ?? [])
   );
   const defaultImpairments: Record<string, string> = {
     SCHOOL_WORK: "NONE",
@@ -125,6 +137,7 @@ export function DailyLogForm({
     setDayQuality(data.dayQuality);
     setCheckedBehaviors(new Set(data.behaviorKeys));
     setCheckedCustom(new Set(data.customItemIds));
+    setCheckedStrategies(new Set(data.strategyIds));
     setImpairments(
       Object.keys(data.impairments).length > 0
         ? { ...defaultImpairments, ...data.impairments }
@@ -140,6 +153,7 @@ export function DailyLogForm({
     setDayQuality("");
     setCheckedBehaviors(new Set());
     setCheckedCustom(new Set());
+    setCheckedStrategies(new Set());
     setImpairments(defaultImpairments);
     setNotes("");
     setMenstrual(null);
@@ -181,6 +195,14 @@ export function DailyLogForm({
     });
   }
 
+  function toggleStrategy(id: string) {
+    setCheckedStrategies((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
   function setImpairment(domain: string, severity: string) {
     setImpairments((prev) => ({ ...prev, [domain]: severity }));
   }
@@ -205,6 +227,7 @@ export function DailyLogForm({
         dayQuality: dayQuality as "GOOD" | "NEUTRAL" | "BAD",
         behaviorKeys: Array.from(checkedBehaviors),
         customItemIds: Array.from(checkedCustom),
+        strategyIds: Array.from(checkedStrategies),
         impairments,
         notes: notes.trim() || undefined,
         menstrualSeverity: menstrual,
@@ -305,6 +328,31 @@ export function DailyLogForm({
           </div>
         )}
       </CollapsibleSection>
+
+      {strategies.length > 0 && (
+        <CollapsibleSection
+          title="Strategies used"
+          badge={checkedStrategies.size}
+          defaultOpen={isEdit && checkedStrategies.size > 0}
+        >
+          <div className="flex flex-wrap gap-2">
+            {strategies.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => toggleStrategy(s.id)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                  checkedStrategies.has(s.id)
+                    ? "bg-green-600 text-white"
+                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
 
       <CollapsibleSection title="Impairment tracking" badge={impairmentCount} defaultOpen={isEdit && impairmentCount > 0}>
         <ImpairmentTracking values={impairments} onChange={setImpairment} />

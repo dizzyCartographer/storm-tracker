@@ -226,7 +226,7 @@ _From iterative requirements: medication and strategy management._
 `Medication` model with name, dosage, frequency, instructions, start/end dates, active status. Full CRUD server actions with membership checks. `MedicationManager` component on project detail page: add, edit, discontinue (sets end date + inactive), delete. Active meds shown prominently with green badge; discontinued meds collapsed under a `<details>` toggle.
 
 ### 14.2 — Strategy tracking ✅
-`Strategy` model with name, description, category, and default flag. `StrategyUsage` model links strategies to dates and entries with 1-5 effectiveness rating. 8 pre-seeded default strategies (Sleep, Communication, De-escalation, Environment, Self-Care) loaded via "Load defaults" button. `StrategyManager` component on project detail page: add custom strategies, delete, view grouped by category. Server actions for CRUD, seeding, and usage logging.
+`Strategy` model with name, description, category, and default flag. Strategies are tracked per-entry via `strategyIds` JSONB column on Entry (flattened from former `StrategyUsage` table). 8 pre-seeded default strategies (Sleep, Communication, De-escalation, Environment, Self-Care) loaded via "Load defaults" button. `StrategyManager` component on project detail page: add custom strategies, delete, view grouped by category. Strategy selector (green pill toggles) in daily log form. Strategies displayed in log detail and history views.
 
 ***
 

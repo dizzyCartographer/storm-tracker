@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth-utils";
 import { getEntryDetail } from "@/lib/actions/entry-actions";
 import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
 import { getCustomItems } from "@/lib/actions/custom-item-actions";
+import { getStrategies } from "@/lib/actions/strategy-actions";
 import { Nav } from "@/app/_components/nav";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -72,8 +73,11 @@ export default async function LogDetailPage({
 
   const activeImpairments = Object.entries(impairments).filter(([, severity]) => severity !== "NONE");
 
-  // Load custom item labels
+  // Load custom item labels and strategy names
   const customItems = customItemIds.length > 0 ? await getCustomItems(entry.tenantId) : [];
+  const strategyIds = (entry.strategyIds as string[]) ?? [];
+  const allStrategies = strategyIds.length > 0 ? await getStrategies(entry.tenantId) : [];
+  const strategyLabelMap = Object.fromEntries(allStrategies.map((s) => [s.id, s.name]));
   const customLabelMap = Object.fromEntries(customItems.map((i) => [i.id, i.label]));
 
   const manicKeys = behaviorKeys.filter((key) => categoryForItem[key] === "manic");
@@ -175,6 +179,20 @@ export default async function LogDetailPage({
               {customItemIds.map((itemId) => (
                 <span key={itemId} className="rounded-md bg-gray-100 px-2.5 py-1 text-sm">
                   {customLabelMap[itemId] ?? itemId}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Strategies */}
+        {strategyIds.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Strategies Used</h2>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {strategyIds.map((id) => (
+                <span key={id} className="rounded-md bg-green-50 text-green-800 px-2.5 py-1 text-sm">
+                  {strategyLabelMap[id] ?? id}
                 </span>
               ))}
             </div>

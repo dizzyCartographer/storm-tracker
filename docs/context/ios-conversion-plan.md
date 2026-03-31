@@ -8,7 +8,7 @@ The web app (Next.js 16, Vercel, Prisma/Neon Postgres) is being converted to an 
 
 ---
 
-## Phase A: Flatten Entry Data Model (web app, prerequisite)
+## Phase A: Flatten Entry Data Model (web app, prerequisite) ✅
 
 Consolidate 5 tables into 1. Add persisted computed fields.
 
@@ -26,6 +26,7 @@ Consolidate 5 tables into 1. Add persisted computed fields.
 |--------|------|---------|
 | `behaviorKeys` | `jsonb` | `["manic-gate", "depressive-core-1"]` |
 | `customItemIds` | `jsonb` | `["clx123", "clx456"]` |
+| `strategyIds` | `jsonb` | `["str123", "str456"]` |
 | `impairments` | `jsonb` | `{"school": "PRESENT", "family": "SEVERE"}` |
 | `menstrualSeverity` | `String?` | `"MEDIUM"` (or null — no need for a whole table for one field) |
 | `computedMood` | `String?` | `"MANIC"` — algorithmic classification |

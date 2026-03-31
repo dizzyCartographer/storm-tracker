@@ -37,10 +37,12 @@ export function EntryDetail({
   entry,
   currentUserId,
   behaviorLabelMap,
+  strategyLabelMap,
 }: {
   entry: Entry & { displayMood?: string; hasBehaviorDetail?: boolean };
   currentUserId: string;
   behaviorLabelMap?: Record<string, string>;
+  strategyLabelMap?: Record<string, string>;
 }) {
   const displayMood = entry.displayMood ?? entry.mood;
   const behaviorKeys = entry.behaviorKeys;
@@ -126,6 +128,22 @@ export function EntryDetail({
           </div>
         </div>
       )}
+
+      {strategyLabelMap && (() => {
+        const sIds = (entry.strategyIds as string[] | undefined) ?? [];
+        return sIds.length > 0 ? (
+          <div className="mt-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase">Strategies</p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {sIds.map((id) => (
+                <span key={id} className="rounded bg-green-50 text-green-800 px-2 py-0.5 text-xs">
+                  {strategyLabelMap[id] ?? id}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null;
+      })()}
 
       {entry.menstrualSeverity && (
         <p className="mt-3 text-xs text-gray-500">
