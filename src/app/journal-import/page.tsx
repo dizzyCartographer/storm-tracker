@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants, getDefaultTenantId } from "@/lib/actions/tenant-actions";
+import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
 import { Nav } from "@/app/_components/nav";
 import { redirect } from "next/navigation";
 import { ProjectSelector } from "@/app/_components/project-selector";
@@ -21,6 +22,7 @@ export default async function JournalImportPage({
   const defaultTenantId = await getDefaultTenantId();
   const activeTenantId = params.tenant ?? defaultTenantId ?? tenants[0].id;
   const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
+  const { items: behaviorItems } = await getTenantBehaviorItems(activeTenant.id);
 
   return (
     <>
@@ -31,7 +33,7 @@ export default async function JournalImportPage({
         <p className="mt-1 text-sm text-gray-500">
           Paste a journal entry or notes and AI will extract structured behavioral data for {activeTenant.name}.
         </p>
-        <JournalImportForm tenantId={activeTenant.id} />
+        <JournalImportForm tenantId={activeTenant.id} behaviorItems={behaviorItems} />
       </main>
     </>
   );

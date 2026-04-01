@@ -5,6 +5,25 @@ import { useRouter } from "next/navigation";
 import { saveDailyLog } from "@/lib/actions/entry-actions";
 import type { ParsedEntry } from "@/app/api/parse-journal/route";
 
+interface BehaviorItem {
+  key: string;
+  category: string;
+  categoryName: string;
+  label: string;
+  description: string;
+}
+
+const categoryColors: Record<string, { active: string; inactive: string }> = {
+  manic: {
+    active: "border-red-600 bg-red-700 text-white",
+    inactive: "border-red-200 bg-red-50 text-red-700 hover:bg-red-100",
+  },
+  depressive: {
+    active: "border-blue-600 bg-blue-700 text-white",
+    inactive: "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100",
+  },
+};
+
 const moodLabels: Record<string, string> = {
   MANIC: "Manic",
   DEPRESSIVE: "Depressive",
