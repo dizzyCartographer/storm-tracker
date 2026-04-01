@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npm run:*)",
+      "Bash(ls /Users/mariayarley/Documents/GitHub/storm-tracker/src/generated/prisma/index*)",
+      "Bash(gh api:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); deps={**d.get\\(''''dependencies'''',{}\\), **d.get\\(''''devDependencies'''',{}\\)}; [print\\(k,v\\) for k,v in sorted\\(deps.items\\(\\)\\) if any\\(x in k.lower\\(\\) for x in [''''prisma'''',''''postgres'''',''''neon'''',''''supabase'''',''''vercel'''',''''pg'''',''''database'''']\\)]\")",
+      "Bash(openssl rand:*)",
+      "Bash(vercel env:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "mcp__aa80dce7-08f2-4bc1-91c6-6f0ccbcb26ac__get_runtime_logs",
+      "Bash(npx tsx -e \":*)",
+      "Bash(node -e \":*)",
+      "Bash(npx next:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npx tsx:*)",
+      "mcp__aa80dce7-08f2-4bc1-91c6-6f0ccbcb26ac__list_deployments",
+      "Bash(git rm:*)",
+      "Bash(md5 docs/context/features.md docs/context/functional-requirements.md docs/context/branding.md docs/context/branding-style-guide.md)",
+      "Bash(ls docs/context/*.md)",
+      "Bash(git ls-files:*)",
+      "Bash(ls docs/context/*branding*)",
+      "Bash(xxd /Users/mariayarley/Documents/GitHub/storm-tracker/CLAUDE.md)",
+      "Bash(npx vercel:*)",
+      "Bash(npx expo:*)",
+      "Bash(xcrun simctl:*)",
+      "Bash(export LANG=en_US.UTF-8)",
+      "Bash(xcodebuild -version)",
+      "Bash(xcodebuild -workspace StormTracker.xcworkspace -scheme StormTracker -showdestinations)",
+      "mcp__aa80dce7-08f2-4bc1-91c6-6f0ccbcb26ac__get_deployment_build_logs",
+      "mcp__aa80dce7-08f2-4bc1-91c6-6f0ccbcb26ac__web_fetch_vercel_url"
+    ]
+  }
+}

@@ -58,7 +58,7 @@ Enhancements, refinements, edge cases, and polish items to address as features a
 
 - ~~selected project should persist across dashboard history reports and docs~~ → Phase 17.2
 
-- ~~upload error: Vercel Blob: No token found. Either configure the `BLOB_READ_WRITE_TOKEN` environment variable, or pass a `token` option to your calls.~~ → Phase 17.1
+- ~~upload error: Vercel Blob: No token found. Either configure the~~ ~~`BLOB_READ_WRITE_TOKEN`~~ ~~environment variable, or pass a~~ ~~`token`~~ ~~option to your calls.~~ → Phase 17.1
 
   - BLOB\_READ\_WRITE\_TOKEN="vercel\_blob\_rw\_4l1RRfxlqFRYu8LL\_3vn2klZygNb9rdPLsDBsceYBg0f3x1"
 

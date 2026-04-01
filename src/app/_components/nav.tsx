@@ -11,6 +11,7 @@ const viewLinks = [
   { href: "/history", label: "History" },
   { href: "/reports", label: "Reports" },
   { href: "/documents", label: "Docs" },
+  { href: "/journal-import", label: "Import" },
   { href: "/projects", label: "Projects" },
 ];
 
