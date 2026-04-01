@@ -18,7 +18,10 @@ export async function signIn(
     // Step 1: Sign in to get a session
     const signInRes = await fetch(`${API_BASE_URL}/api/auth/sign-in/email`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Origin: API_BASE_URL,
+      },
       body: JSON.stringify({ email, password }),
     });
 
@@ -30,38 +33,21 @@ export async function signIn(
       };
     }
 
-    // Extract session cookie/token from the sign-in response
+    // Extract session token from the sign-in response body
     const signInData = await signInRes.json();
     const sessionToken = signInData?.token ?? signInData?.session?.token;
 
     if (!sessionToken) {
-      // Try extracting from set-cookie header
-      const setCookie = signInRes.headers.get("set-cookie");
-      if (!setCookie) {
-        return { success: false, error: "No session token received" };
-      }
-      // Store the cookie for the token request
-      await SecureStore.setItemAsync(SESSION_COOKIE_KEY, setCookie);
+      return { success: false, error: "No session token received" };
     }
 
-    // Step 2: Get a JWT token
-    const tokenHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-
-    // Attach session auth — either via cookie or authorization header
-    if (sessionToken) {
-      tokenHeaders["Authorization"] = `Bearer ${sessionToken}`;
-    } else {
-      const storedCookie = await SecureStore.getItemAsync(SESSION_COOKIE_KEY);
-      if (storedCookie) {
-        tokenHeaders["Cookie"] = storedCookie;
-      }
-    }
-
+    // Step 2: Get a JWT token — pass session token as a cookie
     const tokenRes = await fetch(`${API_BASE_URL}/api/auth/token`, {
       method: "GET",
-      headers: tokenHeaders,
+      headers: {
+        Cookie: `better-auth.session_token=${sessionToken}`,
+        Origin: API_BASE_URL,
+      },
     });
 
     if (!tokenRes.ok) {

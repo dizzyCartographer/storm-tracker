@@ -9,17 +9,11 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: true },
   secret: process.env.STRM_TRKR_BETTER_AUTH_SECRET,
   baseURL: process.env.STRM_TRKR_BETTER_AUTH_URL,
-  trustedOrigins: (origin) => {
-    // Allow requests with no Origin header (React Native / mobile clients)
-    if (!origin) return true;
-    // Allow the configured base URL
-    if (
-      process.env.STRM_TRKR_BETTER_AUTH_URL &&
-      origin === process.env.STRM_TRKR_BETTER_AUTH_URL
-    )
-      return true;
-    return false;
-  },
+  trustedOrigins: [
+    ...(process.env.STRM_TRKR_BETTER_AUTH_URL
+      ? [process.env.STRM_TRKR_BETTER_AUTH_URL]
+      : []),
+  ],
   plugins: [
     nextCookies(),
     jwt({
