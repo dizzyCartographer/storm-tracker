@@ -19,6 +19,7 @@ export interface ReportDay {
   hasPeriod: boolean;
   periodSeverity: string | null;
   hasNotes: boolean;
+  notes: string | null;
 }
 
 export interface ReportData {
@@ -29,6 +30,21 @@ export interface ReportData {
   impairmentSummary: { domain: string; presentCount: number; severeCount: number }[];
   tenantName: string;
   dateRange: { from: string; to: string };
+  projectInfo: {
+    teenFullName: string | null;
+    teenNickname: string | null;
+    teenBirthday: Date | null;
+    teenDiagnosis: string | null;
+    teenOtherHealth: string | null;
+    teenSchool: string | null;
+    teenHasIep: boolean;
+    onsetDate: Date | null;
+    familyHistory: string | null;
+    description: string | null;
+    purpose: string | null;
+  } | null;
+  medications: { name: string; dosage: string | null; frequency: string | null; instructions: string | null }[];
+  strategies: { name: string; category: string | null }[];
 }
 
 export async function getReportData(
