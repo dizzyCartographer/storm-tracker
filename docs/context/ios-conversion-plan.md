@@ -64,32 +64,33 @@ Consolidate 5 tables into 1. Add persisted computed fields.
 
 ---
 
-## Phase B: Enable Neon Data API
+## Phase B: Enable Neon Data API ✅
 
-### B.1 — Row-Level Security Policies
-Add RLS policies to all tables so Postgres enforces access control (currently done in server actions). Key policies:
-- Users can only read/write entries in tenants they're a member of
-- Entry ownership checks for edits/deletes
-- Tenant member role checks for admin operations
+### B.1 — Row-Level Security Policies ✅
+RLS enabled on all 24 tables via migration `20260331_add_rls_policies`. Helper functions `is_tenant_member()` and `is_tenant_owner()` (SECURITY DEFINER) avoid repeated subqueries. Prisma connects as DB owner and bypasses RLS; only Neon Data API requests (authenticated role) are subject to policies.
 
-### B.2 — JWT Auth Setup
-Configure Neon Data API with a JWT provider. Options:
-- Adapt better-auth to issue JWTs with `sub` claim
-- Or use Neon Auth as the provider
+Policy categories:
+- **Auth tables** (users, sessions, accounts): read/update own only. Verifications: no Data API access.
+- **Tenant management** (tenants, tenant_members, invites): read if member, manage if owner.
+- **Tenant data** (entries, custom_checklist_items, attachments, medications, strategies): CRUD if member. Entries: create/update/delete own only.
+- **Diagnostic frameworks** (11 tables): read-only for any authenticated user.
 
-### B.3 — Enable Data API in Neon Console
-- Configure schema access
-- Enable API
-- Test CRUD operations against flattened Entry table
+### B.2 — JWT Auth Setup ✅
+Added Better Auth `jwt` plugin alongside existing `nextCookies()` in `src/lib/auth.ts`. Exposes:
+- `POST /api/auth/token` — mobile app calls after sign-in to get a JWT (sub = user ID)
+- `GET /api/auth/jwks` — JWKS endpoint for Neon to verify tokens
 
-### B.4 — Custom API Endpoints (thin)
-Only for operations that need server-side computation:
+### B.3 — Enable Data API in Neon Console ✅
+User enabled Data API, JWT, and RLS in Neon console. JWKS URL must be set to `https://<production-domain>/api/auth/jwks`.
+
+### B.4 — Custom API Endpoints ✅
+Three endpoints for server-side computation (JWT-authenticated via `src/lib/mobile-auth.ts`):
 
 | Endpoint | Purpose |
 |----------|---------|
-| `POST /api/mobile/entries` | Save daily log — single upsert + run scoring engine + persist `computedMood`/`computedScore` |
-| `GET /api/mobile/analysis/dashboard` | Run pattern prediction + episode detection + caregiver suggestions for a tenant |
-| `GET /api/mobile/frameworks` | Load tenant framework (joins across 11 tables, complex shaping) |
+| `POST /api/mobile/entries` | Save daily log — single upsert + scoring engine + persist `computedMood`/`computedScore` |
+| `GET /api/mobile/analysis/[tenantId]` | Full analysis pipeline: scoring, episodes, signals, predictions, suggestions, discrepancies |
+| `GET /api/mobile/frameworks/[tenantId]` | Load tenant framework data (behaviors, criteria, classification rules, episode thresholds) |
 
 Everything else (read entries, list tenants, CRUD medications, strategies, custom items, attachments) goes through the auto-generated Neon Data API.
 
