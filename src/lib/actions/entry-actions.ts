@@ -211,6 +211,7 @@ export async function getEntryByDate(tenantId: string, dateStr: string) {
     behaviorKeys: (entry.behaviorKeys as string[]) ?? [],
     customItemIds: (entry.customItemIds as string[]) ?? [],
     strategyIds: (entry.strategyIds as string[]) ?? [],
+    missedMedIds: (entry.missedMedIds as string[]) ?? [],
     impairments: (entry.impairments as Record<string, string>) ?? {},
     menstrualSeverity: entry.menstrualSeverity ?? null,
   };
@@ -247,6 +248,7 @@ export async function getEntryDetail(entryId: string) {
     date: entry.date.toISOString().slice(0, 10),
     behaviorKeys,
     customItemIds: (entry.customItemIds as string[]) ?? [],
+    missedMedIds: (entry.missedMedIds as string[]) ?? [],
     impairments: (entry.impairments as Record<string, string>) ?? {},
     displayMood,
     hasBehaviorDetail,
