@@ -38,6 +38,12 @@ interface StrategyItem {
   category: string | null;
 }
 
+interface MedicationItem {
+  id: string;
+  name: string;
+  dosage: string | null;
+}
+
 interface InitialData {
   id: string;
   date: string;
@@ -46,6 +52,7 @@ interface InitialData {
   behaviorKeys: string[];
   customItemIds: string[];
   strategyIds: string[];
+  missedMedIds: string[];
   impairments: Record<string, string>;
   notes: string | null;
   menstrualSeverity: string | null;
@@ -87,6 +94,7 @@ export function DailyLogForm({
   tenantId,
   customItems,
   strategies,
+  medications,
   initialData,
   behaviorItems,
   initialAttachments,
@@ -94,6 +102,7 @@ export function DailyLogForm({
   tenantId: string;
   customItems: CustomItem[];
   strategies: StrategyItem[];
+  medications?: MedicationItem[];
   initialData?: InitialData;
   behaviorItems?: BehaviorItem[];
   initialAttachments?: { id: string; fileName: string; fileType: string; fileSize: number; url: string }[];
@@ -112,6 +121,9 @@ export function DailyLogForm({
   );
   const [checkedStrategies, setCheckedStrategies] = useState<Set<string>>(
     new Set(initialData?.strategyIds ?? [])
+  );
+  const [missedMeds, setMissedMeds] = useState<Set<string>>(
+    new Set(initialData?.missedMedIds ?? [])
   );
   const defaultImpairments: Record<string, string> = {
     SCHOOL_WORK: "NONE",
@@ -138,6 +150,7 @@ export function DailyLogForm({
     setCheckedBehaviors(new Set(data.behaviorKeys));
     setCheckedCustom(new Set(data.customItemIds));
     setCheckedStrategies(new Set(data.strategyIds));
+    setMissedMeds(new Set(data.missedMedIds));
     setImpairments(
       Object.keys(data.impairments).length > 0
         ? { ...defaultImpairments, ...data.impairments }
