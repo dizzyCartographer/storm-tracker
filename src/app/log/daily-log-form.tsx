@@ -167,6 +167,7 @@ export function DailyLogForm({
     setCheckedBehaviors(new Set());
     setCheckedCustom(new Set());
     setCheckedStrategies(new Set());
+    setMissedMeds(new Set());
     setImpairments(defaultImpairments);
     setNotes("");
     setMenstrual(null);
@@ -216,6 +217,14 @@ export function DailyLogForm({
     });
   }
 
+  function toggleMissedMed(id: string) {
+    setMissedMeds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
   function setImpairment(domain: string, severity: string) {
     setImpairments((prev) => ({ ...prev, [domain]: severity }));
   }
@@ -241,6 +250,7 @@ export function DailyLogForm({
         behaviorKeys: Array.from(checkedBehaviors),
         customItemIds: Array.from(checkedCustom),
         strategyIds: Array.from(checkedStrategies),
+        missedMedIds: Array.from(missedMeds),
         impairments,
         notes: notes.trim() || undefined,
         menstrualSeverity: menstrual,
@@ -361,6 +371,34 @@ export function DailyLogForm({
                 }`}
               >
                 {s.name}
+              </button>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {medications && medications.length > 0 && (
+        <CollapsibleSection
+          title="Missed medications"
+          badge={missedMeds.size}
+          defaultOpen={missedMeds.size > 0}
+        >
+          <p className="mb-2 text-xs text-gray-400">
+            Meds are assumed taken. Only mark the ones that were missed today.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {medications.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => toggleMissedMed(m.id)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                  missedMeds.has(m.id)
+                    ? "bg-amber-500 text-white"
+                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {m.name}{m.dosage ? ` ${m.dosage}` : ""}
               </button>
             ))}
           </div>

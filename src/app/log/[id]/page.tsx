@@ -3,6 +3,7 @@ import { getEntryDetail } from "@/lib/actions/entry-actions";
 import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
 import { getCustomItems } from "@/lib/actions/custom-item-actions";
 import { getStrategies } from "@/lib/actions/strategy-actions";
+import { getMedications } from "@/lib/actions/medication-actions";
 import { Nav } from "@/app/_components/nav";
 import Link from "next/link";
 import { notFound } from "next/navigation";
