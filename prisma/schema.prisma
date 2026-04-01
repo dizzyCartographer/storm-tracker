@@ -195,6 +195,7 @@ model Entry {
   behaviorKeys      Json?   @default("[]")    // string[] of checked behavior item keys
   customItemIds     Json?   @default("[]")    // string[] of checked custom checklist item IDs
   strategyIds       Json?   @default("[]")    // string[] of strategy IDs used that day
+  missedMedIds      Json?   @default("[]")    // string[] of medication IDs missed that day
   impairments       Json?   @default("{}")    // Record<string, string> e.g. {"SCHOOL_WORK": "PRESENT"}
   menstrualSeverity String?                   // "LIGHT" | "MEDIUM" | "HEAVY" | null
 
