@@ -37,7 +37,7 @@ export interface ReportData {
     teenDiagnosis: string | null;
     teenOtherHealth: string | null;
     teenSchool: string | null;
-    teenHasIep: boolean;
+    teenHasIep: boolean | null;
     onsetDate: Date | null;
     familyHistory: string | null;
     description: string | null;

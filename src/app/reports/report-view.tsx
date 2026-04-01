@@ -112,7 +112,7 @@ export function ReportView({ tenantId, tenantName, behaviorLabelMap }: ReportVie
 
       {data && data.days.length > 0 && (
         <div id="report-content" className="space-y-8">
-          {/* Header for print */}
+          {/* Header + Project Info for print */}
           <div className="hidden print:block">
             <h1 className="text-xl font-bold">{tenantName} — Behavior Report</h1>
             <p className="text-sm text-gray-500">
@@ -121,6 +121,83 @@ export function ReportView({ tenantId, tenantName, behaviorLabelMap }: ReportVie
               {new Set(data.days.map((d) => d.date)).size} days logged
             </p>
           </div>
+
+          {/* Project Info */}
+          {data.projectInfo && (
+            <section className="rounded-md border border-gray-200 p-4 print:border-0 print:p-0">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+                Patient Information
+              </h2>
+              <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                {data.projectInfo.teenFullName && (
+                  <>
+                    <span className="text-gray-500">Name</span>
+                    <span>{data.projectInfo.teenFullName}{data.projectInfo.teenNickname ? ` ("${data.projectInfo.teenNickname}")` : ""}</span>
+                  </>
+                )}
+                {data.projectInfo.teenBirthday && (
+                  <>
+                    <span className="text-gray-500">Date of Birth</span>
+                    <span>{formatDate(new Date(data.projectInfo.teenBirthday).toISOString().slice(0, 10))}</span>
+                  </>
+                )}
+                {data.projectInfo.teenSchool && (
+                  <>
+                    <span className="text-gray-500">School</span>
+                    <span>{data.projectInfo.teenSchool}{data.projectInfo.teenHasIep ? " (IEP)" : ""}</span>
+                  </>
+                )}
+                {data.projectInfo.teenDiagnosis && (
+                  <>
+                    <span className="text-gray-500">Diagnosis</span>
+                    <span>{data.projectInfo.teenDiagnosis}</span>
+                  </>
+                )}
+                {data.projectInfo.teenOtherHealth && (
+                  <>
+                    <span className="text-gray-500">Other Health</span>
+                    <span>{data.projectInfo.teenOtherHealth}</span>
+                  </>
+                )}
+                {data.projectInfo.onsetDate && (
+                  <>
+                    <span className="text-gray-500">Onset Date</span>
+                    <span>{formatDate(new Date(data.projectInfo.onsetDate).toISOString().slice(0, 10))}</span>
+                  </>
+                )}
+                {data.projectInfo.familyHistory && (
+                  <>
+                    <span className="text-gray-500">Family History</span>
+                    <span>{data.projectInfo.familyHistory}</span>
+                  </>
+                )}
+              </div>
+              {data.medications.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs font-medium text-gray-500">Active Medications</p>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {data.medications.map((med, i) => (
+                      <span key={i} className="rounded-full bg-green-50 border border-green-200 px-2.5 py-0.5 text-xs text-green-800">
+                        {med.name}{med.dosage ? ` ${med.dosage}` : ""}{med.frequency ? ` (${med.frequency})` : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {data.strategies.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs font-medium text-gray-500">Strategies</p>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {data.strategies.map((s, i) => (
+                      <span key={i} className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs text-blue-800">
+                        {s.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Summary stats */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -160,7 +237,7 @@ export function ReportView({ tenantId, tenantName, behaviorLabelMap }: ReportVie
           {data.episodes.length > 0 && (
             <section>
               <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                Detected Episodes
+                Possible Episodes
               </h2>
               <div className="mt-2 space-y-2">
                 {data.episodes.map((ep, i) => (
@@ -170,9 +247,9 @@ export function ReportView({ tenantId, tenantName, behaviorLabelMap }: ReportVie
                   >
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold">
-                        {ep.type.charAt(0) + ep.type.slice(1).toLowerCase()} episode
+                        Possible {ep.type.charAt(0) + ep.type.slice(1).toLowerCase()} episode
                         <span className="ml-2 text-xs font-normal text-gray-500">
-                          ({ep.confidence === "DSM5_MET" ? "DSM-5 criteria met" : "Prodromal concern"})
+                          ({ep.confidence === "DSM5_MET" ? "Pattern consistent with DSM-5 criteria" : "Emerging pattern of concern"})
                         </span>
                       </p>
                       <span className="text-xs text-gray-500">{ep.dayCount} days</span>
@@ -262,6 +339,28 @@ export function ReportView({ tenantId, tenantName, behaviorLabelMap }: ReportVie
               </table>
             </div>
           </section>
+
+          {/* Caregiver Notes */}
+          {data.days.some((d) => d.notes) && (
+            <section>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+                Caregiver Notes
+              </h2>
+              <div className="mt-2 space-y-3">
+                {data.days
+                  .filter((d) => d.notes)
+                  .map((d) => (
+                    <div key={d.date} className="rounded-md border border-gray-200 px-4 py-3">
+                      <p className="text-xs font-medium text-gray-500">
+                        {formatDate(d.date)}
+                        {d.userName && <span className="ml-2 text-gray-400">— {d.userName}</span>}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">{d.notes}</p>
+                    </div>
+                  ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
     </div>
