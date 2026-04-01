@@ -1,14 +1,5 @@
 "use client";
 
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
-
 interface FrequencyChartProps {
   data: { key: string; count: number; percentage: number }[];
   behaviorLabelMap?: Record<string, string>;
@@ -29,27 +20,28 @@ export function FrequencyChart({ data, behaviorLabelMap }: FrequencyChartProps) 
     percentage: d.percentage,
   }));
 
+  const maxCount = Math.max(...chartData.map((d) => d.count));
+
   return (
-    <div style={{ height: Math.max(200, chartData.length * 28) }} className="w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={chartData}
-          layout="vertical"
-          margin={{ top: 0, right: 40, left: 10, bottom: 0 }}
-        >
-          <XAxis type="number" tick={{ fontSize: 10 }} />
-          <YAxis
-            type="category"
-            dataKey="name"
-            tick={{ fontSize: 10 }}
-            width={140}
-          />
-          <Tooltip
-            formatter={(value) => [`${value} days`, "Frequency"]}
-          />
-          <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={16} />
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="space-y-2">
+      {chartData.map((d) => (
+        <div key={d.name} className="flex items-start gap-3">
+          <p className="w-48 shrink-0 text-right text-xs text-gray-700 leading-tight pt-0.5">
+            {d.name}
+          </p>
+          <div className="flex flex-1 items-center gap-2">
+            <div className="flex-1 h-5 rounded bg-gray-100">
+              <div
+                className="h-5 rounded bg-indigo-500"
+                style={{ width: `${(d.count / maxCount) * 100}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-xs text-gray-500 w-16">
+              {d.count}d ({d.percentage}%)
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
