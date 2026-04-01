@@ -16,6 +16,7 @@ export interface ReportDay {
   dayQuality: string;
   behaviors: string[];
   impairments: Record<string, string>;
+  missedMedIds: string[];
   hasPeriod: boolean;
   periodSeverity: string | null;
   hasNotes: boolean;
@@ -28,6 +29,7 @@ export interface ReportData {
   signals: ProdromeSignal[];
   behaviorFrequency: { key: string; count: number; percentage: number }[];
   impairmentSummary: { domain: string; presentCount: number; severeCount: number }[];
+  missedMedSummary: { medId: string; medName: string; count: number }[];
   tenantName: string;
   dateRange: { from: string; to: string };
   projectInfo: {
@@ -124,6 +126,7 @@ export async function getReportData(
       dayQuality: entry.dayQuality,
       behaviors: behaviorKeys,
       impairments,
+      missedMedIds: (entry.missedMedIds as string[]) ?? [],
       hasPeriod: !!entry.menstrualSeverity,
       periodSeverity: entry.menstrualSeverity,
       hasNotes: !!entry.notes,
