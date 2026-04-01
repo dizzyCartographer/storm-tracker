@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants, getDefaultTenantId } from "@/lib/actions/tenant-actions";
 import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
 import { getStrategies } from "@/lib/actions/strategy-actions";
+import { getMedications } from "@/lib/actions/medication-actions";
 import { Nav } from "@/app/_components/nav";
 import { ProjectSelector } from "@/app/_components/project-selector";
 import { redirect } from "next/navigation";
@@ -27,6 +28,8 @@ export default async function HistoryPage({
   const behaviorLabelMap = Object.fromEntries(behaviorItems.map((i) => [i.key, i.label]));
   const strategies = await getStrategies(activeTenant.id);
   const strategyLabelMap = Object.fromEntries(strategies.map((s) => [s.id, s.name]));
+  const medications = await getMedications(activeTenant.id);
+  const medLabelMap = Object.fromEntries(medications.map((m) => [m.id, m.name + (m.dosage ? ` ${m.dosage}` : "")]));
 
   return (
     <>
@@ -38,7 +41,7 @@ export default async function HistoryPage({
           Viewing entries for {activeTenant.name}
         </p>
 
-        <HistoryView tenantId={activeTenant.id} currentUserId={user.id} behaviorLabelMap={behaviorLabelMap} strategyLabelMap={strategyLabelMap} />
+        <HistoryView tenantId={activeTenant.id} currentUserId={user.id} behaviorLabelMap={behaviorLabelMap} strategyLabelMap={strategyLabelMap} medLabelMap={medLabelMap} />
       </main>
     </>
   );
