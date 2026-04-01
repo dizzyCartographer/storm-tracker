@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth-utils";
 import { getUserTenants, getDefaultTenantId } from "@/lib/actions/tenant-actions";
 import { getCustomItems } from "@/lib/actions/custom-item-actions";
 import { getStrategies } from "@/lib/actions/strategy-actions";
+import { getMedications } from "@/lib/actions/medication-actions";
 import { getEntryForEdit } from "@/lib/actions/entry-actions";
 import { getEntryAttachments } from "@/lib/actions/attachment-actions";
 import { getTenantBehaviorItems } from "@/lib/analysis/framework-loader";
@@ -27,6 +28,8 @@ export default async function LogPage({
   const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
   const customItems = await getCustomItems(activeTenant.id);
   const strategies = await getStrategies(activeTenant.id);
+  const allMedications = await getMedications(activeTenant.id);
+  const activeMedications = allMedications.filter((m) => m.isActive);
   const { items: behaviorItems } = await getTenantBehaviorItems(activeTenant.id);
 
   // Load existing entry for editing
@@ -49,6 +52,7 @@ export default async function LogPage({
           tenantId={activeTenant.id}
           customItems={customItems.map((i) => ({ id: i.id, label: i.label }))}
           strategies={strategies.map((s) => ({ id: s.id, name: s.name, category: s.category }))}
+          medications={activeMedications.map((m) => ({ id: m.id, name: m.name, dosage: m.dosage }))}
           initialData={entryData ?? undefined}
           behaviorItems={behaviorItems}
           initialAttachments={attachments.map((a) => ({
