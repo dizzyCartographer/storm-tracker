@@ -11,6 +11,9 @@ interface BehaviorItem {
   categoryName: string;
   label: string;
   description: string;
+  recognitionExamples: string[] | null;
+  sortOrder: number;
+  categorySortOrder: number;
 }
 
 const categoryColors: Record<string, { active: string; inactive: string }> = {
@@ -314,26 +317,59 @@ Example: 'Tuesday was really rough. He barely slept the night before and was inc
       {/* Behaviors */}
       <div>
         <label className="block text-sm font-medium text-gray-700">
-          Detected Behaviors
+          Behavior Criteria
           <span className="ml-2 text-xs font-normal text-gray-400">
-            Click to toggle
+            AI-detected items are pre-selected — click to toggle any
           </span>
         </label>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {editBehaviorKeys.map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => toggleBehavior(key)}
-              className="rounded-full border border-gray-800 bg-gray-900 px-3 py-1 text-xs font-medium text-white hover:bg-gray-700"
-            >
-              {key.replace(/-/g, " ")} ×
-            </button>
-          ))}
-          {editBehaviorKeys.length === 0 && (
-            <span className="text-xs text-gray-400">None detected</span>
-          )}
-        </div>
+        {(() => {
+          const sorted = [...behaviorItems].sort(
+            (a, b) => a.categorySortOrder - b.categorySortOrder || a.sortOrder - b.sortOrder
+          );
+          const grouped = sorted.reduce<Record<string, BehaviorItem[]>>(
+            (acc, item) => {
+              const cat = item.category;
+              if (!acc[cat]) acc[cat] = [];
+              acc[cat].push(item);
+              return acc;
+            },
+            {}
+          );
+          return (
+            <div className="mt-2 space-y-3">
+              {Object.entries(grouped).map(([category, items]) => (
+                <div key={category}>
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {items[0].categoryName}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {items.map((item) => {
+                      const active = editBehaviorKeys.includes(item.key);
+                      const colors = categoryColors[category] ?? {
+                        active: "border-gray-800 bg-gray-900 text-white",
+                        inactive:
+                          "border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100",
+                      };
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => toggleBehavior(item.key)}
+                          title={item.description}
+                          className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                            active ? colors.active : colors.inactive
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Impairments */}
