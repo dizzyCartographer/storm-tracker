@@ -4,14 +4,9 @@ import { auth } from "@/lib/auth";
 import Link from "next/link";
 
 export default async function Home() {
-  let session = null;
-  try {
-    session = await auth.api.getSession({
-      headers: await headers(),
-    });
-  } catch {
-    // If session check fails (e.g. corrupt cookie), show landing page
-  }
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   if (session) redirect("/dashboard");
 
