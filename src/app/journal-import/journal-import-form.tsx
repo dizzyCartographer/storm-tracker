@@ -65,7 +65,13 @@ const confidenceColors: Record<string, string> = {
   LOW: "bg-red-100 text-red-800",
 };
 
-export function JournalImportForm({ tenantId }: { tenantId: string }) {
+export function JournalImportForm({
+  tenantId,
+  behaviorItems,
+}: {
+  tenantId: string;
+  behaviorItems: BehaviorItem[];
+}) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [parsing, setParsing] = useState(false);
