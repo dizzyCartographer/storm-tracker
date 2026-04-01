@@ -38,6 +38,7 @@ export function EntryDetail({
   currentUserId,
   behaviorLabelMap,
   strategyLabelMap,
+  medLabelMap,
 }: {
   entry: Entry & { displayMood?: string; hasBehaviorDetail?: boolean };
   currentUserId: string;
