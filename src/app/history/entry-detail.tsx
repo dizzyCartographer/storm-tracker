@@ -43,6 +43,7 @@ export function EntryDetail({
   currentUserId: string;
   behaviorLabelMap?: Record<string, string>;
   strategyLabelMap?: Record<string, string>;
+  medLabelMap?: Record<string, string>;
 }) {
   const displayMood = entry.displayMood ?? entry.mood;
   const behaviorKeys = entry.behaviorKeys;
@@ -138,6 +139,22 @@ export function EntryDetail({
               {sIds.map((id) => (
                 <span key={id} className="rounded bg-green-50 text-green-800 px-2 py-0.5 text-xs">
                   {strategyLabelMap[id] ?? id}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null;
+      })()}
+
+      {medLabelMap && (() => {
+        const mIds = (entry.missedMedIds as string[] | undefined) ?? [];
+        return mIds.length > 0 ? (
+          <div className="mt-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase">Missed Medications</p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {mIds.map((id) => (
+                <span key={id} className="rounded bg-amber-50 text-amber-800 px-2 py-0.5 text-xs">
+                  {medLabelMap[id] ?? id}
                 </span>
               ))}
             </div>
