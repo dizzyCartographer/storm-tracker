@@ -264,6 +264,17 @@ export function ReportView({ tenantId, tenantName, behaviorLabelMap }: ReportVie
                         </span>
                       )}
                     </p>
+                    {(() => {
+                      const episodeDays = data.days.filter(
+                        (d) => d.date >= ep.startDate && d.date <= ep.endDate
+                      );
+                      const missedDays = episodeDays.filter((d) => d.missedMedIds.length > 0);
+                      return missedDays.length > 0 ? (
+                        <p className="mt-1 text-xs text-amber-700">
+                          Medications missed on {missedDays.length} of {episodeDays.length} days during this period
+                        </p>
+                      ) : null;
+                    })()}
                     <p className="mt-1 text-[10px] text-gray-500 italic">{ep.criteriaNote}</p>
                   </div>
                 ))}

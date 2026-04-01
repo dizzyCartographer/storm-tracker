@@ -29,7 +29,6 @@ export interface ReportData {
   signals: ProdromeSignal[];
   behaviorFrequency: { key: string; count: number; percentage: number }[];
   impairmentSummary: { domain: string; presentCount: number; severeCount: number }[];
-  missedMedSummary: { medId: string; medName: string; count: number }[];
   tenantName: string;
   dateRange: { from: string; to: string };
   projectInfo: {
