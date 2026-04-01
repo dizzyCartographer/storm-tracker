@@ -133,6 +133,11 @@ export default async function DashboardPage({
                     {entry.behaviorKeys.length} behavior{entry.behaviorKeys.length !== 1 ? "s" : ""} logged
                   </p>
                 )}
+                {((entry.missedMedIds as string[]) ?? []).length > 0 && (
+                  <p className="mt-0.5 text-xs text-amber-600">
+                    {((entry.missedMedIds as string[]) ?? []).length} med{((entry.missedMedIds as string[]) ?? []).length !== 1 ? "s" : ""} missed
+                  </p>
+                )}
                 {Object.values(entry.impairments).filter((s) => s !== "NONE").length > 0 && (
                   <p className="mt-0.5 text-xs text-gray-500">
                     {Object.values(entry.impairments).filter((s) => s !== "NONE").length} impairment{Object.values(entry.impairments).filter((s) => s !== "NONE").length !== 1 ? "s" : ""}

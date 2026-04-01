@@ -77,8 +77,11 @@ export default async function LogDetailPage({
   // Load custom item labels and strategy names
   const customItems = customItemIds.length > 0 ? await getCustomItems(entry.tenantId) : [];
   const strategyIds = (entry.strategyIds as string[]) ?? [];
+  const missedMedIds = entry.missedMedIds;
   const allStrategies = strategyIds.length > 0 ? await getStrategies(entry.tenantId) : [];
   const strategyLabelMap = Object.fromEntries(allStrategies.map((s) => [s.id, s.name]));
+  const allMeds = missedMedIds.length > 0 ? await getMedications(entry.tenantId) : [];
+  const medLabelMap = Object.fromEntries(allMeds.map((m) => [m.id, m.name + (m.dosage ? ` ${m.dosage}` : "")]));
   const customLabelMap = Object.fromEntries(customItems.map((i) => [i.id, i.label]));
 
   const manicKeys = behaviorKeys.filter((key) => categoryForItem[key] === "manic");
@@ -194,6 +197,20 @@ export default async function LogDetailPage({
               {strategyIds.map((id) => (
                 <span key={id} className="rounded-md bg-green-50 text-green-800 px-2.5 py-1 text-sm">
                   {strategyLabelMap[id] ?? id}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Missed Medications */}
+        {missedMedIds.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Missed Medications</h2>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {missedMedIds.map((id) => (
+                <span key={id} className="rounded-md bg-amber-50 text-amber-800 px-2.5 py-1 text-sm">
+                  {medLabelMap[id] ?? id}
                 </span>
               ))}
             </div>
