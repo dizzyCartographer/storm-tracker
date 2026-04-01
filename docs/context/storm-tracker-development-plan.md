@@ -294,9 +294,37 @@ Include the full project profile (teen info, background, active medications, str
 
 _From iterative requirements: track missed medication days._
 
-### 19.1 — Missed medication day logging ⬜
+### 19.1 — Missed medication day logging ✅
 
-Add the ability to flag a day when meds were missed. Default assumption is meds were taken — only missed days need to be logged. Add a "missed meds" toggle to the daily log form (per active medication). Display missed-med days on dashboard, history, and reports. Surface patterns (e.g., correlation between missed meds and mood shifts).
+Added `missedMedIds` JSONB column on Entry. "Missed medications" collapsible section in daily log form with amber pill toggles per active med. Displayed on dashboard (count), history entry detail (amber badges), log detail view (amber badges), and reports (missed-med days noted on possible episodes).
+
+***
+
+## Phase 20: Persisted Episode Detection ⬜
+
+_Currently episodes are recomputed on every report generation. They should be stored in the database so reports read stored data and episode history is preserved._
+
+### 20.1 — Episode table and persistence ⬜
+
+New `Episode` model:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | uuid | PK |
+| tenantId | string | FK to tenant |
+| type | string | MANIC, HYPOMANIC, DEPRESSIVE, MIXED |
+| startDate | date | First day of episode |
+| endDate | date | Last day of episode |
+| dayCount | int | Total days in episode |
+| confidence | string | DSM5_MET or PRODROMAL_CONCERN |
+| peakSeverity | string | |
+| hasSafetyConcern | boolean | |
+| criteriaNote | string | Explanation text |
+| missedMedDays | int | Count of days with missed meds during episode |
+| createdAt | timestamp | When first detected |
+| updatedAt | timestamp | |
+
+Episodes are computed and persisted whenever a daily log is saved (new data could create, extend, or resolve an episode). Reports read stored episodes instead of recomputing. Prodrome signals should follow the same pattern.
 
 ***
 
