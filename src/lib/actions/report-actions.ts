@@ -61,7 +61,32 @@ export async function getReportData(
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },
-    select: { name: true },
+    select: {
+      name: true,
+      teenFullName: true,
+      teenNickname: true,
+      teenBirthday: true,
+      teenDiagnosis: true,
+      teenOtherHealth: true,
+      teenSchool: true,
+      teenHasIep: true,
+      onsetDate: true,
+      familyHistory: true,
+      description: true,
+      purpose: true,
+    },
+  });
+
+  const medications = await prisma.medication.findMany({
+    where: { tenantId, isActive: true },
+    select: { name: true, dosage: true, frequency: true, instructions: true },
+    orderBy: { name: "asc" },
+  });
+
+  const strategies = await prisma.strategy.findMany({
+    where: { tenantId },
+    select: { name: true, category: true },
+    orderBy: { name: "asc" },
   });
 
   // Load the tenant's diagnostic framework
@@ -102,6 +127,7 @@ export async function getReportData(
       hasPeriod: !!entry.menstrualSeverity,
       periodSeverity: entry.menstrualSeverity,
       hasNotes: !!entry.notes,
+      notes: entry.notes,
     };
   });
 
@@ -164,5 +190,22 @@ export async function getReportData(
     impairmentSummary,
     tenantName: tenant?.name ?? "Unknown",
     dateRange: { from: fromDate, to: toDate },
+    projectInfo: tenant
+      ? {
+          teenFullName: tenant.teenFullName,
+          teenNickname: tenant.teenNickname,
+          teenBirthday: tenant.teenBirthday,
+          teenDiagnosis: tenant.teenDiagnosis,
+          teenOtherHealth: tenant.teenOtherHealth,
+          teenSchool: tenant.teenSchool,
+          teenHasIep: tenant.teenHasIep,
+          onsetDate: tenant.onsetDate,
+          familyHistory: tenant.familyHistory,
+          description: tenant.description,
+          purpose: tenant.purpose,
+        }
+      : null,
+    medications,
+    strategies,
   };
 }
