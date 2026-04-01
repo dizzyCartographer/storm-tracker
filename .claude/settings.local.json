@@ -37,7 +37,8 @@
       "mcp__aa80dce7-08f2-4bc1-91c6-6f0ccbcb26ac__web_fetch_vercel_url",
       "Bash(git reset:*)",
       "Bash(git fetch:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
     ]
   }
 }
