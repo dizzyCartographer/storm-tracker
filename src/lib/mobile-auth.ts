@@ -1,36 +1,20 @@
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { auth } from "./auth";
 import { prisma } from "./prisma";
 
-const JWKS = createRemoteJWKSet(
-  new URL("/api/auth/jwks", process.env.STRM_TRKR_BETTER_AUTH_URL!)
-);
-
 /**
- * Verify a JWT from the Authorization header and return the user ID.
- * Used by custom mobile API endpoints.
+ * Verify a Better Auth session from the request and return the user ID.
+ * Works with both cookie-based (web/Expo) and Bearer token auth.
  */
 export async function requireMobileUser(request: Request): Promise<string> {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    throw new AuthError("Missing or invalid Authorization header", 401);
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  if (!session?.user?.id) {
+    throw new AuthError("Not authenticated", 401);
   }
 
-  const token = authHeader.slice(7);
-
-  try {
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: process.env.STRM_TRKR_BETTER_AUTH_URL,
-    });
-
-    if (!payload.sub) {
-      throw new AuthError("Token missing sub claim", 401);
-    }
-
-    return payload.sub;
-  } catch (err) {
-    if (err instanceof AuthError) throw err;
-    throw new AuthError("Invalid or expired token", 401);
-  }
+  return session.user.id;
 }
 
 /**
