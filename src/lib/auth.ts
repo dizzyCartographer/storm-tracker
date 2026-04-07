@@ -1,6 +1,8 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { jwt } from "better-auth/plugins";
+import { expo } from "@better-auth/expo";
 import { authPrisma } from "./prisma";
 
 export const auth = betterAuth({
@@ -8,8 +10,29 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: true },
   secret: process.env.STRM_TRKR_BETTER_AUTH_SECRET,
   baseURL: process.env.STRM_TRKR_BETTER_AUTH_URL,
-  trustedOrigins: process.env.STRM_TRKR_BETTER_AUTH_URL
-    ? [process.env.STRM_TRKR_BETTER_AUTH_URL]
-    : [],
-  plugins: [nextCookies()],
+  trustedOrigins: (request) => {
+    const origins: string[] = [
+      "stormtracker://",
+      "http://localhost:3000",
+    ];
+    if (process.env.STRM_TRKR_BETTER_AUTH_URL) {
+      origins.push(process.env.STRM_TRKR_BETTER_AUTH_URL);
+    }
+    // Vercel preview deployments use dynamic subdomains
+    const origin = request?.headers.get("origin");
+    if (origin && /^https:\/\/storm-tracker-.*\.vercel\.app$/.test(origin)) {
+      origins.push(origin);
+    }
+    return origins;
+  },
+  plugins: [
+    expo(),
+    jwt({
+      jwt: {
+        issuer: process.env.STRM_TRKR_BETTER_AUTH_URL,
+        expirationTime: "15m",
+      },
+    }),
+    nextCookies(), // MUST be last — ordering matters
+  ],
 });

@@ -83,6 +83,16 @@ model Verification {
   @@map("verifications")
 }
 
+model Jwks {
+  id         String    @id @default(uuid())
+  publicKey  String
+  privateKey String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+
+  @@map("jwks")
+}
+
 enum ProjectPurpose {
   ONGOING_TRACKING
   DIAGNOSTIC_COLLECTION
