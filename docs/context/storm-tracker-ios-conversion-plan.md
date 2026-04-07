@@ -75,10 +75,18 @@ Policy categories:
 - **Tenant data** (entries, custom_checklist_items, attachments, medications, strategies): CRUD if member. Entries: create/update/delete own only.
 - **Diagnostic frameworks** (11 tables): read-only for any authenticated user.
 
-### B.2 — JWT Auth Setup ✅
-Added Better Auth `jwt` plugin alongside existing `nextCookies()` in `src/lib/auth.ts`. Exposes:
-- `POST /api/auth/token` — mobile app calls after sign-in to get a JWT (sub = user ID)
-- `GET /api/auth/jwks` — JWKS endpoint for Neon to verify tokens
+### B.2 — JWT Auth Setup 🔧
+**⚠️ The Better Auth `jwt` plugin was added then removed** — it broke all web sessions by interfering with cookie-based auth in `getSession()`. **NEVER add plugins to `src/lib/auth.ts` for mobile features.**
+
+Correct approach: create standalone endpoints under `/api/mobile/` using the `jose` library:
+- `GET /api/mobile/jwks` — serves the public key for JWT verification
+- `POST /api/mobile/token` — validates a Better Auth session cookie, issues a signed JWT (sub = user ID)
+
+Implementation details:
+- Generate an RSA keypair; store private key as env var (`MOBILE_JWT_PRIVATE_KEY`), serve public key via JWKS
+- Token endpoint validates session by calling Better Auth's session lookup directly (not via plugin)
+- `src/lib/mobile-auth.ts` already exists with `requireMobileUser()` using `jose` — just needs its JWKS URL pointed at `/api/mobile/jwks`
+- Mobile client (`mobile/src/lib/auth.ts`) needs updated to call `/api/mobile/token` instead of `/api/auth/token`
 
 ### B.3 — Enable Data API in Neon Console ✅
 User enabled Data API, JWT, and RLS in Neon console. JWKS URL must be set to `https://<production-domain>/api/auth/jwks`.
@@ -96,29 +104,35 @@ Everything else (read entries, list tenants, CRUD medications, strategies, custo
 
 ---
 
-## Phase C: Expo App Scaffold + TestFlight Pipeline
+## Phase C: Expo App Scaffold + TestFlight Pipeline 🔧
 
 Get a minimal app running on your phone via TestFlight before building real screens.
 
-### C.1 — Project Setup
-- `mobile/` directory in existing repo
-- Expo with TypeScript, Expo Router
+### C.1 — Project Setup ✅
+- `mobile/` directory in existing repo (Expo SDK 55, React Native 0.83, TypeScript)
+- Expo Router for file-based navigation
 - `expo-secure-store` for JWT tokens
+- Bundle ID: `com.stormtracker.app`
 
-### C.2 — Apple Developer + TestFlight Setup
+### C.2 — Apple Developer + TestFlight Setup ⬜
 - Apple Developer account ($99/year)
 - Set up App Store Connect (app record, bundle ID)
 - Configure Xcode signing (or EAS Build credentials)
-- Build minimal "hello world" app → deploy to TestFlight
+- Build minimal app → deploy to TestFlight
 - Verify install on personal device
-- Walk through entire Xcode/TestFlight flow step by step
 
-### C.3 — API Client
-- Typed client for Neon Data API (auto-generated CRUD)
-- Typed client for custom endpoints (scoring, analysis)
-- Auth token management
+### C.3 — API Client ✅
+- `mobile/src/lib/api.ts` — typed fetch wrapper with Bearer token auth, auto-logout on 401
+- `mobile/src/lib/auth.ts` — sign-in flow, SecureStore token management, `getToken()`/`signOut()`/`isAuthenticated()`
+- `mobile/src/lib/auth-context.tsx` — React Context for app-wide auth state
+- **Blocked:** sign-in fails at token exchange step because B.2 endpoints don't exist yet
 
-### C.4 — Styling Foundation
+### C.4 — Screens Built ✅ (partial)
+- `mobile/src/app/_layout.tsx` — root layout with AuthProvider
+- `mobile/src/app/sign-in.tsx` — sign-in form (email/password, error handling, loading state)
+- `mobile/src/app/index.tsx` — placeholder home screen with sign-out button
+
+### C.5 — Styling Foundation ⬜
 - NativeWind (Tailwind for React Native) or StyleSheet
 - Mood color system (manic=orange, depressive=blue, mixed=purple, neutral=gray)
 - Project theming (teen's favorite color)

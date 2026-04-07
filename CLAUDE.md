@@ -46,3 +46,6 @@ When adding a new context file, add an `@` import below **and** update the tree 
 ## Workflow Rules
 
 - **Commit and push after every phase.** When a development plan phase is complete, create a commit and push to `origin/main` immediately. Do not wait for the user to ask.
+- **Descriptive commit messages only.** Never use "Update documents" or "Update files". Name what changed and why. See `docs/context/conventions.md` for format.
+- **Clean up worktrees and branches.** After completing work in a Claude Code worktree, merge to `main`, remove the worktree, and delete the branch (local + remote). Do not leave stale branches.
+- **Check git state at session start.** Run `git branch -a` and `git worktree list` early. Clean up anything left over from previous sessions before starting new work.

@@ -290,7 +290,7 @@ Include the full project profile (teen info, background, active medications, str
 
 ***
 
-## Phase 19: Medication Logging ⬜
+## Phase 19: Medication Logging ✅
 
 _From iterative requirements: track missed medication days._
 
@@ -325,6 +325,36 @@ New `Episode` model:
 | updatedAt | timestamp | |
 
 Episodes are computed and persisted whenever a daily log is saved (new data could create, extend, or resolve an episode). Reports read stored episodes instead of recomputing. Prodrome signals should follow the same pattern.
+
+***
+
+## Phase 21: Journal Import ✅
+
+_AI-powered freeform journal parsing into structured behavioral entries._
+
+### 21.1 — Journal import page ✅
+
+New `/journal-import` page with 3-step flow: (1) paste freeform journal text, (2) review AI-parsed result with editable fields and full behavior checklist for follow-up toggling, (3) save confirmation. Uses Vercel AI SDK with `@ai-sdk/anthropic` (`generateObject` with Zod schema). Parses date, mood, day quality, behavior keys, impairments, notes, confidence, reasoning, and follow-up questions. Nav link added as "Import".
+
+***
+
+## Phase 22: Report Enhancements ✅
+
+### 22.1 — Project info in report header ✅
+
+Reports display patient information section after the print header: teen details, active medications (green pills), strategies (blue pills).
+
+### 22.2 — Caregiver notes in report ✅
+
+Notes section at bottom of report showing all caregiver notes with dates.
+
+### 22.3 — Softer episode language ✅
+
+"Detected Episodes" → "Possible Episodes". "DSM-5 criteria met" → "Pattern consistent with DSM-5 criteria". "Prodromal concern" → "Emerging pattern of concern".
+
+### 22.4 — Behavior frequency chart fix ✅
+
+Replaced Recharts bar chart with clean CSS-based horizontal bar layout. Labels no longer overlap — each behavior gets its own row with full label, proportional bar, and count/percentage.
 
 ***
 
