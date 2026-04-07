@@ -11,9 +11,11 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@better-auth/expo": "^1.6.0",
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/elements": "^2.9.10",
     "@react-navigation/native": "^7.1.33",
+    "better-auth": "^1.6.0",
     "expo": "~55.0.9",
     "expo-constants": "~55.0.9",
     "expo-device": "~55.0.10",

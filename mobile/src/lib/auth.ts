@@ -1,71 +1,35 @@
+import { createAuthClient } from "better-auth/react";
+import { expoClient } from "@better-auth/expo/client";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE_URL } from "./api";
 
-const TOKEN_KEY = "storm_tracker_jwt";
-const SESSION_COOKIE_KEY = "storm_tracker_session";
+export const authClient = createAuthClient({
+  baseURL: API_BASE_URL,
+  plugins: [
+    expoClient({
+      scheme: "stormtracker",
+      storage: SecureStore,
+      storagePrefix: "storm_tracker",
+    }),
+  ],
+});
 
 /**
- * Sign in with email and password.
- * 1. POST to Better Auth sign-in endpoint to create a session
- * 2. POST to /api/auth/token to get a JWT for mobile API access
- * 3. Store the JWT in SecureStore
+ * Sign in with email and password via Better Auth.
  */
 export async function signIn(
   email: string,
   password: string
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
-    // Step 1: Sign in to get a session
-    const signInRes = await fetch(`${API_BASE_URL}/api/auth/sign-in/email`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Origin: API_BASE_URL,
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const result = await authClient.signIn.email({ email, password });
 
-    if (!signInRes.ok) {
-      const data = await signInRes.json().catch(() => null);
+    if (result.error) {
       return {
         success: false,
-        error: data?.message ?? "Invalid email or password",
+        error: result.error.message ?? "Invalid email or password",
       };
     }
-
-    // Extract session token from the sign-in response body
-    const signInData = await signInRes.json();
-    const sessionToken = signInData?.token ?? signInData?.session?.token;
-
-    if (!sessionToken) {
-      return { success: false, error: "No session token received" };
-    }
-
-    // Step 2: Get a JWT token — pass session token as a cookie
-    const tokenRes = await fetch(`${API_BASE_URL}/api/auth/token`, {
-      method: "GET",
-      headers: {
-        Cookie: `better-auth.session_token=${sessionToken}`,
-        Origin: API_BASE_URL,
-      },
-    });
-
-    if (!tokenRes.ok) {
-      return {
-        success: false,
-        error: "Signed in but failed to get access token",
-      };
-    }
-
-    const tokenData = await tokenRes.json();
-    const jwt = tokenData?.token;
-
-    if (!jwt) {
-      return { success: false, error: "No JWT token in response" };
-    }
-
-    // Step 3: Store the JWT
-    await SecureStore.setItemAsync(TOKEN_KEY, jwt);
 
     return { success: true };
   } catch (err) {
@@ -77,25 +41,33 @@ export async function signIn(
 }
 
 /**
- * Get the stored JWT token.
- */
-export async function getToken(): Promise<string | null> {
-  return SecureStore.getItemAsync(TOKEN_KEY);
-}
-
-/**
- * Sign out — delete stored tokens.
+ * Sign out — clears the Better Auth session.
  */
 export async function signOut(): Promise<void> {
-  await SecureStore.deleteItemAsync(TOKEN_KEY);
-  await SecureStore.deleteItemAsync(SESSION_COOKIE_KEY);
+  await authClient.signOut();
 }
 
 /**
- * Check if user has a stored token.
- * Does NOT validate expiration — the API will return 401 if expired.
+ * Check if user has an active session.
  */
 export async function isAuthenticated(): Promise<boolean> {
-  const token = await getToken();
-  return token !== null;
+  try {
+    const session = await authClient.getSession();
+    return !!session.data?.user;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get a JWT for Neon Data API requests.
+ * The JWT plugin on the server issues these on demand.
+ */
+export async function getJwt(): Promise<string | null> {
+  try {
+    const result = await authClient.token();
+    return result.data?.token ?? null;
+  } catch {
+    return null;
+  }
 }

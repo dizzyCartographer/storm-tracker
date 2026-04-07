@@ -2,137 +2,76 @@
 
 ## Context
 
-The web app (Next.js 16, Vercel, Prisma/Neon Postgres) is being converted to an iOS app via React Native + Expo. The web app will eventually be sunset. The current data model has unnecessary complexity — a single daily log entry is fragmented across 5 tables when it should be one record. The app also has no REST API (uses Next.js server actions), which blocks mobile access.
+The web app (Next.js 16, Vercel, Prisma/Neon Postgres) is being converted to an iOS app via React Native + Expo. The web app will eventually be sunset. The data model was flattened (Phase A) to simplify API access. Neon Data API provides auto-generated REST for all tables. Better Auth handles both web and mobile authentication via its Expo and JWT plugins.
 
-**Strategy:** Flatten the data model first, then enable Neon Data API for auto-generated REST, with a few custom API endpoints for operations that need server-side computation (scoring/classification). Then build the Expo app.
-
----
-
-## Phase A: Flatten Entry Data Model (web app, prerequisite) ✅
-
-Consolidate 5 tables into 1. Add persisted computed fields.
-
-### Schema Changes
-
-**Remove these tables:**
-- `BehaviorCheck`
-- `CustomCheck`
-- `Impairment`
-- `MenstrualLog`
-
-**Add JSONB + computed columns to `Entry`:**
-
-| Column | Type | Example |
-|--------|------|---------|
-| `behaviorKeys` | `jsonb` | `["manic-gate", "depressive-core-1"]` |
-| `customItemIds` | `jsonb` | `["clx123", "clx456"]` |
-| `strategyIds` | `jsonb` | `["str123", "str456"]` |
-| `impairments` | `jsonb` | `{"school": "PRESENT", "family": "SEVERE"}` |
-| `menstrualSeverity` | `String?` | `"MEDIUM"` (or null — no need for a whole table for one field) |
-| `computedMood` | `String?` | `"MANIC"` — algorithmic classification |
-| `computedScore` | `Float?` | `0.75` — wave graph score |
-
-### Migration Script
-- Read all entries with their related BehaviorCheck, CustomCheck, Impairment, MenstrualLog records
-- Write JSONB values + compute and store `computedMood`/`computedScore` for each entry
-- Run scoring engine during migration to populate computed fields for historical data
-- Verify row counts match before dropping old tables
-
-### Application Code Updates
-
-**Files to modify:**
-
-| File | Change |
-|------|--------|
-| `prisma/schema.prisma` | Add JSONB columns to Entry, remove 4 child models |
-| `src/lib/actions/entry-actions.ts` | `saveDailyLog()` becomes single upsert + compute classification. All `getEntries*` functions stop doing `.map(bc => bc.itemKey)` — data is already in the right shape. Remove `displayMood` computation on read. |
-| `src/lib/actions/report-actions.ts` | Same — stop flattening nested records, read JSONB directly |
-| `src/lib/actions/analysis-actions.ts` | Same — read `behaviorKeys` directly from entry |
-| `src/app/log/daily-log-form.tsx` | Form state stays the same (already works with key arrays) |
-| `src/app/log/[id]/page.tsx` | Read-only view — read from JSONB instead of nested includes |
-| `src/app/log/behavior-checklist.tsx` | No change — already works with key arrays |
-| `src/app/log/impairment-tracking.tsx` | Minor — read/write from JSONB object instead of array of records |
-| `src/app/log/menstrual-tracking.tsx` | Minor — read/write single field instead of nested record |
-| `src/app/dashboard/entry-card.tsx` | Use `computedMood` directly instead of recalculating |
-| `src/app/history/entry-calendar.tsx` | Use `computedMood` for dot colors |
-| `src/app/reports/report-view.tsx` | Use `computedScore` directly |
-
-### Verification
-- Run existing app locally, create/edit/view entries — all flows work
-- Compare dashboard, history, reports output before and after migration
-- Verify scoring matches: `computedMood` on every historical entry should match what the old read-time computation produced
+**Strategy:** Flatten the data model → enable Neon Data API with RLS → add Better Auth Expo/JWT plugins → build Expo app → TestFlight → App Store.
 
 ---
 
-## Phase B: Enable Neon Data API ✅
+## Phase A: Flatten Entry Data Model ✅
+
+Consolidated 5 tables into 1 Entry table with JSONB columns (`behaviorKeys`, `customItemIds`, `strategyIds`, `impairments`, `menstrualSeverity`) and persisted computed fields (`computedMood`, `computedScore`).
+
+---
+
+## Phase B: Backend API Layer ✅
 
 ### B.1 — Row-Level Security Policies ✅
-RLS enabled on all 24 tables via migration `20260331_add_rls_policies`. Helper functions `is_tenant_member()` and `is_tenant_owner()` (SECURITY DEFINER) avoid repeated subqueries. Prisma connects as DB owner and bypasses RLS; only Neon Data API requests (authenticated role) are subject to policies.
+RLS enabled on all 24 tables via migration `20260331_add_rls_policies`. Helper functions `is_tenant_member()` and `is_tenant_owner()` (SECURITY DEFINER). Prisma connects as DB owner and bypasses RLS; only Neon Data API requests are subject to policies.
 
-Policy categories:
-- **Auth tables** (users, sessions, accounts): read/update own only. Verifications: no Data API access.
-- **Tenant management** (tenants, tenant_members, invites): read if member, manage if owner.
-- **Tenant data** (entries, custom_checklist_items, attachments, medications, strategies): CRUD if member. Entries: create/update/delete own only.
-- **Diagnostic frameworks** (11 tables): read-only for any authenticated user.
+### B.2 — Better Auth Plugins ✅
+Added `expo()`, `jwt()`, and `nextCookies()` (must be last) to `src/lib/auth.ts`. The JWT plugin stores keys in the `jwks` table (migration `20260407_add_jwks_table`). The Expo plugin enables mobile session management via `expo-secure-store`. `trustedOrigins` accepts production URL, `stormtracker://` deep link scheme, localhost, and Vercel preview URLs via dynamic callback.
 
-### B.2 — JWT Auth Setup 🔧
-**⚠️ The Better Auth `jwt` plugin was added then removed** — it broke all web sessions by interfering with cookie-based auth in `getSession()`. **NEVER add plugins to `src/lib/auth.ts` for mobile features.**
+**Key lesson:** Plugin ordering matters — `nextCookies()` must be last or it breaks web sessions.
 
-Correct approach: create standalone endpoints under `/api/mobile/` using the `jose` library:
-- `GET /api/mobile/jwks` — serves the public key for JWT verification
-- `POST /api/mobile/token` — validates a Better Auth session cookie, issues a signed JWT (sub = user ID)
-
-Implementation details:
-- Generate an RSA keypair; store private key as env var (`MOBILE_JWT_PRIVATE_KEY`), serve public key via JWKS
-- Token endpoint validates session by calling Better Auth's session lookup directly (not via plugin)
-- `src/lib/mobile-auth.ts` already exists with `requireMobileUser()` using `jose` — just needs its JWKS URL pointed at `/api/mobile/jwks`
-- Mobile client (`mobile/src/lib/auth.ts`) needs updated to call `/api/mobile/token` instead of `/api/auth/token`
-
-### B.3 — Enable Data API in Neon Console ✅
-User enabled Data API, JWT, and RLS in Neon console. JWKS URL must be set to `https://<production-domain>/api/auth/jwks`.
+### B.3 — Neon Data API ✅
+Data API, JWT, and RLS enabled in Neon console. JWKS URL set to `https://storm-tracker-murex.vercel.app/api/auth/jwks`.
 
 ### B.4 — Custom API Endpoints ✅
-Three endpoints for server-side computation (JWT-authenticated via `src/lib/mobile-auth.ts`):
+Three endpoints for server-side computation (authenticated via Better Auth sessions):
 
 | Endpoint | Purpose |
 |----------|---------|
-| `POST /api/mobile/entries` | Save daily log — single upsert + scoring engine + persist `computedMood`/`computedScore` |
-| `GET /api/mobile/analysis/[tenantId]` | Full analysis pipeline: scoring, episodes, signals, predictions, suggestions, discrepancies |
-| `GET /api/mobile/frameworks/[tenantId]` | Load tenant framework data (behaviors, criteria, classification rules, episode thresholds) |
+| `POST /api/mobile/entries` | Save daily log — upsert + scoring engine + persist computed fields |
+| `GET /api/mobile/analysis/[tenantId]` | Full analysis pipeline |
+| `GET /api/mobile/frameworks/[tenantId]` | Framework data for UI rendering |
 
-Everything else (read entries, list tenants, CRUD medications, strategies, custom items, attachments) goes through the auto-generated Neon Data API.
+Everything else goes through Neon Data API.
 
 ---
 
 ## Phase C: Expo App Scaffold + TestFlight Pipeline 🔧
 
-Get a minimal app running on your phone via TestFlight before building real screens.
-
 ### C.1 — Project Setup ✅
-- `mobile/` directory in existing repo (Expo SDK 55, React Native 0.83, TypeScript)
+- `mobile/` directory (Expo SDK 55, React Native 0.83, TypeScript)
 - Expo Router for file-based navigation
-- `expo-secure-store` for JWT tokens
 - Bundle ID: `com.stormtracker.app`
 
-### C.2 — Apple Developer + TestFlight Setup ⬜
+### C.2 — Mobile Auth Client 🔧
+- `@better-auth/expo` client with `expoClient()` plugin for cookie-based session management via SecureStore
+- `createAuthClient()` with `baseURL` pointing to production Vercel URL
+- `authClient.signIn.email()` for email/password, `authClient.token()` for JWT when needed for Neon Data API
+- Auth context provides `isSignedIn`, `signIn`, `signOut` to the app
+
+### C.3 — API Client ✅
+- `mobile/src/lib/api.ts` — fetch wrapper for custom endpoints
+- Uses session cookies (via `authClient.getCookie()`) for custom API endpoints
+- Uses JWT (via `authClient.token()`) for Neon Data API requests
+- Helpers: `saveEntry()`, `getAnalysis()`, `getFrameworks()`
+
+### C.4 — Screens Built ✅ (partial)
+- `_layout.tsx` — root layout with AuthProvider
+- `sign-in.tsx` — sign-in form (email/password, error handling, loading state)
+- `index.tsx` — placeholder home screen with auth gate
+
+### C.5 — Apple Developer + TestFlight Setup ⬜
 - Apple Developer account ($99/year)
-- Set up App Store Connect (app record, bundle ID)
+- App Store Connect (app record, bundle ID)
 - Configure Xcode signing (or EAS Build credentials)
 - Build minimal app → deploy to TestFlight
 - Verify install on personal device
 
-### C.3 — API Client ✅
-- `mobile/src/lib/api.ts` — typed fetch wrapper with Bearer token auth, auto-logout on 401
-- `mobile/src/lib/auth.ts` — sign-in flow, SecureStore token management, `getToken()`/`signOut()`/`isAuthenticated()`
-- `mobile/src/lib/auth-context.tsx` — React Context for app-wide auth state
-- **Blocked:** sign-in fails at token exchange step because B.2 endpoints don't exist yet
-
-### C.4 — Screens Built ✅ (partial)
-- `mobile/src/app/_layout.tsx` — root layout with AuthProvider
-- `mobile/src/app/sign-in.tsx` — sign-in form (email/password, error handling, loading state)
-- `mobile/src/app/index.tsx` — placeholder home screen with sign-out button
-
-### C.5 — Styling Foundation ⬜
+### C.6 — Styling Foundation ⬜
 - NativeWind (Tailwind for React Native) or StyleSheet
 - Mood color system (manic=orange, depressive=blue, mixed=purple, neutral=gray)
 - Project theming (teen's favorite color)
@@ -140,7 +79,7 @@ Get a minimal app running on your phone via TestFlight before building real scre
 
 ---
 
-## Phase D: v1 Screens (build + push to TestFlight iteratively)
+## Phase D: v1 Screens (build + push to TestFlight iteratively) ⬜
 
 Each screen gets tested on device via TestFlight as it's built.
 
@@ -152,7 +91,8 @@ Each screen gets tested on device via TestFlight as it's built.
 
 ---
 
-## Phase E: Native Features (post-v1)
+## Phase E: Native Features (post-v1) ⬜
+- Apple Sign In (`expo-apple-authentication` + Better Auth Apple plugin)
 - Push notifications for logging reminders
 - Camera for attachments (`expo-image-picker`)
 - Face ID / Touch ID (`expo-local-authentication`)
@@ -164,14 +104,13 @@ Each screen gets tested on device via TestFlight as it's built.
 
 ---
 
-## Phase F: Design & Visual Polish
+## Phase F: Design & Visual Polish ⬜
 - User-driven design changes (TBD — collect during beta testing)
 - Deferred intentionally: functionality first, then polish
-- This phase will be scoped based on design feedback gathered during TestFlight beta
 
 ---
 
-## Phase G: App Store Submission
+## Phase G: App Store Submission ⬜
 - App icons, splash screen, screenshots
 - Privacy policy (health-adjacent data)
 - App Store review + submission
@@ -179,9 +118,10 @@ Each screen gets tested on device via TestFlight as it's built.
 ---
 
 ## Execution Order
-1. **Phase A first** — flatten the data model in the existing web app. This improves the web app regardless of mobile.
-2. **Phase B** — enable Neon Data API. Web app continues using server actions; mobile will use the Data API.
-3. **Phase C** — scaffold Expo app + get TestFlight pipeline working.
-4. **Phase D/E** — build screens iteratively, test on device, add native features.
-5. **Phase F** — design polish based on beta testing feedback.
-6. **Phase G** — App Store submission.
+1. ~~Phase A~~ ✅ — flatten data model
+2. ~~Phase B~~ ✅ — backend API layer (RLS, auth plugins, Neon Data API, custom endpoints)
+3. **Phase C** 🔧 — finish mobile auth client, Apple Developer + TestFlight
+4. **Phase D** — build v1 screens iteratively
+5. **Phase E** — native features (Apple Sign In, notifications, etc.)
+6. **Phase F** — design polish from beta feedback
+7. **Phase G** — App Store submission

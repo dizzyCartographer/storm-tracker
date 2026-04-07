@@ -1,25 +1,56 @@
-import { getToken, signOut } from "./auth";
+import { authClient, getJwt, signOut } from "./auth";
 
 export const API_BASE_URL = "https://storm-tracker-murex.vercel.app";
 
 /**
- * Authenticated fetch wrapper.
- * Attaches the JWT Bearer token to all requests.
- * On 401, clears the token (forces re-login).
+ * Authenticated fetch for custom API endpoints.
+ * Uses Better Auth session cookies (managed by expoClient).
  */
 export async function apiFetch(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = await getToken();
+  const cookies = await authClient.getCookie();
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  if (cookies) {
+    headers["Cookie"] = cookies;
+  }
+
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers,
+    credentials: "omit",
+  });
+
+  if (res.status === 401) {
+    await signOut();
+  }
+
+  return res;
+}
+
+/**
+ * Authenticated fetch for Neon Data API.
+ * Uses JWT Bearer token (issued by Better Auth JWT plugin).
+ */
+export async function neonFetch(
+  path: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const jwt = await getJwt();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (jwt) {
+    headers["Authorization"] = `Bearer ${jwt}`;
   }
 
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -27,7 +58,6 @@ export async function apiFetch(
     headers,
   });
 
-  // If token is expired/invalid, clear it so the app shows sign-in
   if (res.status === 401) {
     await signOut();
   }
