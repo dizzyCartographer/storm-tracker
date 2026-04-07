@@ -10,12 +10,18 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: true },
   secret: process.env.STRM_TRKR_BETTER_AUTH_SECRET,
   baseURL: process.env.STRM_TRKR_BETTER_AUTH_URL,
-  trustedOrigins: [
-    ...(process.env.STRM_TRKR_BETTER_AUTH_URL
-      ? [process.env.STRM_TRKR_BETTER_AUTH_URL]
-      : []),
-    "stormtracker://",
-  ],
+  trustedOrigins: (request) => {
+    const origins: string[] = ["stormtracker://"];
+    if (process.env.STRM_TRKR_BETTER_AUTH_URL) {
+      origins.push(process.env.STRM_TRKR_BETTER_AUTH_URL);
+    }
+    // Vercel preview deployments use dynamic subdomains
+    const origin = request?.headers.get("origin");
+    if (origin && /^https:\/\/storm-tracker-.*\.vercel\.app$/.test(origin)) {
+      origins.push(origin);
+    }
+    return origins;
+  },
   plugins: [
     expo(),
     jwt({
