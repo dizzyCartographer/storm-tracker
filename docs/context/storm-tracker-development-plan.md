@@ -300,9 +300,9 @@ Added `missedMedIds` JSONB column on Entry. "Missed medications" collapsible sec
 
 ***
 
-## Phase 20: Persisted Episode Detection ⬜
+## Phase 20: Persisted Analysis ⬜
 
-_Currently episodes are recomputed on every report generation. They should be stored in the database so reports read stored data and episode history is preserved._
+_All analysis outputs are currently recomputed on every read. Per project convention, any business logic that produces a result displayed to the user MUST be stored in the database. This phase persists all analysis at write time so every read is a simple database query — no custom read endpoints needed. Mobile and web both read stored data via Neon Data API (mobile) or Prisma (web)._
 
 ### 20.1 — Episode table and persistence ⬜
 
@@ -324,7 +324,87 @@ New `Episode` model:
 | createdAt | timestamp | When first detected |
 | updatedAt | timestamp | |
 
-Episodes are computed and persisted whenever a daily log is saved (new data could create, extend, or resolve an episode). Reports read stored episodes instead of recomputing. Prodrome signals should follow the same pattern.
+Episodes are computed and persisted whenever a daily log is saved (new data could create, extend, or resolve an episode). Reports and dashboard read stored episodes instead of recomputing.
+
+### 20.2 — Prodrome signal persistence ⬜
+
+New `ProdromeSignal` model:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | uuid | PK |
+| tenantId | string | FK to tenant |
+| signalType | string | e.g. SLEEP_DISRUPTION, ESCALATING_IRRITABILITY |
+| detectedDate | date | When the signal was detected |
+| severity | string | LOW, MODERATE, HIGH |
+| description | string | Human-readable explanation |
+| relatedBehaviors | jsonb | Behavior keys that triggered the signal |
+| resolved | boolean | Whether the signal has resolved |
+| createdAt | timestamp | |
+| updatedAt | timestamp | |
+
+Recomputed on entry save. Old signals for the tenant are replaced with current detections.
+
+### 20.3 — Prediction persistence ⬜
+
+New `Prediction` model:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | uuid | PK |
+| tenantId | string | FK to tenant |
+| type | string | CYCLE_FORECAST, TREND, DAY_OF_WEEK_PATTERN |
+| summary | string | Human-readable prediction text |
+| data | jsonb | Structured prediction data (dates, probabilities, etc.) |
+| generatedAt | timestamp | When this prediction was computed |
+| expiresAt | timestamp | When this prediction becomes stale |
+| createdAt | timestamp | |
+
+Recomputed on entry save. Stale predictions are replaced.
+
+### 20.4 — Suggestion persistence ⬜
+
+New `Suggestion` model:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | uuid | PK |
+| tenantId | string | FK to tenant |
+| category | string | SAFETY, COMMUNICATION, ENVIRONMENT, SELF_CARE, CLINICAL |
+| text | string | The suggestion content |
+| priority | int | Display ordering |
+| context | string | Why this suggestion was generated |
+| createdAt | timestamp | |
+
+Recomputed on entry save. Old suggestions for the tenant are replaced with current ones.
+
+### 20.5 — Discrepancy persistence ⬜
+
+New `Discrepancy` model:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | uuid | PK |
+| tenantId | string | FK to tenant |
+| date | date | The date with conflicting observations |
+| entries | jsonb | Array of { userName, mood, classification, criteriaCount } |
+| createdAt | timestamp | |
+
+Recomputed on entry save for the affected date. Stored so dashboard and reports can display without recomputation.
+
+### 20.6 — Write-time analysis trigger ⬜
+
+The entry save endpoint (POST /api/mobile/entries and saveDailyLog server action) triggers all analysis after persisting the entry:
+1. Daily classification — already persisted as `computedMood` / `computedScore` ✅
+2. Episode detection → upsert Episode rows
+3. Prodrome signal detection → replace ProdromeSignal rows
+4. Prediction generation → replace Prediction rows
+5. Suggestion generation → replace Suggestion rows
+6. Discrepancy detection → upsert Discrepancy rows for the entry's date
+
+### 20.7 — Remove recomputation from read paths ⬜
+
+Delete the analysis API endpoint (`/api/mobile/analysis/[tenantId]`). Update web dashboard, reports, and history to read from the new tables instead of calling analysis functions. Mobile reads all data via Neon Data API.
 
 ***
 
