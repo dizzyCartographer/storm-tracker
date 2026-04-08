@@ -30,7 +30,7 @@ Every `.md` file in `docs/context/` is loaded into every session (subdirectories
 Before making significant changes, consult the relevant context files.
 When adding a new context file, add an `@` import below **and** update the tree above.
 
-@docs/context/overview.md
+@docs/context/overview\.md
 @docs/context/features.md
 @docs/context/architecture.md
 @docs/context/data-sources.md
@@ -49,7 +49,11 @@ When adding a new context file, add an `@` import below **and** update the tree 
 ## Workflow Rules
 
 - **Commit and push after every phase.** When a development plan phase is complete, create a commit and push to `origin/main` immediately. Do not wait for the user to ask.
+
 - **Commit before auto-save can.** Stage and commit with a proper message immediately after completing a logical unit of work. Do not leave modified files sitting in the working tree for auto-commit to pick up. If auto-commits have already been made with generic messages, squash them into a single descriptive commit before pushing (unless already pushed to remote).
+
 - **Descriptive commit messages only.** Never use "Update documents", "Update files", or "Add file.ts; Update file2.ts" style messages. Every commit message must follow the format in `docs/context/conventions.md`: `<type>: <description>`. Name the feature or change, not the files.
+
 - **Clean up worktrees and branches.** After completing work in a Claude Code worktree, merge to `main`, remove the worktree, and delete the branch (local + remote). Do not leave stale branches.
+
 - **Check git state at session start.** Run `git branch -a` and `git worktree list` early. Clean up anything left over from previous sessions before starting new work.
