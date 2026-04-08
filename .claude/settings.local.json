@@ -97,7 +97,8 @@
       "Read(//Users/mariayarley/Library/**)",
       "Read(//Users/mariayarley/**)",
       "Bash(neonctl auth:*)",
-      "Bash(neonctl me:*)"
+      "Bash(neonctl me:*)",
+      "Bash(vercel whoami:*)"
     ]
   }
 }
