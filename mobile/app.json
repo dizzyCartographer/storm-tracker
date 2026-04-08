@@ -41,6 +41,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "dd3e30bc-d31a-406d-a1cb-c388c808715a"
+      }
+    },
+    "owner": "dizzycartographer"
   }
 }
