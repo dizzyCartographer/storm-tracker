@@ -19,7 +19,7 @@ storm-tracker/
 │       ├── branding-style-guide.md  # Style guide, colors, typography
 │       ├── ui-requirements.md       # UI/UX specifications
 │       ├── architecture-standards.md # Data access, computation, and modeling standards
-│       ├── ios-conversion-plan.md   # iOS conversion roadmap
+│       ├── storm-tracker-ios-conversion-plan.md # iOS conversion roadmap
 │       └── storm-tracker-work-log.md # Running log of sessions, decisions, and work context
 └── CLAUDE.md         # This file — loaded into every Claude session
 ```
@@ -45,7 +45,7 @@ When adding a new context file, add an `@` import below **and** update the tree 
 @docs/context/architecture-standards.md
 @docs/context/scoring-logic.md
 @docs/context/storm-tracker-development-plan.md
-@docs/context/ios-conversion-plan.md
+@docs/context/storm-tracker-ios-conversion-plan.md
 @docs/context/storm-tracker-work-log.md
 
 ## Workflow Rules
