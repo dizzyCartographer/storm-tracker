@@ -252,6 +252,22 @@ export async function getStrategies(
   return res.json();
 }
 
+/** Get entries for a tenant within a date range. */
+export async function getEntriesByRange(
+  tenantId: string,
+  startDate: string,
+  endDate: string
+): Promise<EntryRow[]> {
+  const res = await neonFetch(
+    `/entries?"tenantId"=eq.${tenantId}` +
+      `&date=gte.${startDate}&date=lte.${endDate}` +
+      `&order=date.desc` +
+      `&select=id,date,mood,"dayQuality",notes,"behaviorKeys","customItemIds","strategyIds","missedMedIds",impairments,"menstrualSeverity","computedMood","computedScore","userId"`
+  );
+  if (!res.ok) throw new Error("Failed to fetch entries");
+  return res.json();
+}
+
 /** Get an existing entry for a tenant on a specific date. */
 export async function getEntryByDate(
   tenantId: string,
