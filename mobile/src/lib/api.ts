@@ -54,7 +54,7 @@ export async function neonFetch(
 
   // Neon Data API intermittently returns "jwk not found" (400) due to
   // JWKS cache misses across their infrastructure. Retry up to 2 times.
-  let res: Response;
+  let res: Response = null!;
   for (let attempt = 0; attempt < 3; attempt++) {
     res = await fetch(url, { ...options, headers });
     if (res.status !== 400) break;
@@ -184,6 +184,87 @@ export async function getSuggestions(
   return res.json();
 }
 
+// ── Neon Data API read helpers: Log form data ──
+
+/** Get the active framework ID for a tenant. */
+export async function getFrameworkId(tenantId: string): Promise<string | null> {
+  const res = await neonFetch(
+    `/tenant_frameworks?"tenantId"=eq.${tenantId}&select="frameworkId"&limit=1`
+  );
+  if (!res.ok) throw new Error("Failed to fetch tenant framework");
+  const rows: { frameworkId: string }[] = await res.json();
+  return rows.length > 0 ? rows[0].frameworkId : null;
+}
+
+/** Get behavior categories for a framework, sorted. */
+export async function getBehaviorCategories(
+  frameworkId: string
+): Promise<BehaviorCategoryRow[]> {
+  const res = await neonFetch(
+    `/framework_behavior_categories?"frameworkId"=eq.${frameworkId}&select=id,slug,name,"sortOrder"&order="sortOrder"`
+  );
+  if (!res.ok) throw new Error("Failed to fetch behavior categories");
+  return res.json();
+}
+
+/** Get behavior definitions for given category IDs, sorted. */
+export async function getBehaviorDefinitions(
+  categoryIds: string[]
+): Promise<BehaviorDefinitionRow[]> {
+  const inClause = categoryIds.map((id) => `"${id}"`).join(",");
+  const res = await neonFetch(
+    `/behavior_definitions?"categoryId"=in.(${inClause})&select=id,"itemKey",label,description,"recognitionExamples","isSafetyConcern","sortOrder","categoryId"&order="sortOrder"`
+  );
+  if (!res.ok) throw new Error("Failed to fetch behavior definitions");
+  return res.json();
+}
+
+/** Get custom checklist items for a tenant. */
+export async function getCustomItems(
+  tenantId: string
+): Promise<CustomItemRow[]> {
+  const res = await neonFetch(
+    `/custom_checklist_items?"tenantId"=eq.${tenantId}&select=id,label`
+  );
+  if (!res.ok) throw new Error("Failed to fetch custom items");
+  return res.json();
+}
+
+/** Get active medications for a tenant. */
+export async function getActiveMedications(
+  tenantId: string
+): Promise<MedicationRow[]> {
+  const res = await neonFetch(
+    `/medications?"tenantId"=eq.${tenantId}&"isActive"=eq.true&select=id,name,dosage`
+  );
+  if (!res.ok) throw new Error("Failed to fetch medications");
+  return res.json();
+}
+
+/** Get strategies for a tenant. */
+export async function getStrategies(
+  tenantId: string
+): Promise<StrategyRow[]> {
+  const res = await neonFetch(
+    `/strategies?"tenantId"=eq.${tenantId}&select=id,name,category`
+  );
+  if (!res.ok) throw new Error("Failed to fetch strategies");
+  return res.json();
+}
+
+/** Get an existing entry for a tenant on a specific date. */
+export async function getEntryByDate(
+  tenantId: string,
+  date: string
+): Promise<EntryRow | null> {
+  const res = await neonFetch(
+    `/entries?"tenantId"=eq.${tenantId}&date=eq.${date}&select=id,date,mood,"dayQuality",notes,"behaviorKeys","customItemIds","strategyIds","missedMedIds",impairments,"menstrualSeverity","computedMood","computedScore","userId"&limit=1`
+  );
+  if (!res.ok) throw new Error("Failed to fetch entry");
+  const rows: EntryRow[] = await res.json();
+  return rows.length > 0 ? rows[0] : null;
+}
+
 // ── Types ──
 
 export interface TenantSummary {
@@ -202,11 +283,49 @@ export interface EntryRow {
   dayQuality: string;
   notes: string | null;
   behaviorKeys: string[];
+  customItemIds?: string[];
+  strategyIds?: string[];
   missedMedIds: string[];
   impairments: Record<string, string>;
+  menstrualSeverity?: string | null;
   computedMood: string | null;
   computedScore: number | null;
   userId: string;
+}
+
+export interface BehaviorCategoryRow {
+  id: string;
+  slug: string;
+  name: string;
+  sortOrder: number;
+}
+
+export interface BehaviorDefinitionRow {
+  id: string;
+  itemKey: string;
+  label: string;
+  description: string;
+  recognitionExamples: string | null;
+  isSafetyConcern: boolean;
+  sortOrder: number;
+  categoryId: string;
+}
+
+export interface CustomItemRow {
+  id: string;
+  label: string;
+}
+
+export interface MedicationRow {
+  id: string;
+  name: string;
+  dosage: string | null;
+}
+
+export interface StrategyRow {
+  id: string;
+  name: string;
+  category: string | null;
 }
 
 export interface EpisodeRow {
