@@ -9,6 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import {
   getTenants,
   getEntriesByRange,
@@ -380,6 +381,7 @@ export default function HistoryScreen() {
 // ── Entry Card ──
 
 function EntryCard({ entry }: { entry: EntryRow }) {
+  const router = useRouter();
   const mood = displayMood(entry);
   const moodStyle = MOOD_COLORS[mood] ?? MOOD_COLORS.NEUTRAL;
   const hasDetail = hasBehaviorDetail(entry);
@@ -393,7 +395,11 @@ function EntryCard({ entry }: { entry: EntryRow }) {
   const behaviors = entry.behaviorKeys ?? [];
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push(`/entry/${entry.id}`)}
+      activeOpacity={0.7}
+    >
       {/* Mood badge + meta */}
       <View style={styles.cardHeader}>
         <View style={[styles.moodBadge, { backgroundColor: moodStyle.bg }]}>
@@ -488,7 +494,7 @@ function EntryCard({ entry }: { entry: EntryRow }) {
           </Text>
         </View>
       )}
-    </View>
+    </TouchableOpacity>
   );
 }
 

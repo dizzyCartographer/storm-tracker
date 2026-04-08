@@ -268,6 +268,16 @@ export async function getEntriesByRange(
   return res.json();
 }
 
+/** Get a single entry by ID. */
+export async function getEntryById(id: string): Promise<EntryRow | null> {
+  const res = await neonFetch(
+    `/entries?id=eq.${id}&select=id,date,mood,"dayQuality",notes,"behaviorKeys","customItemIds","strategyIds","missedMedIds",impairments,"menstrualSeverity","computedMood","computedScore","userId","tenantId"&limit=1`
+  );
+  if (!res.ok) throw new Error("Failed to fetch entry");
+  const rows: (EntryRow & { tenantId?: string })[] = await res.json();
+  return rows.length > 0 ? rows[0] : null;
+}
+
 /** Get an existing entry for a tenant on a specific date. */
 export async function getEntryByDate(
   tenantId: string,

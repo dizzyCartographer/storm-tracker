@@ -9,6 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
 import {
   getTenants,
@@ -123,6 +124,7 @@ function ProjectSelector({
 }
 
 function EntryCard({ entry }: { entry: EntryRow }) {
+  const router = useRouter();
   const mood = displayMood(entry);
   const moodStyle = MOOD_COLORS[mood] ?? MOOD_COLORS.NEUTRAL;
   const hasBehaviors = hasBehaviorDetail(entry);
@@ -132,7 +134,11 @@ function EntryCard({ entry }: { entry: EntryRow }) {
   const impairments = impairmentCount(entry);
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push(`/entry/${entry.id}`)}
+      activeOpacity={0.7}
+    >
       <View style={styles.cardHeader}>
         <Text style={styles.cardDate}>{formatDate(entry.date)}</Text>
         <View style={[styles.moodBadge, { backgroundColor: moodStyle.bg }]}>
@@ -173,7 +179,7 @@ function EntryCard({ entry }: { entry: EntryRow }) {
           {entry.notes}
         </Text>
       )}
-    </View>
+    </TouchableOpacity>
   );
 }
 
