@@ -6,12 +6,12 @@ _Documents all computation that currently lives in TypeScript (`src/lib/analysis
 
 | Module | Current | Target | Status |
 |--------|---------|--------|--------|
-| Daily scoring | TypeScript, persisted at write | Postgres trigger on entry insert/update | ⬜ Not started |
-| Episode detection | TypeScript, computed on read | Postgres function → `episodes` table | ⬜ Not started |
-| Prodrome signals | TypeScript, computed on read | Postgres function → `prodrome_signals` table | ⬜ Not started |
-| Pattern prediction | TypeScript, computed on read | Postgres function → `predictions` table | ⬜ Not started |
-| Caregiver suggestions | TypeScript, computed on read | Postgres function → `suggestions` table | ⬜ Not started |
-| Framework loader | TypeScript + Prisma + 5min cache | Eliminated — Postgres functions query framework tables directly | ⬜ Not started |
+| Daily scoring | TypeScript, persisted at write | Postgres trigger on entry insert/update | ✅ Done |
+| Episode detection | TypeScript, computed on read | Postgres function → `episodes` table | ✅ Done |
+| Prodrome signals | TypeScript, computed on read | Postgres function → `prodrome_signals` table | ✅ Done |
+| Pattern prediction | TypeScript, computed on read | Postgres function → `predictions` table | ✅ Done |
+| Caregiver suggestions | TypeScript, computed on read | Postgres function → `suggestions` table | ✅ Done |
+| Framework loader | TypeScript + Prisma + 5min cache | Eliminated — Postgres functions query framework tables directly | ✅ Done |
 
 ---
 

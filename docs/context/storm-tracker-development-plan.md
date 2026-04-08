@@ -300,11 +300,11 @@ Added `missedMedIds` JSONB column on Entry. "Missed medications" collapsible sec
 
 ***
 
-## Phase 20: Persisted Analysis ⬜
+## Phase 20: Persisted Analysis ✅
 
 _All analysis outputs are currently recomputed on every read. Per project convention, any business logic that produces a result displayed to the user MUST be stored in the database. This phase persists all analysis at write time so every read is a simple database query — no custom read endpoints needed. Mobile and web both read stored data via Neon Data API (mobile) or Prisma (web)._
 
-### 20.1 — Episode table and persistence ⬜
+### 20.1 — Episode table and persistence ✅
 
 New `Episode` model:
 
@@ -326,7 +326,7 @@ New `Episode` model:
 
 Episodes are computed and persisted whenever a daily log is saved (new data could create, extend, or resolve an episode). Reports and dashboard read stored episodes instead of recomputing.
 
-### 20.2 — Prodrome signal persistence ⬜
+### 20.2 — Prodrome signal persistence ✅
 
 New `ProdromeSignal` model:
 
