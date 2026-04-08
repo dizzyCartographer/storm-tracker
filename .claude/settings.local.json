@@ -103,7 +103,10 @@
       "Bash(printf 'postgresql://neondb_owner:npg_FGL9rO1mlYIo@ep-round-shape-amx2h82v.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require')",
       "Bash(for var:*)",
       "Bash(npx eas:*)",
-      "Bash(vercel ls:*)"
+      "Bash(vercel ls:*)",
+      "WebFetch(domain:docs.expo.dev)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)"
     ]
   }
 }
