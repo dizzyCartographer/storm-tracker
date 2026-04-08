@@ -123,3 +123,28 @@ Set up a staging environment using Vercel Preview deployments + Neon database br
 - To promote staging to prod: merge `staging` → `main`
 
 ---
+
+## Session: 2026-04-08 — Apple Developer Account Setup
+
+### What Happened
+
+Short session focused on connecting the Apple Developer account to EAS for iOS builds.
+
+### Work Completed
+
+- **Fixed Node.js PATH issue.** `node`/`npx` installed at `/opt/homebrew/bin/` but not on PATH in some shells. Confirmed `~/.zprofile` has `eval "$(/opt/homebrew/bin/brew shellenv)"` — opening a new terminal resolves it.
+- **Fixed `eas.json` validation error.** Empty string values for `ascAppId` and `appleTeamId` caused EAS CLI to reject the file. Removed the empty fields.
+- **Set up Apple Developer credentials via `eas credentials`.** Selected iOS → production → build credentials. EAS generated and stored a distribution certificate and provisioning profile.
+- **Added Apple Team ID to `eas.json`.** Team ID: `RC99K6SXQX`, Apple ID: `maria.yarley@gmail.com`.
+
+### Current State
+
+Apple Developer account is fully connected to EAS. Signing credentials (distribution cert + provisioning profile) stored in EAS cloud. Ready to run `eas build` when the app is ready.
+
+### What's Next
+
+- First iOS build (`eas build --platform ios`)
+- Phase 20.7 — Remove recomputation from web read paths (still open)
+- Mobile v1 screens
+
+---
