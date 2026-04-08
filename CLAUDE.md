@@ -23,6 +23,7 @@ storm-tracker/
 │       ├── future-enhancements.md # Planned future enhancements
 │       ├── storm-tracker-ios-conversion-plan.md # iOS conversion roadmap
 │       ├── storm-tracker-work-log.md # Running log of sessions, decisions, and work context
+│       ├── tech-debt.md             # Known architectural debt tracker
 │       └── feedback/             # Corrections and process rules (auto-loaded)
 └── CLAUDE.md         # This file — loaded into every Claude session
 ```
@@ -53,6 +54,7 @@ When adding a new context file, add an `@` import below **and** update the tree 
 @docs/context/app-purpose-and-liability-constraints.md
 @docs/context/future-enhancements.md
 @docs/context/storm-tracker-work-log.md
+@docs/context/tech-debt.md
 @docs/context/feedback/*.md
 
 ## Workflow Rules
