@@ -83,3 +83,43 @@ Brief session. User checked status and requested creation of this work log file 
 - Work log lives at `docs/work-log.md` (not in `docs/context/`) to avoid auto-loading into every session and consuming context window. Read on demand when history is needed.
 
 ---
+
+## Session: 2026-04-08 — Staging Environment Setup
+
+### What Happened
+
+Set up a staging environment using Vercel Preview deployments + Neon database branching.
+
+### Work Completed
+
+1. **Installed CLIs** — `vercel` and `neonctl` installed globally via npm.
+
+2. **Neon staging branch** — Created `staging` branch from `main` in the `storm-tracker-db` Neon project (`green-silence-82079891`). Branch ID: `br-still-unit-am2a7elj`. Endpoint: `ep-round-shape-amx2h82v`.
+
+3. **Vercel Preview env vars** — Removed shared database env vars from Preview environment and re-added staging-specific values:
+   - `STRM_TRKR_DATABASE_URL` → staging branch pooled connection
+   - `STRM_TRKR_DATABASE_URL_UNPOOLED` → staging branch unpooled connection
+   - Removed 7 Neon integration host vars from Preview (they pointed to prod)
+   - `STRM_TRKR_BETTER_AUTH_URL` not set for Preview — handled dynamically via `VERCEL_URL`
+
+4. **Better Auth `VERCEL_URL` fallback** — Updated `src/lib/auth.ts` so `baseURL` falls back to `https://${VERCEL_URL}` when `STRM_TRKR_BETTER_AUTH_URL` isn't set. This makes preview deployments work automatically without needing to know the exact URL.
+
+5. **Git `staging` branch** — Cleaned up a stale remote `staging` branch (only had auto-commits). Created fresh `staging` branch from `main` and pushed. Merged auth change back to `main`.
+
+6. **Verified deployment** — Preview deployment from `staging` branch deployed successfully (status: Ready).
+
+### Environment Architecture
+
+| Environment | Branch (Git) | Branch (Neon) | URL |
+|-------------|-------------|---------------|-----|
+| Production | `main` | `main` | `storm-tracker-murex.vercel.app` |
+| Staging | `staging` | `staging` | Auto-generated Vercel preview URL |
+| Local | any | `main` (via .env) | `localhost:3000` |
+
+### Workflow
+
+- Push to `main` → production deployment
+- Push to `staging` → preview deployment with isolated database
+- To promote staging to prod: merge `staging` → `main`
+
+---
