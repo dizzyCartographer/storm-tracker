@@ -28,6 +28,9 @@ export const auth = betterAuth({
   plugins: [
     expo(),
     jwt({
+      jwks: {
+        keyPairConfig: { alg: "RS256" },
+      },
       jwt: {
         issuer: process.env.STRM_TRKR_BETTER_AUTH_URL,
         expirationTime: "15m",
