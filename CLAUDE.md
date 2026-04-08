@@ -42,7 +42,7 @@ When adding a new context file, add an `@` import below **and** update the tree 
 @docs/context/iterative-functional-requirements.md
 @docs/context/ui-requirements.md
 @docs/context/data-architecture-diagnostic-frameworks.md
-@docs/context/architecture-standards.md
+@docs/context/application-architecture-standards.md
 @docs/context/scoring-logic.md
 @docs/context/storm-tracker-development-plan.md
 @docs/context/storm-tracker-ios-conversion-plan.md
