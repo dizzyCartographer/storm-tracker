@@ -60,4 +60,4 @@ When adding a new context file, add an `@` import below **and** update the tree 
 
 - **Check git state at session start.** Run `git branch -a` and `git worktree list` early. Clean up anything left over from previous sessions before starting new work.
 
-- **Update the work log.** Before ending a session, append a new entry to `docs/context/work-log.md` summarizing what happened, decisions made, work completed, issues encountered, and what's next. This is the primary continuity mechanism across conversations.
+- **Maintain the work log.** `docs/context/work-log.md` is the primary continuity mechanism across conversations. Append to it as things happen — when a decision is made, a feature is started or completed, a roadblock is discovered, or an architecture change is agreed upon. Do not wait for a session to end. The goal is that a new conversation can read this file and pick up exactly where the last one left off.
