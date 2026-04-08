@@ -203,3 +203,27 @@ All code is back to the state it was in before this session. No app code was cha
 4. **Existing custom GET endpoints** (`/api/mobile/tenants`, `/api/mobile/analysis/[tenantId]`, `/api/mobile/frameworks/[tenantId]`) — These are also reads that should go through Neon Data API. Need to plan migration.
 
 ---
+
+## Session: 2026-04-08 — DevOps Workflow Established
+
+### What Happened
+
+Staging branch was 12 commits behind main. Fast-forwarded staging to match. Established a proper deployment workflow going forward.
+
+### Decisions Made
+
+1. **Staging-first workflow.** All changes go to the `staging` branch. Claude tests locally first, then pushes to staging and tests on the live Vercel preview. User then tests on live staging and gives explicit approval. Only after approval, merge staging → main for production. Never push directly to main.
+
+### Work Completed
+
+- Fast-forwarded `staging` to match `main` (12 commits).
+- Saved staging-first workflow as feedback memory (`feedback_staging_first.md`) in both memory folder and `docs/context/feedback/`.
+
+### What's Next
+
+1. **Wire up `neonFetch()`** — Point to Neon REST endpoint with JWT auth.
+2. **Phase D.2 — Dashboard screen** — Using Neon Data API for entry reads.
+3. **Phase C.5 — Apple Developer + TestFlight** — Can run in parallel.
+4. **Migrate custom GET endpoints** to Neon Data API.
+
+---

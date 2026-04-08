@@ -107,7 +107,15 @@
       "WebFetch(domain:docs.expo.dev)",
       "Bash(git merge:*)",
       "Bash(git stash:*)",
-      "Bash(ls /Users/mariayarley/Documents/GitHub/storm-tracker/docs/context/*.md)"
+      "Bash(ls /Users/mariayarley/Documents/GitHub/storm-tracker/docs/context/*.md)",
+      "Bash(curl -s http://localhost:8081/reload)",
+      "Bash(curl -s http://localhost:8081)",
+      "Bash(rm /Users/mariayarley/Documents/GitHub/storm-tracker/src/app/api/mobile/entries/route.ts)",
+      "Bash(rm /Users/mariayarley/Documents/GitHub/storm-tracker/src/app/api/mobile/tenants/route.ts)",
+      "Bash(rm /Users/mariayarley/Documents/GitHub/storm-tracker/src/app/api/mobile/frameworks/\\\\[tenantId\\\\]/route.ts)",
+      "Bash(rm /Users/mariayarley/Documents/GitHub/storm-tracker/src/app/api/mobile/analysis/\\\\[tenantId\\\\]/route.ts)",
+      "Bash(rm /Users/mariayarley/Documents/GitHub/storm-tracker/src/lib/mobile-auth.ts)",
+      "Bash(ls src/app/api/mobile/entries/route.ts src/app/api/mobile/tenants/route.ts src/app/api/mobile/analysis/*/route.ts src/app/api/mobile/frameworks/*/route.ts src/lib/mobile-auth.ts)"
     ]
   }
 }
