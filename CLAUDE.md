@@ -19,7 +19,8 @@ storm-tracker/
 │       ├── branding-style-guide.md  # Style guide, colors, typography
 │       ├── ui-requirements.md       # UI/UX specifications
 │       ├── architecture-standards.md # Data access, computation, and modeling standards
-│       └── ios-conversion-plan.md   # iOS conversion roadmap
+│       ├── ios-conversion-plan.md   # iOS conversion roadmap
+│       └── work-log.md              # Running log of sessions, decisions, and work context
 └── CLAUDE.md         # This file — loaded into every Claude session
 ```
 
@@ -45,6 +46,7 @@ When adding a new context file, add an `@` import below **and** update the tree 
 @docs/context/scoring-logic.md
 @docs/context/storm-tracker-development-plan.md
 @docs/context/ios-conversion-plan.md
+@docs/context/work-log.md
 
 ## Workflow Rules
 
@@ -57,3 +59,5 @@ When adding a new context file, add an `@` import below **and** update the tree 
 - **Clean up worktrees and branches.** After completing work in a Claude Code worktree, merge to `main`, remove the worktree, and delete the branch (local + remote). Do not leave stale branches.
 
 - **Check git state at session start.** Run `git branch -a` and `git worktree list` early. Clean up anything left over from previous sessions before starting new work.
+
+- **Update the work log.** Before ending a session, append a new entry to `docs/context/work-log.md` summarizing what happened, decisions made, work completed, issues encountered, and what's next. This is the primary continuity mechanism across conversations.
