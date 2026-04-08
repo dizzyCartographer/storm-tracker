@@ -76,7 +76,14 @@
       "Bash(grep -A 20 'export interface User' /Users/mariayarley/Documents/GitHub/storm-tracker/node_modules/@better-auth/core/dist/db/*.d.ts)",
       "Bash(find /Users/mariayarley/Documents/GitHub/storm-tracker/node_modules/@better-auth/core/dist -path */db* -name *.d.mts)",
       "Bash(find /Users/mariayarley/Documents/GitHub/storm-tracker/src/app -type f -name *.ts -o -name *.tsx)",
-      "Bash(grep -r \"neonFetch\\\\|sql\\\\|query\\\\|execute\" /Users/mariayarley/Documents/GitHub/storm-tracker/src --include=*.ts --include=*.tsx)"
+      "Bash(grep -r \"neonFetch\\\\|sql\\\\|query\\\\|execute\" /Users/mariayarley/Documents/GitHub/storm-tracker/src --include=*.ts --include=*.tsx)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//Users/mariayarley/Documents/GitHub/storm-tracker/$HOME/.nvm/versions/node/*/bin/**)",
+      "Bash(source .env)",
+      "Bash(psql \"$STRM_TRKR_DATABASE_URL_UNPOOLED\" -f prisma/migrations/20260407_scoring_trigger/migration.sql)",
+      "Bash(ls /opt/homebrew/bin/psql*)",
+      "Read(//opt/homebrew/opt/**)",
+      "Read(//opt/homebrew/opt/libpq/bin/**)"
     ]
   }
 }
