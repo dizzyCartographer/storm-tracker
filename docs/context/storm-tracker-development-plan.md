@@ -345,7 +345,7 @@ New `ProdromeSignal` model:
 
 Recomputed on entry save. Old signals for the tenant are replaced with current detections.
 
-### 20.3 — Prediction persistence ⬜
+### 20.3 — Prediction persistence ✅
 
 New `Prediction` model:
 
@@ -362,7 +362,7 @@ New `Prediction` model:
 
 Recomputed on entry save. Stale predictions are replaced.
 
-### 20.4 — Suggestion persistence ⬜
+### 20.4 — Suggestion persistence ✅
 
 New `Suggestion` model:
 
@@ -378,7 +378,7 @@ New `Suggestion` model:
 
 Recomputed on entry save. Old suggestions for the tenant are replaced with current ones.
 
-### 20.5 — Discrepancy persistence ⬜
+### 20.5 — Discrepancy persistence ↩️ Deferred
 
 New `Discrepancy` model:
 
@@ -392,7 +392,7 @@ New `Discrepancy` model:
 
 Recomputed on entry save for the affected date. Stored so dashboard and reports can display without recomputation.
 
-### 20.6 — Write-time analysis trigger ⬜
+### 20.6 — Write-time analysis trigger ✅
 
 The entry save endpoint (POST /api/mobile/entries and saveDailyLog server action) triggers all analysis after persisting the entry:
 1. Daily classification — already persisted as `computedMood` / `computedScore` ✅
@@ -403,6 +403,8 @@ The entry save endpoint (POST /api/mobile/entries and saveDailyLog server action
 6. Discrepancy detection → upsert Discrepancy rows for the entry's date
 
 ### 20.7 — Remove recomputation from read paths ⬜
+
+_Still needed: update web dashboard, reports, and history to read from episodes/prodrome_signals/predictions/suggestions tables instead of calling TypeScript analysis functions. Delete the `/api/mobile/analysis/[tenantId]` endpoint._
 
 Delete the analysis API endpoint (`/api/mobile/analysis/[tenantId]`). Update web dashboard, reports, and history to read from the new tables instead of calling analysis functions. Mobile reads all data via Neon Data API.
 
