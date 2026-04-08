@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getReferenceData } from "@/lib/actions/reference-actions";
 import type { ReferenceFramework, ReferenceBehavior } from "@/lib/actions/reference-actions";
 import Link from "next/link";
