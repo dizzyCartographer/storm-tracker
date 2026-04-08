@@ -50,10 +50,17 @@ export async function neonFetch(
     ...(options.headers as Record<string, string>),
   };
 
-  const res = await fetch(`${NEON_DATA_API_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  const url = `${NEON_DATA_API_URL}${path}`;
+
+  // Neon Data API intermittently returns "jwk not found" (400) due to
+  // JWKS cache misses across their infrastructure. Retry up to 2 times.
+  let res: Response;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    res = await fetch(url, { ...options, headers });
+    if (res.status !== 400) break;
+    const body = await res.clone().text();
+    if (!body.includes("jwk not found")) break;
+  }
 
   if (res.status === 401) {
     await signOut();

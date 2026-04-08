@@ -68,20 +68,24 @@ export async function isAuthenticated(): Promise<boolean> {
 export async function getJwt(): Promise<string | null> {
   try {
     const cookies = await authClient.getCookie();
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (cookies) {
-      headers["Cookie"] = cookies;
-    }
+    if (!cookies) return null;
     const res = await fetch(`${API_BASE_URL}/api/auth/token`, {
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookies,
+        "expo-origin": "stormtracker://",
+        "x-skip-oauth-proxy": "true",
+      },
       credentials: "omit",
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn("[getJwt] token request failed:", res.status);
+      return null;
+    }
     const data = await res.json();
     return data.token ?? null;
-  } catch {
+  } catch (err) {
+    console.warn("[getJwt] error:", err);
     return null;
   }
 }
