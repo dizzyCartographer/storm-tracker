@@ -148,3 +148,50 @@ Apple Developer account is fully connected to EAS. Signing credentials (distribu
 - Mobile v1 screens
 
 ---
+
+## Session: 2026-04-08 — Memory Cleanup & Architecture Contradiction Resolution
+
+### What Happened
+
+Started session intending to build mobile dashboard (Phase D.2). Hit an architectural contradiction in the memory system that derailed into cleanup work. No app code was shipped — all changes are documentation and memory corrections.
+
+### Key Issues Found & Resolved
+
+1. **Stale memory contradicted architecture decisions.** `feedback_no_neon_data_api_jwt.md` said "don't use Neon Data API for mobile, use API routes instead." This was written mid-debugging before the JWT plugin ordering fix was found. It directly contradicted the April 7 architecture decision that all reads go through Neon Data API. Claude built a custom GET endpoint based on this stale memory, then second-guessed itself, then proceeded without clear approval. Multiple corrections needed.
+
+2. **`feedback_never_modify_shared_auth.md`** said never add plugins to `src/lib/auth.ts`. Also stale — the fix was plugin ordering (`nextCookies()` must be last), not plugin removal. Replaced with correct rule.
+
+3. **`feedback_better_auth_mobile_session.md`** described manual cookie formatting for token exchange. The `expoClient` plugin handles this automatically now. Deleted as stale.
+
+4. **`project_ios_conversion.md`** said "web will be sunset." Work log (April 7) says "web may NOT be sunset." Corrected to "may or may not be sunset — both must work."
+
+5. **Duplicate file** — `data-architecture-diagnostic-frameworks 2.md` was identical to `data-architecture-diagnostic-frameworks.md`. Deleted.
+
+### Process Rules Established
+
+1. **Memories require approval.** Never write a memory without showing content to the user first and getting explicit approval. (Was violated multiple times this session.)
+
+2. **Memories go to both locations.** Write to memory folder AND `docs/context/feedback/`. Context folder is primary — it's what Claude sees first.
+
+3. **Never proceed on ambiguous answers.** If a decision is surfaced and the response isn't a clear "do X," ask again. Don't interpret non-answers as direction.
+
+### Documentation Changes
+
+- **`docs/context/feedback/`** — New subdirectory for feedback/process rules, auto-loaded via `@docs/context/feedback/*.md` in CLAUDE.md.
+- **`docs/context/feedback/feedback_memory_process.md`** — New. Memories require approval + dual-write rule.
+- **`docs/context/feedback/feedback_better_auth_plugin_ordering.md`** — New. Plugin ordering rule (`nextCookies()` last).
+- **`CLAUDE.md`** — Added feedback subdirectory to tree and imports. Added missing imports for `app-purpose-and-liability-constraints.md` and `future-enhancements.md`.
+- **Memory folder** — Stale memories deleted/corrected, MEMORY.md updated.
+
+### Architecture Decision Confirmed
+
+**Mobile reads go through Neon Data API with JWT.** This was decided on April 7, documented in the work log, conventions, architecture standards, and iOS conversion plan. The contradicting memory was stale. No custom GET endpoints for data reads.
+
+### What's Next
+
+1. **Wire up `neonFetch()`** — Point to Neon REST endpoint (`https://ep-shy-breeze-ami5dzoi.apirest.c-5.us-east-1.aws.neon.tech/neondb/rest/v1`) with JWT auth via `authClient.token()`.
+2. **Phase D.2 — Dashboard screen** — Using Neon Data API for entry reads, existing custom endpoints only for write-time computation.
+3. **Phase C.5 — Apple Developer + TestFlight** — Can run in parallel, no code dependency.
+4. **Existing custom GET endpoints** (`/api/mobile/tenants`, `/api/mobile/analysis/[tenantId]`, `/api/mobile/frameworks/[tenantId]`) — These are also reads that should go through Neon Data API. Need to plan migration.
+
+---

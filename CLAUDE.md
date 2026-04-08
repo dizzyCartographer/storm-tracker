@@ -19,15 +19,19 @@ storm-tracker/
 │       ├── branding-style-guide.md  # Style guide, colors, typography
 │       ├── ui-requirements.md       # UI/UX specifications
 │       ├── architecture-standards.md # Data access, computation, and modeling standards
+│       ├── app-purpose-and-liability-constraints.md # Purpose and liability guardrails
+│       ├── future-enhancements.md # Planned future enhancements
 │       ├── storm-tracker-ios-conversion-plan.md # iOS conversion roadmap
-│       └── storm-tracker-work-log.md # Running log of sessions, decisions, and work context
+│       ├── storm-tracker-work-log.md # Running log of sessions, decisions, and work context
+│       └── feedback/             # Corrections and process rules (auto-loaded)
 └── CLAUDE.md         # This file — loaded into every Claude session
 ```
 
 ## How Context Works
 
 All top-level files in `docs/context/` are the source of truth for project decisions.
-Every `.md` file in `docs/context/` is loaded into every session (subdirectories are not).
+Every `.md` file in `docs/context/` is loaded into every session.
+Files in `docs/context/feedback/` are also loaded via the wildcard import below.
 Before making significant changes, consult the relevant context files.
 When adding a new context file, add an `@` import below **and** update the tree above.
 
@@ -46,7 +50,10 @@ When adding a new context file, add an `@` import below **and** update the tree 
 @docs/context/scoring-logic.md
 @docs/context/storm-tracker-development-plan.md
 @docs/context/storm-tracker-ios-conversion-plan.md
+@docs/context/app-purpose-and-liability-constraints.md
+@docs/context/future-enhancements.md
 @docs/context/storm-tracker-work-log.md
+@docs/context/feedback/*.md
 
 ## Workflow Rules
 
