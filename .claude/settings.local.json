@@ -92,7 +92,10 @@
       "Bash(find /Users/mariayarley/Documents/GitHub/storm-tracker/.vercel -type f -not -path */.*)",
       "Bash(vercel --version)",
       "Bash(neonctl --version)",
-      "Bash(npm i:*)"
+      "Bash(npm i:*)",
+      "Read(//opt/homebrew/Cellar/node/25.3.0/bin/**)",
+      "Read(//Users/mariayarley/Library/**)",
+      "Read(//Users/mariayarley/**)"
     ]
   }
 }
