@@ -21,9 +21,7 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "maria.yarley@gmail.com",
-        "ascAppId": "",
-        "appleTeamId": ""
+        "appleId": "maria.yarley@gmail.com"
       }
     }
   }
