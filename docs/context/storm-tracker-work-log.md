@@ -187,6 +187,14 @@ Started session intending to build mobile dashboard (Phase D.2). Hit an architec
 
 **Mobile reads go through Neon Data API with JWT.** This was decided on April 7, documented in the work log, conventions, architecture standards, and iOS conversion plan. The contradicting memory was stale. No custom GET endpoints for data reads.
 
+### Issues Encountered
+
+- **Accidental file deletions.** During rollback attempts, the existing mobile API route files (`src/app/api/mobile/entries/route.ts`, `tenants/route.ts`, `analysis/[tenantId]/route.ts`, `frameworks/[tenantId]/route.ts`) and `src/lib/mobile-auth.ts` were deleted from disk. Restored via `git checkout HEAD --`. No data loss.
+
+### Current State
+
+All code is back to the state it was in before this session. No app code was changed. Simulator still shows the placeholder "You're signed in" screen. Expo dev server running on port 8081.
+
 ### What's Next
 
 1. **Wire up `neonFetch()`** — Point to Neon REST endpoint (`https://ep-shy-breeze-ami5dzoi.apirest.c-5.us-east-1.aws.neon.tech/neondb/rest/v1`) with JWT auth via `authClient.token()`.
