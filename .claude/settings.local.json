@@ -83,7 +83,9 @@
       "Bash(psql \"$STRM_TRKR_DATABASE_URL_UNPOOLED\" -f prisma/migrations/20260407_scoring_trigger/migration.sql)",
       "Bash(ls /opt/homebrew/bin/psql*)",
       "Read(//opt/homebrew/opt/**)",
-      "Read(//opt/homebrew/opt/libpq/bin/**)"
+      "Read(//opt/homebrew/opt/libpq/bin/**)",
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/psql \"$STRM_TRKR_DATABASE_URL_UNPOOLED\" -f prisma/migrations/20260407_scoring_trigger/migration.sql)",
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/psql \"$STRM_TRKR_DATABASE_URL_UNPOOLED\" -x -c \":*)"
     ]
   }
 }
