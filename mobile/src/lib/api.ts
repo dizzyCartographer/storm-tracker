@@ -1,11 +1,8 @@
 import { authClient, getJwt, signOut } from "./auth";
+import { API_BASE_URL, NEON_DATA_API_URL } from "./config";
 
-export const API_BASE_URL = "https://storm-tracker-murex.vercel.app";
+// ── Authenticated fetch for custom API endpoints ──
 
-/**
- * Authenticated fetch for custom API endpoints.
- * Uses Better Auth session cookies (managed by expoClient).
- */
 export async function apiFetch(
   path: string,
   options: RequestInit = {}
@@ -34,26 +31,26 @@ export async function apiFetch(
   return res;
 }
 
-/**
- * Authenticated fetch for Neon Data API.
- * Uses JWT Bearer token (issued by Better Auth JWT plugin).
- */
+// ── Authenticated fetch for Neon Data API (JWT + RLS) ──
+
 export async function neonFetch(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
   const jwt = await getJwt();
 
+  if (!jwt) {
+    await signOut();
+    throw new Error("No JWT available");
+  }
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    Authorization: `Bearer ${jwt}`,
     ...(options.headers as Record<string, string>),
   };
 
-  if (jwt) {
-    headers["Authorization"] = `Bearer ${jwt}`;
-  }
-
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  const res = await fetch(`${NEON_DATA_API_URL}${path}`, {
     ...options,
     headers,
   });
@@ -65,11 +62,8 @@ export async function neonFetch(
   return res;
 }
 
-// ── Custom endpoint helpers ──
+// ── Custom endpoint helpers (write-time computation) ──
 
-/**
- * Save a daily log entry (with server-side scoring).
- */
 export async function saveEntry(data: {
   tenantId: string;
   mood: string;
@@ -77,6 +71,7 @@ export async function saveEntry(data: {
   behaviorKeys?: string[];
   customItemIds?: string[];
   strategyIds?: string[];
+  missedMedIds?: string[];
   impairments?: Record<string, string>;
   notes?: string;
   menstrualSeverity?: string | null;
@@ -89,20 +84,158 @@ export async function saveEntry(data: {
   return res.json();
 }
 
-/**
- * Get analysis dashboard data for a tenant.
- */
-export async function getAnalysis(tenantId: string, days = 30) {
-  const res = await apiFetch(
-    `/api/mobile/analysis/${tenantId}?days=${days}`
+// ── Neon Data API read helpers ──
+
+/** Get tenants the current user belongs to (via tenant_members join). */
+export async function getTenants(): Promise<TenantSummary[]> {
+  // Get memberships first, then fetch tenant details
+  const membersRes = await neonFetch(
+    `/tenant_members?select="tenantId",role`
   );
+  if (!membersRes.ok) throw new Error("Failed to fetch memberships");
+  const members: { tenantId: string; role: string }[] =
+    await membersRes.json();
+
+  if (members.length === 0) return [];
+
+  const tenantIds = members.map((m) => m.tenantId);
+  const inClause = tenantIds.map((id) => `"${id}"`).join(",");
+
+  const tenantsRes = await neonFetch(
+    `/tenants?id=in.(${inClause})&select=id,name,"teenFavoriteColor","teenPhotoUrl","teenNickname"`
+  );
+  if (!tenantsRes.ok) throw new Error("Failed to fetch tenants");
+  const tenants: Array<{
+    id: string;
+    name: string;
+    teenFavoriteColor: string | null;
+    teenPhotoUrl: string | null;
+    teenNickname: string | null;
+  }> = await tenantsRes.json();
+
+  // Merge role onto tenant
+  const roleMap = new Map(members.map((m) => [m.tenantId, m.role]));
+  return tenants.map((t) => ({
+    ...t,
+    role: roleMap.get(t.id) ?? "CAREGIVER",
+  }));
+}
+
+/** Get recent entries for a tenant, newest first. */
+export async function getRecentEntries(
+  tenantId: string,
+  limit = 14
+): Promise<EntryRow[]> {
+  const res = await neonFetch(
+    `/entries?` +
+      `"tenantId"=eq.${tenantId}` +
+      `&order=date.desc` +
+      `&limit=${limit}` +
+      `&select=id,date,mood,"dayQuality",notes,"behaviorKeys","missedMedIds",impairments,"computedMood","computedScore","userId"`
+  );
+  if (!res.ok) throw new Error("Failed to fetch entries");
   return res.json();
 }
 
-/**
- * Get diagnostic framework data for a tenant.
- */
-export async function getFrameworks(tenantId: string) {
-  const res = await apiFetch(`/api/mobile/frameworks/${tenantId}`);
+/** Get episodes for a tenant. */
+export async function getEpisodes(tenantId: string): Promise<EpisodeRow[]> {
+  const res = await neonFetch(
+    `/episodes?"tenantId"=eq.${tenantId}&order="startDate".desc&limit=10`
+  );
+  if (!res.ok) throw new Error("Failed to fetch episodes");
   return res.json();
+}
+
+/** Get active prodrome signals for a tenant. */
+export async function getSignals(tenantId: string): Promise<SignalRow[]> {
+  const res = await neonFetch(
+    `/prodrome_signals?"tenantId"=eq.${tenantId}&order="createdAt".desc&limit=20`
+  );
+  if (!res.ok) throw new Error("Failed to fetch signals");
+  return res.json();
+}
+
+/** Get predictions for a tenant. */
+export async function getPredictions(
+  tenantId: string
+): Promise<PredictionRow[]> {
+  const res = await neonFetch(
+    `/predictions?"tenantId"=eq.${tenantId}&order="createdAt".desc&limit=10`
+  );
+  if (!res.ok) throw new Error("Failed to fetch predictions");
+  return res.json();
+}
+
+/** Get suggestions for a tenant. */
+export async function getSuggestions(
+  tenantId: string
+): Promise<SuggestionRow[]> {
+  const res = await neonFetch(
+    `/suggestions?"tenantId"=eq.${tenantId}&order=priority.asc&limit=20`
+  );
+  if (!res.ok) throw new Error("Failed to fetch suggestions");
+  return res.json();
+}
+
+// ── Types ──
+
+export interface TenantSummary {
+  id: string;
+  name: string;
+  teenFavoriteColor: string | null;
+  teenPhotoUrl: string | null;
+  teenNickname: string | null;
+  role: string;
+}
+
+export interface EntryRow {
+  id: string;
+  date: string;
+  mood: string;
+  dayQuality: string;
+  notes: string | null;
+  behaviorKeys: string[];
+  missedMedIds: string[];
+  impairments: Record<string, string>;
+  computedMood: string | null;
+  computedScore: number | null;
+  userId: string;
+}
+
+export interface EpisodeRow {
+  id: string;
+  tenantId: string;
+  type: string;
+  confidence: string;
+  startDate: string;
+  endDate: string;
+  dayCount: number;
+  peakSeverity: string;
+  hasSafetyConcern: boolean;
+  criteriaNote: string | null;
+}
+
+export interface SignalRow {
+  id: string;
+  signalId: string;
+  level: string;
+  title: string;
+  description: string;
+  relatedDates: string[];
+}
+
+export interface PredictionRow {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  confidence: string;
+}
+
+export interface SuggestionRow {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  priority: string;
 }

@@ -1,7 +1,8 @@
 import { createAuthClient } from "better-auth/react";
 import { expoClient } from "@better-auth/expo/client";
+import { jwtClient } from "better-auth/client/plugins";
 import * as SecureStore from "expo-secure-store";
-import { API_BASE_URL } from "./api";
+import { API_BASE_URL } from "./config";
 
 export const authClient = createAuthClient({
   baseURL: API_BASE_URL,
@@ -11,6 +12,7 @@ export const authClient = createAuthClient({
       storage: SecureStore,
       storagePrefix: "storm_tracker",
     }),
+    jwtClient(),
   ],
 });
 
@@ -61,12 +63,24 @@ export async function isAuthenticated(): Promise<boolean> {
 
 /**
  * Get a JWT for Neon Data API requests.
- * The JWT plugin on the server issues these on demand.
+ * Calls the Better Auth JWT plugin's /token endpoint.
  */
 export async function getJwt(): Promise<string | null> {
   try {
-    const result = await authClient.token();
-    return result.data?.token ?? null;
+    const cookies = await authClient.getCookie();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (cookies) {
+      headers["Cookie"] = cookies;
+    }
+    const res = await fetch(`${API_BASE_URL}/api/auth/token`, {
+      headers,
+      credentials: "omit",
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.token ?? null;
   } catch {
     return null;
   }
