@@ -9,7 +9,7 @@ export const auth = betterAuth({
   database: prismaAdapter(authPrisma, { provider: "postgresql" }),
   emailAndPassword: { enabled: true },
   secret: process.env.STRM_TRKR_BETTER_AUTH_SECRET,
-  baseURL: process.env.STRM_TRKR_BETTER_AUTH_URL,
+  baseURL: process.env.STRM_TRKR_BETTER_AUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
   trustedOrigins: (request) => {
     const origins: string[] = [
       "stormtracker://",
