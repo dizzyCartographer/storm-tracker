@@ -89,7 +89,9 @@
       "Bash(xattr -d com.apple.quarantine /opt/homebrew/bin/node)",
       "Bash(/opt/homebrew/opt/postgresql@17/bin/psql \"$STRM_TRKR_DATABASE_URL_UNPOOLED\" -c \":*)",
       "Bash(/opt/homebrew/opt/postgresql@17/bin/psql \"$STRM_TRKR_DATABASE_URL_UNPOOLED\" -f prisma/migrations/20260407_analysis_tables_and_triggers/migration.sql)",
-      "Bash(find /Users/mariayarley/Documents/GitHub/storm-tracker/.vercel -type f -not -path */.*)"
+      "Bash(find /Users/mariayarley/Documents/GitHub/storm-tracker/.vercel -type f -not -path */.*)",
+      "Bash(vercel --version)",
+      "Bash(neonctl --version)"
     ]
   }
 }
