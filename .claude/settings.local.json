@@ -96,7 +96,8 @@
       "Read(//opt/homebrew/Cellar/node/25.3.0/bin/**)",
       "Read(//Users/mariayarley/Library/**)",
       "Read(//Users/mariayarley/**)",
-      "Bash(neonctl auth:*)"
+      "Bash(neonctl auth:*)",
+      "Bash(neonctl me:*)"
     ]
   }
 }
