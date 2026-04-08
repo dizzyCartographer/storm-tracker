@@ -106,7 +106,8 @@
       "Bash(vercel ls:*)",
       "WebFetch(domain:docs.expo.dev)",
       "Bash(git merge:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(ls /Users/mariayarley/Documents/GitHub/storm-tracker/docs/context/*.md)"
     ]
   }
 }
