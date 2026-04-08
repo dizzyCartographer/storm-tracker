@@ -85,7 +85,9 @@
       "Read(//opt/homebrew/opt/**)",
       "Read(//opt/homebrew/opt/libpq/bin/**)",
       "Bash(/opt/homebrew/opt/postgresql@17/bin/psql \"$STRM_TRKR_DATABASE_URL_UNPOOLED\" -f prisma/migrations/20260407_scoring_trigger/migration.sql)",
-      "Bash(/opt/homebrew/opt/postgresql@17/bin/psql \"$STRM_TRKR_DATABASE_URL_UNPOOLED\" -x -c \":*)"
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/psql \"$STRM_TRKR_DATABASE_URL_UNPOOLED\" -x -c \":*)",
+      "Bash(xattr -d com.apple.quarantine /opt/homebrew/bin/node)",
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/psql \"$STRM_TRKR_DATABASE_URL_UNPOOLED\" -c \":*)"
     ]
   }
 }
