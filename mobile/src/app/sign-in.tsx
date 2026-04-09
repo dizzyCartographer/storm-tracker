@@ -31,7 +31,7 @@ export default function SignInScreen() {
     const result = await signIn(email.trim(), password);
 
     if (!result.success) {
-      setError(result.error ?? "Sign in failed");
+      setError(result.error ?? "Log in failed");
     }
 
     setLoading(false);
@@ -46,7 +46,7 @@ export default function SignInScreen() {
         <View style={styles.content}>
           <Text style={styles.logo}>⚡️</Text>
           <Text style={styles.title}>Storm Tracker</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+          <Text style={styles.subtitle}>Log in to continue</Text>
 
           <View style={styles.form}>
             <View style={styles.inputGroup}>
@@ -94,7 +94,7 @@ export default function SignInScreen() {
               {loading ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <Text style={styles.buttonText}>Sign In</Text>
+                <Text style={styles.buttonText}>Log In</Text>
               )}
             </TouchableOpacity>
           </View>

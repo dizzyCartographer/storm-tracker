@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useAuth } from "@/lib/auth-context";
 import {
   getTenants,
   getCurrentUserInfo,
@@ -26,6 +25,7 @@ import {
   PredictionRow,
   SuggestionRow,
 } from "@/lib/api";
+import { HeaderMenu } from "@/components/header-menu";
 
 // ── Mood colors ──
 
@@ -235,8 +235,6 @@ function EpisodeCard({ episode }: { episode: EpisodeRow }) {
 // ── Main Screen ──
 
 export default function DashboardScreen() {
-  const { signOut } = useAuth();
-
   const [tenants, setTenants] = useState<TenantSummary[]>([]);
   const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
   const [entries, setEntries] = useState<EntryRow[]>([]);
@@ -319,9 +317,7 @@ export default function DashboardScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Storm Tracker</Text>
-        <TouchableOpacity onPress={signOut}>
-          <Text style={styles.signOutLink}>Sign Out</Text>
-        </TouchableOpacity>
+        <HeaderMenu />
       </View>
 
       {/* Project Selector */}
@@ -457,7 +453,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   headerTitle: { fontSize: 22, fontWeight: "700", color: "#111827" },
-  signOutLink: { fontSize: 14, color: "#6B7280" },
 
   projectRow: { maxHeight: 48 },
   projectRowContent: { paddingHorizontal: 16, gap: 8 },
