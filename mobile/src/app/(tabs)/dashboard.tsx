@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
 import {
   getTenants,
+  getCurrentUserInfo,
   getRecentEntries,
   getEpisodes,
   getSignals,
@@ -264,10 +265,12 @@ export default function DashboardScreen() {
     try {
       setLoading(true);
       setError(null);
-      const t = await getTenants();
+      const [t, user] = await Promise.all([getTenants(), getCurrentUserInfo()]);
       setTenants(t);
       if (t.length > 0) {
-        setSelectedTenant(t[0].id);
+        const defaultId = user?.defaultTenantId;
+        const hasDefault = defaultId && t.some((tenant) => tenant.id === defaultId);
+        setSelectedTenant(hasDefault ? defaultId : t[0].id);
       } else {
         setLoading(false);
       }
