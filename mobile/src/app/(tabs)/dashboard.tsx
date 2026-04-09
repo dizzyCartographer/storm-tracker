@@ -235,7 +235,14 @@ function EpisodeCard({ episode }: { episode: EpisodeRow }) {
 // ── Main Screen ──
 
 export default function DashboardScreen() {
-  const { signOut } = useAuth();
+  const router = useRouter();
+  const { isSignedIn, signOut } = useAuth();
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      router.replace("/");
+    }
+  }, [isSignedIn]);
 
   const [tenants, setTenants] = useState<TenantSummary[]>([]);
   const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
