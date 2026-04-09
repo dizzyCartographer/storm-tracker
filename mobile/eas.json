@@ -11,14 +11,23 @@
         "simulator": true
       }
     },
-    "preview": {
-      "distribution": "internal"
+    "staging": {
+      "autoIncrement": true,
+      "env": {
+        "APP_ENV": "staging"
+      }
     },
     "production": {
       "autoIncrement": true
     }
   },
   "submit": {
+    "staging": {
+      "ios": {
+        "appleId": "maria.yarley@gmail.com",
+        "appleTeamId": "RC99K6SXQX"
+      }
+    },
     "production": {
       "ios": {
         "appleId": "maria.yarley@gmail.com",
