@@ -330,3 +330,53 @@ The `auth.user_id()` function (from `pg_session_jwt` extension) extracts the `su
 5. **Phase C.5 — Apple Developer + TestFlight**
 
 ***
+
+## Session: 2026-04-09 — Branch Cleanup, App Rename, Staging TestFlight
+
+### What Happened
+
+Started with a messy git state left behind by Dispatch (2 worktrees, stale branches). Cleaned everything up, merged pending work, renamed the app, and got the first staging TestFlight build submitted.
+
+### Key Decisions Made
+
+1. **App name is "StormTrackRx"** — "Storm Tracker" was taken in the App Store. Production app is "StormTrackRx", staging is "StormTrackRx Dev".
+
+2. **Two App Store Connect records.** Production: `com.stormtracker.app` (ascAppId `6761905904`). Staging/dev: `com.stormtracker.dev` (ascAppId `6761926912`).
+
+### Work Completed
+
+- **Branch cleanup.** Removed 2 Dispatch worktrees (`thirsty-mayer`, `lucid-knuth`), deleted stale branches (`claude/thirsty-mayer`, `claude/lucid-knuth`, `feat/mobile-auth-plugins`). Pruned worktree refs. Deleted remote `claude/lucid-knuth`.
+
+- **Merged Projects/Profile screens.** `claude/lucid-knuth` had one commit (`feat: add Projects and Profile screens to mobile app`) — merged into staging. Adds Projects list, Project detail, and Profile screens to the mobile app.
+
+- **App rename.** Updated `mobile/app.json` name to "StormTrackRx". Updated `mobile/app.config.js` to output "StormTrackRx" (production) and "StormTrackRx Dev" (staging).
+
+- **Staging ascAppId.** Added `6761926912` to staging submit profile in `eas.json`.
+
+- **Staging TestFlight build + submit.** Set up build credentials (reused existing distribution certificate, created new provisioning profile for `com.stormtracker.dev`). Built and submitted to TestFlight via EAS.
+
+### Issues Encountered
+
+- **Committed to main instead of staging.** Was on `main` when merging lucid-knuth and committing the rename. Fixed by fast-forwarding staging to match. Both branches are now in sync.
+
+- **EAS credentials needed interactive setup.** The staging bundle ID (`com.stormtracker.dev`) had no provisioning profile. Had to run `eas credentials` interactively to set one up before the build could proceed.
+
+- **Export compliance flag.** Build output warned that `ITSAppUsesNonExemptEncryption` is not set. May need to toggle this in App Store Connect before testers can install.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `main` | In sync with staging |
+| `staging` | Current branch, pushed to remote |
+| No worktrees | Clean |
+| No stale branches | Clean |
+
+### What's Next
+
+1. **Verify staging TestFlight install** on device once Apple finishes processing.
+2. **Phase D screens** — Continue building mobile v1 screens on staging branch.
+3. **Create Prisma migration for database grants** — still open from previous session.
+4. **Phase 20.7** — Remove recomputation from web read paths — still open.
+
+***
