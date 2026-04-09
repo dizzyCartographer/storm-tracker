@@ -64,30 +64,35 @@ Everything else goes through Neon Data API.
 - `sign-in.tsx` — sign-in form (email/password, error handling, loading state)
 - `index.tsx` — placeholder home screen with auth gate
 
-### C.5 — Apple Developer + TestFlight Setup ⬜
-- Apple Developer account ($99/year)
-- App Store Connect (app record, bundle ID)
-- Configure Xcode signing (or EAS Build credentials)
-- Build minimal app → deploy to TestFlight
-- Verify install on personal device
+### C.5 — Apple Developer + TestFlight Setup ✅
+- Apple Developer account ($99/year) — enrolled
+- App Store Connect: production (`com.stormtracker.app`, ascAppId `6761905904`) + staging (`com.stormtracker.dev`, ascAppId `6761926912`)
+- EAS credentials configured (distribution cert + provisioning profiles)
+- 5 builds submitted to TestFlight successfully
+- **Note:** EAS Build free tier = 15 iOS builds/month, lower-priority queue (1+ hour waits during US business hours). Starter plan ($19/month) gets priority queue.
 
-### C.6 — Styling Foundation ⬜
-- NativeWind (Tailwind for React Native) or StyleSheet
-- Mood color system (manic=orange, depressive=blue, mixed=purple, neutral=gray)
-- Project theming (teen's favorite color)
-- Logo SVG via `react-native-svg`
+### C.6 — Styling Foundation ✅
+- React Native Paper + centralized `theme.ts` with mint/teal palette
+- Mood color system (manic=amber/orange, depressive=teal/cyan, mixed=purple, neutral=sage green)
+- Project theming via teen's favorite color (accent bar, project selector pills)
+- Native shadows on pills, Paper Surface on cards
 
 ---
 
-## Phase D: v1 Screens (build + push to TestFlight iteratively) ⬜
+## Phase D: v1 Screens (build + push to TestFlight iteratively) 🔧
 
 Each screen gets tested on device via TestFlight as it's built.
 
-1. Sign in / Sign up
-2. Dashboard (entry cards with `computedMood`, project selector)
-3. Daily log form (behavior checklist, custom items, impairments, menstrual, notes)
-4. History / calendar view (mood-colored dots from `computedMood`)
-5. Entry detail (read-only)
+1. Sign in / Sign up ✅
+2. Dashboard (entry cards with `computedMood`, project selector) ✅
+3. Daily log form (behavior checklist, custom items, impairments, menstrual, notes) ✅
+4. History / calendar view (mood-colored dots from `computedMood`) ✅
+5. Entry detail (read-only) ✅
+6. Projects list + Project detail ✅
+7. Profile ✅
+8. AI Journal Import (3-step: paste → AI parse → review/edit → save) ✅
+9. Log edit (pre-populated form from existing entry) ✅
+10. Project edit (all profile fields) ✅
 
 ---
 
