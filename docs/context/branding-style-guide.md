@@ -8,7 +8,7 @@
 
 - **Tone:** Calm, supportive. Never alarmist. The app handles sensitive data — the UI should feel steady and trustworthy.
 
----
+***
 
 ## Design Philosophy (April 9, 2026)
 
@@ -25,7 +25,9 @@ The app must feel native to whatever OS it's on. iOS should feel like an Apple a
 Deep visual customization per project. The user should feel like _their_ app, not a generic tool. Themes transform the whole app — colors, border treatments, visual motifs, background texture — not just an accent color swap.
 
 **Example presets to eventually build:**
+
 - **Watercolor** — soft, calming, artistic. Suits a parent who finds that aesthetic therapeutic.
+
 - **Anime** — bolder lines, more vibrant. Suits a teen self-tracking with their own aesthetic preferences.
 
 The customization is a retention and engagement strategy. "I want them to love using it, not go 'oh I've got to track my thing.'"
@@ -33,11 +35,14 @@ The customization is a retention and engagement strategy. "I want them to love u
 ### Open design questions (not yet decided)
 
 - What exactly changes per theme: colors only? border radius? shadows? typography? background textures/patterns?
+
 - How many themes ship by default vs. user-created?
+
 - Does each project get its own theme, or is it account-wide?
+
 - Can users create custom themes or only pick from presets?
 
----
+***
 
 ## Mobile Design System
 
@@ -48,18 +53,21 @@ The customization is a retention and engagement strategy. "I want them to love u
 ### Requirements
 
 - Works on both iOS and Android from the same codebase (Android is planned, not just iOS)
+
 - Strong built-in accessibility (customers with disability is an explicit use case)
+
 - Supports deep theming — not just a color token swap, but real visual transformation
-- Feels native on iOS; does not look "Google-ish" on Apple hardware
+
+- Feels native on iOS; 
 
 ### Libraries evaluated
 
-| Library | Strengths | Concerns |
-|---------|-----------|---------|
-| Gluestack UI v3 + NativeWind + Reanimated 4 | Headless, full creative control, best for custom themes | More setup, fewer out-of-box components |
-| React Native Paper | Best accessibility out of box, Material Design 3 | Looks "Google-ish" — conflicts with iOS-native goal |
-| UI Kitten (Eva Design System) | Polished, good theming, premium feel | Smaller community |
-| Tamagui | Universal (web + native), performance-focused | Complexity |
+| Library                                     | Strengths                                               | Concerns                                            |
+| ------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------- |
+| Gluestack UI v3 + NativeWind + Reanimated 4 | Headless, full creative control, best for custom themes | More setup, fewer out-of-box components             |
+| React Native Paper                          | Best accessibility out of box, Material Design 3        | Looks "Google-ish" — conflicts with iOS-native goal |
+| UI Kitten (Eva Design System)               | Polished, good theming, premium feel                    | Smaller community                                   |
+| Tamagui                                     | Universal (web + native), performance-focused           | Complexity                                          |
 
 User is downloading demo apps (Paper, UI Kitten) to evaluate visual feel before deciding.
 
