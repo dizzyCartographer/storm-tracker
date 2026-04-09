@@ -8,7 +8,7 @@
     "scheme": "stormtracker",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.stormtracker.dev",
+      "bundleIdentifier": "com.stormtracker.app",
       "icon": "./assets/expo.icon",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
