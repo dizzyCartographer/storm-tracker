@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
+  Text,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
-import { Text, Chip, ActivityIndicator, Divider, Surface, Button } from "react-native-paper";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { getEntryById, EntryRow } from "@/lib/api";
-import { palette, moodColors, radius } from "@/lib/theme";
 
 // ── Constants ──
+
+const MOOD_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  MANIC: { bg: "#FEF3C7", text: "#92400E", label: "Manic" },
+  DEPRESSIVE: { bg: "#DBEAFE", text: "#1E40AF", label: "Depressive" },
+  MIXED: { bg: "#EDE9FE", text: "#5B21B6", label: "Mixed" },
+  NEUTRAL: { bg: "#F3F4F6", text: "#374151", label: "Neutral" },
+};
 
 const DAY_QUALITY_LABELS: Record<string, string> = {
   GOOD: "Good day",
@@ -50,8 +57,7 @@ function hasBehaviorDetail(entry: EntryRow): boolean {
 
 export default function EntryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
-  const [entry, setEntry] = useState<(EntryRow & { tenantId?: string }) | null>(null);
+  const [entry, setEntry] = useState<EntryRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,7 +78,7 @@ export default function EntryDetailScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={palette.primary} />
+        <ActivityIndicator size="large" color="#374151" />
       </View>
     );
   }
@@ -80,13 +86,13 @@ export default function EntryDetailScreen() {
   if (error || !entry) {
     return (
       <View style={styles.centered}>
-        <Text variant="bodyMedium" style={styles.errorText}>{error ?? "Entry not found"}</Text>
+        <Text style={styles.errorText}>{error ?? "Entry not found"}</Text>
       </View>
     );
   }
 
   const mood = displayMood(entry);
-  const moodStyle = moodColors[mood] ?? moodColors.NEUTRAL;
+  const moodStyle = MOOD_COLORS[mood] ?? MOOD_COLORS.NEUTRAL;
   const hasDetail = hasBehaviorDetail(entry);
   const overridden = entry.computedMood && entry.computedMood !== entry.mood;
   const behaviors = entry.behaviorKeys ?? [];
@@ -101,46 +107,48 @@ export default function EntryDetailScreen() {
       style={styles.container}
       contentContainerStyle={styles.content}
     >
-      <Text variant="titleLarge" style={styles.date}>{formatDate(entry.date)}</Text>
+      {/* Date */}
+      <Text style={styles.date}>{formatDate(entry.date)}</Text>
 
+      {/* Mood badge + day quality */}
       <View style={styles.moodRow}>
-        <Chip
-          compact
-          style={[styles.moodChip, { backgroundColor: moodStyle.bg }]}
-          textStyle={[styles.moodChipText, { color: moodStyle.text }]}
-        >
-          {moodStyle.label}
-        </Chip>
-        <Text variant="bodyMedium" style={styles.qualityText}>
+        <View style={[styles.moodBadge, { backgroundColor: moodStyle.bg }]}>
+          <Text style={[styles.moodBadgeText, { color: moodStyle.text }]}>
+            {moodStyle.label}
+          </Text>
+        </View>
+        <Text style={styles.qualityText}>
           {DAY_QUALITY_LABELS[entry.dayQuality] ?? entry.dayQuality}
         </Text>
       </View>
 
+      {/* Indicators */}
       {!hasDetail && (
         <View style={styles.indicatorRow}>
-          <Text variant="bodySmall" style={styles.quickLogBadge}>Quick log only</Text>
+          <Text style={styles.quickLogBadge}>Quick log only</Text>
         </View>
       )}
 
       {overridden && (
         <View style={styles.indicatorRow}>
-          <Text variant="bodySmall" style={styles.overrideText}>
-            Reported {moodColors[entry.mood]?.label ?? entry.mood} mood
+          <Text style={styles.overrideText}>
+            Reported {MOOD_COLORS[entry.mood]?.label ?? entry.mood} mood
           </Text>
         </View>
       )}
 
       {entry.computedScore !== null && entry.computedScore !== undefined && (
         <View style={styles.indicatorRow}>
-          <Text variant="bodySmall" style={styles.scoreText}>
+          <Text style={styles.scoreText}>
             Wave score: {entry.computedScore}
           </Text>
         </View>
       )}
 
+      {/* Behaviors */}
       {behaviors.length > 0 && (
         <View style={styles.section}>
-          <Text variant="titleSmall" style={styles.sectionTitle}>
+          <Text style={styles.sectionTitle}>
             Behaviors ({behaviors.length})
           </Text>
           <View style={styles.tagRow}>
@@ -156,140 +164,118 @@ export default function EntryDetailScreen() {
                 "risky-reckless-activities",
               ].includes(key);
               return (
-                <Chip
+                <View
                   key={key}
-                  compact
                   style={[
-                    styles.behaviorChip,
+                    styles.tag,
                     isManic
-                      ? { backgroundColor: moodColors.MANIC.bg }
-                      : { backgroundColor: moodColors.DEPRESSIVE.bg },
-                  ]}
-                  textStyle={[
-                    styles.behaviorChipText,
-                    isManic ? { color: moodColors.MANIC.text } : { color: moodColors.DEPRESSIVE.text },
+                      ? { backgroundColor: "#FEF3C7" }
+                      : { backgroundColor: "#DBEAFE" },
                   ]}
                 >
-                  {key.replace(/-/g, " ")}
-                </Chip>
+                  <Text
+                    style={[
+                      styles.tagText,
+                      isManic ? { color: "#92400E" } : { color: "#1E40AF" },
+                    ]}
+                  >
+                    {key.replace(/-/g, " ")}
+                  </Text>
+                </View>
               );
             })}
           </View>
         </View>
       )}
 
+      {/* Impairments */}
       {impairments.length > 0 && (
         <View style={styles.section}>
-          <Text variant="titleSmall" style={styles.sectionTitle}>Impairments</Text>
+          <Text style={styles.sectionTitle}>Impairments</Text>
           {impairments.map(([domain, severity]) => (
-            <View key={domain}>
-              <View style={styles.impairmentRow}>
-                <Text variant="bodyMedium" style={styles.impairmentLabel}>
-                  {IMPAIRMENT_LABELS[domain] ?? domain}
-                </Text>
-                <Chip
-                  compact
+            <View key={domain} style={styles.impairmentRow}>
+              <Text style={styles.impairmentLabel}>
+                {IMPAIRMENT_LABELS[domain] ?? domain}
+              </Text>
+              <View
+                style={[
+                  styles.severityBadge,
+                  severity === "SEVERE"
+                    ? styles.severeBadge
+                    : styles.presentBadge,
+                ]}
+              >
+                <Text
                   style={[
-                    styles.severityChip,
+                    styles.severityText,
                     severity === "SEVERE"
-                      ? { backgroundColor: palette.errorBg }
-                      : { backgroundColor: palette.warningBg },
-                  ]}
-                  textStyle={[
-                    styles.severityChipText,
-                    severity === "SEVERE"
-                      ? { color: palette.error }
-                      : { color: palette.warning },
+                      ? styles.severeText
+                      : styles.presentText,
                   ]}
                 >
                   {severity === "SEVERE" ? "Severe" : "Present"}
-                </Chip>
+                </Text>
               </View>
-              <Divider style={styles.impairmentDivider} />
             </View>
           ))}
         </View>
       )}
 
+      {/* Missed Medications */}
       {missedMeds.length > 0 && (
         <View style={styles.section}>
-          <Text variant="titleSmall" style={styles.sectionTitle}>
+          <Text style={styles.sectionTitle}>
             Missed Medications ({missedMeds.length})
           </Text>
           <View style={styles.tagRow}>
             {missedMeds.map((id) => (
-              <Chip
-                key={id}
-                compact
-                style={[styles.behaviorChip, { backgroundColor: palette.warningBg }]}
-                textStyle={[styles.behaviorChipText, { color: palette.warning }]}
-              >
-                {id}
-              </Chip>
+              <View key={id} style={[styles.tag, { backgroundColor: "#FEF3C7" }]}>
+                <Text style={[styles.tagText, { color: "#92400E" }]}>
+                  {id}
+                </Text>
+              </View>
             ))}
           </View>
         </View>
       )}
 
+      {/* Strategies */}
       {strategies.length > 0 && (
         <View style={styles.section}>
-          <Text variant="titleSmall" style={styles.sectionTitle}>
+          <Text style={styles.sectionTitle}>
             Strategies ({strategies.length})
           </Text>
           <View style={styles.tagRow}>
             {strategies.map((id) => (
-              <Chip
-                key={id}
-                compact
-                style={[styles.behaviorChip, { backgroundColor: palette.secondaryFaint }]}
-                textStyle={[styles.behaviorChipText, { color: "#065F46" }]}
-              >
-                {id}
-              </Chip>
+              <View key={id} style={[styles.tag, { backgroundColor: "#D1FAE5" }]}>
+                <Text style={[styles.tagText, { color: "#065F46" }]}>
+                  {id}
+                </Text>
+              </View>
             ))}
           </View>
         </View>
       )}
 
+      {/* Menstrual */}
       {entry.menstrualSeverity && (
         <View style={styles.section}>
-          <Text variant="titleSmall" style={styles.sectionTitle}>Menstrual</Text>
-          <Chip
-            compact
-            style={[styles.behaviorChip, { backgroundColor: "#FCE7F3" }]}
-            textStyle={[styles.behaviorChipText, { color: "#9D174D" }]}
-          >
-            Period: {entry.menstrualSeverity.toLowerCase()}
-          </Chip>
+          <Text style={styles.sectionTitle}>Menstrual</Text>
+          <View style={[styles.tag, { backgroundColor: "#FCE7F3" }]}>
+            <Text style={[styles.tagText, { color: "#9D174D" }]}>
+              Period: {entry.menstrualSeverity.toLowerCase()}
+            </Text>
+          </View>
         </View>
       )}
 
+      {/* Notes */}
       {entry.notes && (
         <View style={styles.section}>
-          <Text variant="titleSmall" style={styles.sectionTitle}>Notes</Text>
-          <Surface style={styles.notesCard} elevation={2}>
-            <Text variant="bodyMedium" style={styles.notesText}>{entry.notes}</Text>
-          </Surface>
-        </View>
-      )}
-
-      {entry.tenantId && (
-        <View style={styles.editSection}>
-          <Button
-            mode="contained"
-            onPress={() =>
-              router.push({
-                pathname: "/log-edit",
-                params: { entryId: entry.id, tenantId: entry.tenantId },
-              })
-            }
-            buttonColor={palette.primary}
-            textColor="#ffffff"
-            style={styles.editButton}
-            icon="pencil"
-          >
-            Edit Entry
-          </Button>
+          <Text style={styles.sectionTitle}>Notes</Text>
+          <View style={styles.notesCard}>
+            <Text style={styles.notesText}>{entry.notes}</Text>
+          </View>
         </View>
       )}
 
@@ -301,19 +287,20 @@ export default function EntryDetailScreen() {
 // ── Styles ──
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: palette.background },
+  container: { flex: 1, backgroundColor: "#ffffff" },
   content: { padding: 16 },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: palette.background,
+    backgroundColor: "#ffffff",
   },
-  errorText: { color: palette.error },
+  errorText: { color: "#DC2626", fontSize: 14 },
 
   date: {
+    fontSize: 18,
     fontWeight: "700",
-    color: palette.textPrimary,
+    color: "#111827",
     marginBottom: 12,
   },
 
@@ -322,31 +309,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  moodChip: {
-    borderRadius: radius.sm,
+  moodBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
-  moodChipText: { fontSize: 15, fontWeight: "600" },
-  qualityText: { color: palette.textSecondary, marginLeft: 10 },
+  moodBadgeText: { fontSize: 15, fontWeight: "600" },
+  qualityText: { fontSize: 14, color: "#6B7280", marginLeft: 10 },
 
   indicatorRow: { marginBottom: 6 },
   quickLogBadge: {
-    color: palette.warning,
+    fontSize: 13,
+    color: "#D97706",
     fontWeight: "500",
   },
   overrideText: {
-    color: palette.textSecondary,
+    fontSize: 13,
+    color: "#6B7280",
     fontStyle: "italic",
   },
   scoreText: {
-    color: palette.textSecondary,
+    fontSize: 13,
+    color: "#6B7280",
   },
 
   section: {
     marginTop: 20,
   },
   sectionTitle: {
+    fontSize: 14,
     fontWeight: "700",
-    color: palette.textSecondary,
+    color: "#374151",
     marginBottom: 8,
   },
 
@@ -355,40 +348,43 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 8,
   },
-  behaviorChip: {
-    borderRadius: radius.sm,
+  tag: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
   },
-  behaviorChipText: { fontSize: 13, fontWeight: "500" },
+  tagText: { fontSize: 13, fontWeight: "500" },
 
   impairmentRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
   },
-  impairmentLabel: { color: palette.textSecondary },
-  severityChip: {
-    borderRadius: radius.sm,
+  impairmentLabel: { fontSize: 14, color: "#374151" },
+  severityBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  severityChipText: { fontSize: 12, fontWeight: "600" },
-  impairmentDivider: {
-    backgroundColor: palette.borderLight,
-  },
+  presentBadge: { backgroundColor: "#FEF3C7" },
+  severeBadge: { backgroundColor: "#FEE2E2" },
+  severityText: { fontSize: 12, fontWeight: "600" },
+  presentText: { color: "#92400E" },
+  severeText: { color: "#991B1B" },
 
   notesCard: {
-    backgroundColor: palette.card,
-    borderRadius: radius.md,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
     padding: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   notesText: {
-    color: palette.textSecondary,
+    fontSize: 14,
+    color: "#374151",
     lineHeight: 22,
-  },
-
-  editSection: {
-    marginTop: 24,
-  },
-  editButton: {
-    borderRadius: radius.md,
   },
 });

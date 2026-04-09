@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
+  Text,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { Text, Card, Chip, ActivityIndicator, Button, Surface } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   getTenants,
@@ -13,7 +16,6 @@ import {
   TenantSummary,
   CurrentUser,
 } from "@/lib/api";
-import { palette, radius } from "@/lib/theme";
 
 const ROLE_LABELS: Record<string, string> = {
   OWNER: "Owner",
@@ -54,26 +56,26 @@ export default function ProjectsScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
-        <Text variant="headlineSmall" style={styles.headerTitle}>Projects</Text>
+        <Text style={styles.headerTitle}>Projects</Text>
       </View>
 
       {loading && !refreshing ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={palette.primary} />
+          <ActivityIndicator size="large" color="#374151" />
         </View>
       ) : error ? (
         <View style={styles.centered}>
-          <Text variant="bodyMedium" style={styles.errorText}>{error}</Text>
-          <Button mode="outlined" onPress={load} style={styles.retryButton}>
-            Retry
-          </Button>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={load}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       ) : tenants.length === 0 ? (
         <View style={styles.centered}>
-          <Text variant="bodyLarge" style={styles.emptyText}>No projects yet.</Text>
-          <Text variant="bodyMedium" style={styles.emptySubtext}>
+          <Text style={styles.emptyText}>No projects yet.</Text>
+          <Text style={styles.emptySubtext}>
             Create a project on the web app to get started.
           </Text>
         </View>
@@ -95,7 +97,7 @@ export default function ProjectsScreen() {
           ))}
         </ScrollView>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -112,63 +114,60 @@ function ProjectCard({
   const displayName = tenant.teenNickname || tenant.name;
 
   return (
-    <Surface style={styles.cardSurface} elevation={2}>
-      <Card style={styles.card} onPress={onPress} mode="contained">
-        <View style={styles.cardInner}>
-          <View
-            style={[
-              styles.cardAccent,
-              { backgroundColor: tenant.teenFavoriteColor ?? palette.border },
-            ]}
-          />
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+      {/* Left accent bar */}
+      <View
+        style={[
+          styles.cardAccent,
+          { backgroundColor: tenant.teenFavoriteColor ?? "#E5E7EB" },
+        ]}
+      />
 
-          <Card.Content style={styles.cardBody}>
-            <View style={styles.cardRow}>
-              <Text variant="titleMedium" style={styles.cardName}>{tenant.name}</Text>
-              <View style={styles.cardBadges}>
-                {isDefault && (
-                  <Chip
-                    compact
-                    textStyle={styles.chipText}
-                    style={styles.defaultChip}
-                  >
-                    Default
-                  </Chip>
-                )}
-                <Chip
-                  compact
-                  textStyle={styles.chipText}
-                  style={styles.roleChip}
-                >
-                  {role}
-                </Chip>
+      <View style={styles.cardBody}>
+        <View style={styles.cardRow}>
+          <Text style={styles.cardName}>{tenant.name}</Text>
+          <View style={styles.cardBadges}>
+            {isDefault && (
+              <View style={styles.defaultBadge}>
+                <Text style={styles.defaultBadgeText}>Default</Text>
               </View>
-            </View>
-
-            {displayName !== tenant.name && (
-              <Text variant="bodyMedium" style={styles.cardSubname}>{displayName}</Text>
             )}
-
-            <View style={styles.cardMeta}>
-              <Text variant="bodyLarge" style={styles.chevron}>›</Text>
+            <View style={styles.roleBadge}>
+              <Text style={styles.roleBadgeText}>{role}</Text>
             </View>
-          </Card.Content>
+          </View>
         </View>
-      </Card>
-    </Surface>
+
+        {displayName !== tenant.name && (
+          <Text style={styles.cardSubname}>{displayName}</Text>
+        )}
+
+        <View style={styles.cardMeta}>
+          {tenant.teenFavoriteColor && (
+            <View
+              style={[
+                styles.colorDot,
+                { backgroundColor: tenant.teenFavoriteColor },
+              ]}
+            />
+          )}
+          <Text style={styles.chevron}>›</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: palette.background },
+  container: { flex: 1, backgroundColor: "#ffffff" },
 
   header: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: palette.borderLight,
+    borderBottomColor: "#F3F4F6",
   },
-  headerTitle: { fontWeight: "700", color: palette.textPrimary },
+  headerTitle: { fontSize: 22, fontWeight: "700", color: "#111827" },
 
   centered: {
     flex: 1,
@@ -177,32 +176,35 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   errorText: {
-    color: palette.error,
+    fontSize: 14,
+    color: "#DC2626",
     textAlign: "center",
     marginBottom: 12,
   },
   retryButton: {
-    borderColor: palette.border,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
   },
-  emptyText: { color: palette.textSecondary, marginBottom: 4 },
-  emptySubtext: { color: palette.textMuted, textAlign: "center" },
+  retryText: { fontSize: 14, color: "#374151", fontWeight: "500" },
+  emptyText: { fontSize: 16, color: "#6B7280", marginBottom: 4 },
+  emptySubtext: { fontSize: 14, color: "#9CA3AF", textAlign: "center" },
 
   scroll: { flex: 1 },
   scrollContent: { padding: 16, gap: 12 },
 
-  cardSurface: {
-    borderRadius: radius.md,
-    backgroundColor: palette.card,
-  },
   card: {
-    overflow: "hidden",
-    backgroundColor: "transparent",
-  },
-  cardInner: {
     flexDirection: "row",
+    backgroundColor: "#FAFAFA",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    overflow: "hidden",
   },
   cardAccent: { width: 4 },
-  cardBody: { flex: 1, paddingVertical: 14, paddingHorizontal: 14 },
+  cardBody: { flex: 1, padding: 14 },
   cardRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -210,29 +212,38 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   cardName: {
+    fontSize: 16,
     fontWeight: "700",
-    color: palette.textPrimary,
+    color: "#111827",
     flex: 1,
     marginRight: 8,
   },
-  cardSubname: { color: palette.textSecondary, marginBottom: 6 },
+  cardSubname: { fontSize: 14, color: "#6B7280", marginBottom: 6 },
   cardBadges: { flexDirection: "row", gap: 6, flexShrink: 0 },
-  defaultChip: {
-    backgroundColor: palette.successBg,
-    borderRadius: radius.sm,
-    height: 26,
+  defaultBadge: {
+    backgroundColor: "#ECFDF5",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
-  roleChip: {
-    backgroundColor: palette.borderLight,
-    borderRadius: radius.sm,
-    height: 26,
+  defaultBadgeText: { fontSize: 11, fontWeight: "600", color: "#065F46" },
+  roleBadge: {
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
-  chipText: { fontSize: 11, marginHorizontal: 0, marginVertical: 0 },
+  roleBadgeText: { fontSize: 11, fontWeight: "500", color: "#6B7280" },
   cardMeta: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     marginTop: 8,
   },
-  chevron: { color: palette.textMuted },
+  colorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  chevron: { fontSize: 20, color: "#9CA3AF", marginLeft: "auto" },
 });

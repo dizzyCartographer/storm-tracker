@@ -1,21 +1,30 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
+  Text,
+  StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
   RefreshControl,
-  StyleSheet,
 } from "react-native";
-import { Text, Card, Chip, ActivityIndicator, Divider, Surface } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
+  getTenants,
   getEntriesByRange,
+  TenantSummary,
   EntryRow,
 } from "@/lib/api";
-import { useProject } from "@/lib/project-context";
-import { palette, moodColors, radius } from "@/lib/theme";
 
 // ── Constants ──
+
+const MOOD_COLORS: Record<string, { bg: string; text: string; dot: string; label: string }> = {
+  MANIC: { bg: "#FEF3C7", text: "#92400E", dot: "#F59E0B", label: "Manic" },
+  DEPRESSIVE: { bg: "#DBEAFE", text: "#1E40AF", dot: "#3B82F6", label: "Depressive" },
+  MIXED: { bg: "#EDE9FE", text: "#5B21B6", dot: "#8B5CF6", label: "Mixed" },
+  NEUTRAL: { bg: "#F3F4F6", text: "#374151", dot: "#9CA3AF", label: "Neutral" },
+};
 
 const DAY_QUALITY_LABELS: Record<string, string> = {
   GOOD: "Good day",
@@ -41,10 +50,7 @@ function todayParts(): { year: number; month: number } {
   return { year: d.getFullYear(), month: d.getMonth() };
 }
 
-function monthRange(
-  year: number,
-  month: number
-): { start: string; end: string } {
+function monthRange(year: number, month: number): { start: string; end: string } {
   const start = `${year}-${String(month + 1).padStart(2, "0")}-01`;
   const lastDay = new Date(year, month + 1, 0).getDate();
   const end = `${year}-${String(month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
@@ -103,7 +109,8 @@ function hasBehaviorDetail(entry: EntryRow): boolean {
 // ── Main Component ──
 
 export default function HistoryScreen() {
-  const { selectedTenant: activeTenant, tenants, loading: projectLoading } = useProject();
+  const [tenants, setTenants] = useState<TenantSummary[]>([]);
+  const [activeTenant, setActiveTenant] = useState<TenantSummary | null>(null);
   const [year, setYear] = useState(todayParts().year);
   const [month, setMonth] = useState(todayParts().month);
   const [entries, setEntries] = useState<EntryRow[]>([]);
@@ -111,9 +118,23 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Load tenants
+  useEffect(() => {
+    (async () => {
+      try {
+        const t = await getTenants();
+        setTenants(t);
+        if (t.length > 0) setActiveTenant(t[0]);
+      } catch (e) {
+        console.error("Failed to load tenants:", e);
+      }
+    })();
+  }, []);
+
+  // Load entries for month
   const loadEntries = useCallback(async () => {
     if (!activeTenant) {
-      if (!projectLoading) setLoading(false);
+      setLoading(false);
       return;
     }
     try {
@@ -139,6 +160,7 @@ export default function HistoryScreen() {
     loadEntries();
   }, [loadEntries]);
 
+  // Map entries by day number
   const entriesByDay = useMemo(() => {
     const map = new Map<number, EntryRow[]>();
     for (const entry of entries) {
@@ -152,10 +174,10 @@ export default function HistoryScreen() {
 
   const weeks = useMemo(() => calendarGrid(year, month), [year, month]);
 
-  const selectedEntries = selectedDay
-    ? entriesByDay.get(selectedDay) ?? []
-    : [];
+  // Selected day entries
+  const selectedEntries = selectedDay ? entriesByDay.get(selectedDay) ?? [] : [];
 
+  // Month navigation
   function prevMonth() {
     if (month === 0) {
       setYear(year - 1);
@@ -179,18 +201,30 @@ export default function HistoryScreen() {
   const isCurrentMonth =
     year === todayParts().year && month === todayParts().month;
 
-  if ((loading || projectLoading) && entries.length === 0) {
+  // ── Render ──
+
+  if (loading && entries.length === 0) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={palette.primary} />
+          <ActivityIndicator size="large" color="#374151" />
         </View>
-      </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (tenants.length === 0) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>No projects found</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -198,27 +232,57 @@ export default function HistoryScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <Text variant="headlineSmall" style={styles.pageTitle}>
-          History
-        </Text>
+        <Text style={styles.pageTitle}>History</Text>
+
+        {/* Project selector */}
+        {tenants.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.tenantBar}
+          >
+            {tenants.map((t) => (
+              <TouchableOpacity
+                key={t.id}
+                style={[
+                  styles.tenantPill,
+                  activeTenant?.id === t.id && styles.tenantPillActive,
+                ]}
+                onPress={() => setActiveTenant(t)}
+              >
+                {t.teenFavoriteColor && (
+                  <View
+                    style={[
+                      styles.colorDot,
+                      { backgroundColor: t.teenFavoriteColor },
+                    ]}
+                  />
+                )}
+                <Text
+                  style={[
+                    styles.tenantPillText,
+                    activeTenant?.id === t.id && styles.tenantPillTextActive,
+                  ]}
+                >
+                  {t.teenNickname ?? t.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
 
         {/* Month navigation */}
         <View style={styles.monthNav}>
           <TouchableOpacity onPress={prevMonth} style={styles.monthArrow}>
-            <Text variant="headlineMedium" style={styles.monthArrowText}>
-              ‹
-            </Text>
+            <Text style={styles.monthArrowText}>‹</Text>
           </TouchableOpacity>
-          <Text variant="titleMedium" style={styles.monthLabel}>
-            {monthLabel(year, month)}
-          </Text>
+          <Text style={styles.monthLabel}>{monthLabel(year, month)}</Text>
           <TouchableOpacity
             onPress={nextMonth}
             style={styles.monthArrow}
             disabled={isCurrentMonth}
           >
             <Text
-              variant="headlineMedium"
               style={[
                 styles.monthArrowText,
                 isCurrentMonth && styles.monthArrowDisabled,
@@ -230,17 +294,17 @@ export default function HistoryScreen() {
         </View>
 
         {/* Calendar grid */}
-        <Surface style={styles.calendar} elevation={2}>
+        <View style={styles.calendar}>
+          {/* Day headers */}
           <View style={styles.calendarRow}>
             {DAY_NAMES.map((name) => (
               <View key={name} style={styles.calendarHeaderCell}>
-                <Text variant="labelSmall" style={styles.dayHeaderText}>
-                  {name}
-                </Text>
+                <Text style={styles.dayHeaderText}>{name}</Text>
               </View>
             ))}
           </View>
 
+          {/* Weeks */}
           {weeks.map((week, wi) => (
             <View key={wi} style={styles.calendarRow}>
               {week.map((day, di) => {
@@ -274,7 +338,7 @@ export default function HistoryScreen() {
                         {dayEntries.map((e) => {
                           const m = displayMood(e);
                           const color =
-                            moodColors[m]?.dot ?? moodColors.NEUTRAL.dot;
+                            MOOD_COLORS[m]?.dot ?? MOOD_COLORS.NEUTRAL.dot;
                           return (
                             <View
                               key={e.id}
@@ -289,20 +353,17 @@ export default function HistoryScreen() {
               })}
             </View>
           ))}
-        </Surface>
+        </View>
 
         {/* Selected day detail */}
         {selectedDay !== null && (
           <View style={styles.detailSection}>
-            <Divider style={{ marginBottom: 12, backgroundColor: palette.borderLight }} />
-            <Text variant="titleMedium" style={styles.detailDate}>
+            <Text style={styles.detailDate}>
               {formatDateFull(dateStr(year, month, selectedDay))}
             </Text>
 
             {selectedEntries.length === 0 ? (
-              <Text variant="bodySmall" style={styles.noEntries}>
-                No entries logged
-              </Text>
+              <Text style={styles.noEntries}>No entries logged</Text>
             ) : (
               selectedEntries.map((entry) => (
                 <EntryCard key={entry.id} entry={entry} />
@@ -313,7 +374,7 @@ export default function HistoryScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -322,9 +383,10 @@ export default function HistoryScreen() {
 function EntryCard({ entry }: { entry: EntryRow }) {
   const router = useRouter();
   const mood = displayMood(entry);
-  const moodStyle = moodColors[mood] ?? moodColors.NEUTRAL;
+  const moodStyle = MOOD_COLORS[mood] ?? MOOD_COLORS.NEUTRAL;
   const hasDetail = hasBehaviorDetail(entry);
-  const overridden = entry.computedMood && entry.computedMood !== entry.mood;
+  const overridden =
+    entry.computedMood && entry.computedMood !== entry.mood;
 
   const activeImpairments = Object.entries(entry.impairments ?? {}).filter(
     ([, v]) => v !== "NONE"
@@ -333,132 +395,144 @@ function EntryCard({ entry }: { entry: EntryRow }) {
   const behaviors = entry.behaviorKeys ?? [];
 
   return (
-    <Surface style={styles.card} elevation={2}>
-      <Card
-        style={styles.cardInner}
-        onPress={() => router.push(`/entry/${entry.id}`)}
-        mode="contained"
-      >
-        <Card.Content>
-          <View style={styles.cardHeader}>
-            <Chip
-              compact
-              textStyle={{ fontSize: 12, color: moodStyle.text }}
-              style={[styles.moodChip, { backgroundColor: moodStyle.bg }]}
-            >
-              {moodStyle.label}
-            </Chip>
-            <Text variant="bodySmall" style={styles.qualityText}>
-              {DAY_QUALITY_LABELS[entry.dayQuality] ?? entry.dayQuality}
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push(`/entry/${entry.id}`)}
+      activeOpacity={0.7}
+    >
+      {/* Mood badge + meta */}
+      <View style={styles.cardHeader}>
+        <View style={[styles.moodBadge, { backgroundColor: moodStyle.bg }]}>
+          <Text style={[styles.moodBadgeText, { color: moodStyle.text }]}>
+            {moodStyle.label}
+          </Text>
+        </View>
+        <Text style={styles.qualityText}>
+          {DAY_QUALITY_LABELS[entry.dayQuality] ?? entry.dayQuality}
+        </Text>
+      </View>
+
+      {!hasDetail && (
+        <Text style={styles.quickLogBadge}>Quick log only</Text>
+      )}
+
+      {overridden && (
+        <Text style={styles.overrideText}>
+          Reported {MOOD_COLORS[entry.mood]?.label ?? entry.mood} mood
+        </Text>
+      )}
+
+      {/* Behaviors */}
+      {behaviors.length > 0 && (
+        <View style={styles.tagSection}>
+          <Text style={styles.tagLabel}>Behaviors</Text>
+          <View style={styles.tagRow}>
+            {behaviors.map((key) => (
+              <View key={key} style={styles.tag}>
+                <Text style={styles.tagText}>
+                  {key.replace(/-/g, " ")}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Impairments */}
+      {activeImpairments.length > 0 && (
+        <View style={styles.tagSection}>
+          <Text style={styles.tagLabel}>Impairments</Text>
+          <View style={styles.tagRow}>
+            {activeImpairments.map(([domain, severity]) => (
+              <View
+                key={domain}
+                style={[
+                  styles.tag,
+                  severity === "SEVERE" && styles.tagSevere,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tagText,
+                    severity === "SEVERE" && styles.tagTextSevere,
+                  ]}
+                >
+                  {IMPAIRMENT_LABELS[domain] ?? domain}: {severity.toLowerCase()}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Missed meds */}
+      {missedMeds.length > 0 && (
+        <View style={styles.tagSection}>
+          <Text style={styles.tagLabel}>
+            Missed medications ({missedMeds.length})
+          </Text>
+        </View>
+      )}
+
+      {/* Menstrual */}
+      {entry.menstrualSeverity && (
+        <View style={styles.tagSection}>
+          <View style={[styles.tag, { backgroundColor: "#FCE7F3" }]}>
+            <Text style={[styles.tagText, { color: "#9D174D" }]}>
+              Period: {entry.menstrualSeverity.toLowerCase()}
             </Text>
           </View>
+        </View>
+      )}
 
-          {!hasDetail && (
-            <Text variant="labelSmall" style={styles.quickLogBadge}>
-              Quick log only
-            </Text>
-          )}
-
-          {overridden && (
-            <Text variant="labelSmall" style={styles.overrideText}>
-              Reported {moodColors[entry.mood]?.label ?? entry.mood} mood
-            </Text>
-          )}
-
-          {behaviors.length > 0 && (
-            <View style={styles.tagSection}>
-              <Text variant="labelSmall" style={styles.tagLabel}>
-                Behaviors
-              </Text>
-              <View style={styles.tagRow}>
-                {behaviors.map((key) => (
-                  <Chip
-                    key={key}
-                    compact
-                    textStyle={styles.tagChipText}
-                    style={styles.tagChip}
-                  >
-                    {key.replace(/-/g, " ")}
-                  </Chip>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {activeImpairments.length > 0 && (
-            <View style={styles.tagSection}>
-              <Text variant="labelSmall" style={styles.tagLabel}>
-                Impairments
-              </Text>
-              <View style={styles.tagRow}>
-                {activeImpairments.map(([domain, severity]) => (
-                  <Chip
-                    key={domain}
-                    compact
-                    textStyle={[
-                      styles.tagChipText,
-                      severity === "SEVERE" && { color: palette.error },
-                    ]}
-                    style={[
-                      styles.tagChip,
-                      severity === "SEVERE" && { backgroundColor: palette.errorBg },
-                    ]}
-                  >
-                    {IMPAIRMENT_LABELS[domain] ?? domain}: {severity.toLowerCase()}
-                  </Chip>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {missedMeds.length > 0 && (
-            <View style={styles.tagSection}>
-              <Text variant="labelSmall" style={styles.tagLabel}>
-                Missed medications ({missedMeds.length})
-              </Text>
-            </View>
-          )}
-
-          {entry.menstrualSeverity && (
-            <View style={styles.tagSection}>
-              <Chip
-                compact
-                textStyle={{ fontSize: 11, color: "#9D174D" }}
-                style={[styles.moodChip, { backgroundColor: "#FCE7F3" }]}
-              >
-                Period: {entry.menstrualSeverity.toLowerCase()}
-              </Chip>
-            </View>
-          )}
-
-          {entry.notes && (
-            <View style={styles.notesSection}>
-              <Text variant="labelSmall" style={styles.tagLabel}>
-                Notes
-              </Text>
-              <Text variant="bodySmall" style={styles.notesText} numberOfLines={4}>
-                {entry.notes}
-              </Text>
-            </View>
-          )}
-        </Card.Content>
-      </Card>
-    </Surface>
+      {/* Notes */}
+      {entry.notes && (
+        <View style={styles.notesSection}>
+          <Text style={styles.tagLabel}>Notes</Text>
+          <Text style={styles.notesText} numberOfLines={4}>
+            {entry.notes}
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 }
 
 // ── Styles ──
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: palette.background },
+  container: { flex: 1, backgroundColor: "#ffffff" },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  emptyText: { color: "#6B7280", fontSize: 16 },
   scroll: { flex: 1 },
   scrollContent: { padding: 16 },
   pageTitle: {
+    fontSize: 22,
     fontWeight: "700",
-    color: palette.textPrimary,
+    color: "#111827",
     marginBottom: 12,
   },
+
+  // Tenant selector
+  tenantBar: { marginBottom: 16 },
+  tenantPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#F3F4F6",
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  tenantPillActive: {
+    backgroundColor: "#E5E7EB",
+    borderColor: "#374151",
+  },
+  tenantPillText: { fontSize: 14, color: "#6B7280" },
+  tenantPillTextActive: { color: "#111827", fontWeight: "600" },
+  colorDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
 
   // Month nav
   monthNav: {
@@ -470,14 +544,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   monthArrow: { padding: 8 },
-  monthArrowText: { color: palette.primary, fontWeight: "300" },
-  monthArrowDisabled: { color: palette.textMuted },
-  monthLabel: { fontWeight: "700", color: palette.textPrimary },
+  monthArrowText: { fontSize: 28, color: "#374151", fontWeight: "300" },
+  monthArrowDisabled: { color: "#D1D5DB" },
+  monthLabel: { fontSize: 18, fontWeight: "700", color: "#111827" },
 
   // Calendar
   calendar: {
-    backgroundColor: palette.surfaceAlt,
-    borderRadius: radius.md,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
     padding: 8,
     marginBottom: 16,
   },
@@ -487,23 +561,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 6,
   },
-  dayHeaderText: { color: palette.textMuted },
+  dayHeaderText: { fontSize: 12, fontWeight: "600", color: "#9CA3AF" },
   calendarCell: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 8,
     minHeight: 44,
-    borderRadius: radius.sm,
+    borderRadius: 8,
   },
   calendarCellSelected: {
-    backgroundColor: palette.primaryFaint,
+    backgroundColor: "#E5E7EB",
     borderWidth: 1,
-    borderColor: palette.primary,
+    borderColor: "#374151",
   },
-  dayNumber: { fontSize: 14, color: palette.textMuted },
-  dayNumberBold: { fontWeight: "700", color: palette.textPrimary },
-  dayNumberSelected: { color: palette.primary },
+  dayNumber: { fontSize: 14, color: "#9CA3AF" },
+  dayNumberBold: { fontWeight: "700", color: "#111827" },
+  dayNumberSelected: { color: "#111827" },
   dotRow: {
     flexDirection: "row",
     marginTop: 2,
@@ -518,33 +592,43 @@ const styles = StyleSheet.create({
   // Detail section
   detailSection: { marginTop: 4 },
   detailDate: {
+    fontSize: 16,
     fontWeight: "600",
-    color: palette.textPrimary,
+    color: "#111827",
     marginBottom: 12,
   },
-  noEntries: { color: palette.textMuted, fontStyle: "italic" },
+  noEntries: { color: "#9CA3AF", fontSize: 14, fontStyle: "italic" },
 
   // Entry card
   card: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 14,
     marginBottom: 12,
-    borderRadius: radius.md,
-    backgroundColor: palette.card,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
-  cardInner: { backgroundColor: "transparent" },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
   },
-  moodChip: { borderRadius: radius.sm },
-  qualityText: { color: palette.textSecondary, marginLeft: 8 },
+  moodBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  moodBadgeText: { fontSize: 13, fontWeight: "600" },
+  qualityText: { fontSize: 13, color: "#6B7280", marginLeft: 8 },
   quickLogBadge: {
-    color: palette.warning,
+    fontSize: 12,
+    color: "#D97706",
     fontWeight: "500",
     marginBottom: 6,
   },
   overrideText: {
-    color: palette.textSecondary,
+    fontSize: 12,
+    color: "#6B7280",
     fontStyle: "italic",
     marginBottom: 6,
   },
@@ -552,18 +636,23 @@ const styles = StyleSheet.create({
   // Tags
   tagSection: { marginTop: 8 },
   tagLabel: {
+    fontSize: 12,
     fontWeight: "600",
-    color: palette.textSecondary,
+    color: "#6B7280",
     marginBottom: 4,
   },
   tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  tagChip: {
-    backgroundColor: palette.borderLight,
-    borderRadius: radius.sm,
+  tag: {
+    backgroundColor: "#E5E7EB",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
-  tagChipText: { fontSize: 11, color: palette.textSecondary },
+  tagSevere: { backgroundColor: "#FEE2E2" },
+  tagText: { fontSize: 12, color: "#374151" },
+  tagTextSevere: { color: "#991B1B" },
 
   // Notes
   notesSection: { marginTop: 8 },
-  notesText: { color: palette.textSecondary, lineHeight: 20 },
+  notesText: { fontSize: 13, color: "#374151", lineHeight: 20 },
 });

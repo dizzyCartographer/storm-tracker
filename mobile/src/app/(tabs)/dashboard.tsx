@@ -1,32 +1,40 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, ScrollView, RefreshControl, StyleSheet } from "react-native";
 import {
+  View,
   Text,
-  Card,
-  Chip,
-  Button,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   ActivityIndicator,
-  Divider,
-  List,
-  Surface,
-} from "react-native-paper";
+  RefreshControl,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/lib/auth-context";
 import {
+  getTenants,
+  getCurrentUserInfo,
   getRecentEntries,
   getEpisodes,
   getSignals,
   getPredictions,
   getSuggestions,
+  TenantSummary,
   EntryRow,
   EpisodeRow,
   SignalRow,
   PredictionRow,
   SuggestionRow,
 } from "@/lib/api";
-import { useProject } from "@/lib/project-context";
-import { palette, moodColors, radius } from "@/lib/theme";
 
-// ── Constants ──
+// ── Mood colors ──
+
+const MOOD_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  MANIC: { bg: "#FEF3C7", text: "#92400E", label: "Manic" },
+  DEPRESSIVE: { bg: "#DBEAFE", text: "#1E40AF", label: "Depressive" },
+  MIXED: { bg: "#EDE9FE", text: "#5B21B6", label: "Mixed" },
+  NEUTRAL: { bg: "#F3F4F6", text: "#374151", label: "Neutral" },
+};
 
 const DAY_QUALITY: Record<string, string> = {
   GOOD: "Good day",
@@ -61,10 +69,65 @@ function impairmentCount(entry: EntryRow): number {
 
 // ── Components ──
 
+function ProjectSelector({
+  tenants,
+  selected,
+  onSelect,
+}: {
+  tenants: TenantSummary[];
+  selected: string | null;
+  onSelect: (id: string) => void;
+}) {
+  if (tenants.length === 0) return null;
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.projectRow}
+      contentContainerStyle={styles.projectRowContent}
+    >
+      {tenants.map((t) => {
+        const isActive = t.id === selected;
+        return (
+          <TouchableOpacity
+            key={t.id}
+            onPress={() => onSelect(t.id)}
+            style={[
+              styles.projectPill,
+              isActive && styles.projectPillActive,
+              t.teenFavoriteColor && isActive
+                ? { borderColor: t.teenFavoriteColor }
+                : undefined,
+            ]}
+          >
+            {t.teenFavoriteColor && (
+              <View
+                style={[
+                  styles.colorDot,
+                  { backgroundColor: t.teenFavoriteColor },
+                ]}
+              />
+            )}
+            <Text
+              style={[
+                styles.projectPillText,
+                isActive && styles.projectPillTextActive,
+              ]}
+            >
+              {t.teenNickname || t.name}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
 function EntryCard({ entry }: { entry: EntryRow }) {
   const router = useRouter();
   const mood = displayMood(entry);
-  const moodStyle = moodColors[mood] ?? moodColors.NEUTRAL;
+  const moodStyle = MOOD_COLORS[mood] ?? MOOD_COLORS.NEUTRAL;
   const hasBehaviors = hasBehaviorDetail(entry);
   const missedMeds = Array.isArray(entry.missedMedIds)
     ? entry.missedMedIds.length
@@ -72,139 +135,110 @@ function EntryCard({ entry }: { entry: EntryRow }) {
   const impairments = impairmentCount(entry);
 
   return (
-    <Surface style={styles.card} elevation={2}>
-      <Card
-        style={styles.cardInner}
-        onPress={() => router.push(`/entry/${entry.id}`)}
-        mode="contained"
-      >
-        <Card.Content>
-          <View style={styles.cardHeader}>
-            <Text variant="titleSmall" style={styles.cardDate}>
-              {formatDate(entry.date)}
-            </Text>
-            <Chip
-              compact
-              textStyle={{ fontSize: 11, color: moodStyle.text }}
-              style={[styles.moodChip, { backgroundColor: moodStyle.bg }]}
-            >
-              {moodStyle.label}
-            </Chip>
-          </View>
-
-          <Text variant="bodySmall" style={styles.cardQuality}>
-            {DAY_QUALITY[entry.dayQuality] ?? entry.dayQuality}
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push(`/entry/${entry.id}`)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardDate}>{formatDate(entry.date)}</Text>
+        <View style={[styles.moodBadge, { backgroundColor: moodStyle.bg }]}>
+          <Text style={[styles.moodBadgeText, { color: moodStyle.text }]}>
+            {moodStyle.label}
           </Text>
+        </View>
+      </View>
 
-          <View style={styles.cardMeta}>
-            {hasBehaviors ? (
-              <Text variant="labelSmall" style={styles.metaText}>
-                {entry.behaviorKeys.length} behaviors
-              </Text>
-            ) : (
-              <Text variant="labelSmall" style={styles.metaQuickLog}>
-                quick log only
-              </Text>
-            )}
+      <Text style={styles.cardQuality}>
+        {DAY_QUALITY[entry.dayQuality] ?? entry.dayQuality}
+      </Text>
 
-            {impairments > 0 && (
-              <Text variant="labelSmall" style={styles.metaText}>
-                {impairments} impairments
-              </Text>
-            )}
+      <View style={styles.cardMeta}>
+        {hasBehaviors ? (
+          <Text style={styles.metaText}>
+            {entry.behaviorKeys.length} behaviors
+          </Text>
+        ) : (
+          <Text style={styles.metaQuickLog}>quick log only</Text>
+        )}
 
-            {missedMeds > 0 && (
-              <Text variant="labelSmall" style={styles.metaMissed}>
-                {missedMeds} missed meds
-              </Text>
-            )}
-          </View>
+        {impairments > 0 && (
+          <Text style={styles.metaText}>{impairments} impairments</Text>
+        )}
 
-          {hasBehaviors && mood !== entry.mood && (
-            <Text variant="labelSmall" style={styles.reportedMood}>
-              reported {entry.mood.toLowerCase()}
-            </Text>
-          )}
+        {missedMeds > 0 && (
+          <Text style={styles.metaMissed}>{missedMeds} missed meds</Text>
+        )}
+      </View>
 
-          {entry.notes && (
-            <Text variant="bodySmall" style={styles.cardNotes} numberOfLines={2}>
-              {entry.notes}
-            </Text>
-          )}
-        </Card.Content>
-      </Card>
-    </Surface>
+      {hasBehaviors && mood !== entry.mood && (
+        <Text style={styles.reportedMood}>reported {entry.mood.toLowerCase()}</Text>
+      )}
+
+      {entry.notes && (
+        <Text style={styles.cardNotes} numberOfLines={2}>
+          {entry.notes}
+        </Text>
+      )}
+    </TouchableOpacity>
   );
 }
 
 function SignalCard({ signal }: { signal: SignalRow }) {
   const levelColors: Record<string, { bg: string; text: string }> = {
-    ALERT: { bg: palette.errorBg, text: palette.error },
-    WARNING: { bg: palette.warningBg, text: palette.warning },
+    ALERT: { bg: "#FEE2E2", text: "#991B1B" },
+    WARNING: { bg: "#FEF3C7", text: "#92400E" },
     INFO: { bg: "#DBEAFE", text: "#1E40AF" },
   };
   const c = levelColors[signal.level] ?? levelColors.INFO;
 
   return (
-    <Surface
-      style={[styles.analysisCard, { borderLeftColor: c.text }]}
-      elevation={3}
-    >
-      <Chip
-        compact
-        textStyle={{ fontSize: 10, color: c.text, fontWeight: "700" }}
-        style={[styles.levelChip, { backgroundColor: c.bg }]}
-      >
-        {signal.level}
-      </Chip>
-      <Text variant="titleSmall" style={styles.analysisTitle}>
-        {signal.title}
-      </Text>
-      <Text variant="bodySmall" style={styles.analysisDesc}>
-        {signal.description}
-      </Text>
-    </Surface>
+    <View style={[styles.analysisCard, { borderLeftColor: c.text }]}>
+      <View style={[styles.levelBadge, { backgroundColor: c.bg }]}>
+        <Text style={[styles.levelBadgeText, { color: c.text }]}>
+          {signal.level}
+        </Text>
+      </View>
+      <Text style={styles.analysisTitle}>{signal.title}</Text>
+      <Text style={styles.analysisDesc}>{signal.description}</Text>
+    </View>
   );
 }
 
 function EpisodeCard({ episode }: { episode: EpisodeRow }) {
-  const mood = moodColors[episode.type] ?? moodColors.NEUTRAL;
+  const mood = MOOD_COLORS[episode.type] ?? MOOD_COLORS.NEUTRAL;
   return (
-    <Surface
-      style={[styles.analysisCard, { borderLeftColor: mood.text }]}
-      elevation={3}
-    >
+    <View style={[styles.analysisCard, { borderLeftColor: mood.text }]}>
       <View style={styles.analysisCardHeader}>
-        <Chip
-          compact
-          textStyle={{ fontSize: 11, color: mood.text }}
-          style={[styles.moodChip, { backgroundColor: mood.bg }]}
-        >
-          {mood.label}
-        </Chip>
-        <Text variant="labelSmall" style={styles.analysisMeta}>
-          {episode.dayCount}d ·{" "}
+        <View style={[styles.moodBadge, { backgroundColor: mood.bg }]}>
+          <Text style={[styles.moodBadgeText, { color: mood.text }]}>
+            {mood.label}
+          </Text>
+        </View>
+        <Text style={styles.analysisMeta}>
+          {episode.dayCount}d &middot;{" "}
           {episode.confidence === "DSM5_MET"
             ? "Pattern consistent with DSM-5"
             : "Emerging pattern"}
         </Text>
       </View>
-      <Text variant="bodySmall" style={styles.analysisDesc}>
+      <Text style={styles.analysisDesc}>
         {formatDate(episode.startDate)} — {formatDate(episode.endDate)}
       </Text>
       {episode.criteriaNote && (
-        <Text variant="bodySmall" style={styles.analysisDesc}>
-          {episode.criteriaNote}
-        </Text>
+        <Text style={styles.analysisDesc}>{episode.criteriaNote}</Text>
       )}
-    </Surface>
+    </View>
   );
 }
 
 // ── Main Screen ──
 
 export default function DashboardScreen() {
-  const { selectedTenant, tenants, loading: projectLoading } = useProject();
+  const { signOut } = useAuth();
+
+  const [tenants, setTenants] = useState<TenantSummary[]>([]);
+  const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
   const [entries, setEntries] = useState<EntryRow[]>([]);
   const [episodes, setEpisodes] = useState<EpisodeRow[]>([]);
   const [signals, setSignals] = useState<SignalRow[]>([]);
@@ -215,13 +249,36 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Load tenants on mount
+  useEffect(() => {
+    loadTenants();
+  }, []);
+
+  // Load data when tenant changes
   useEffect(() => {
     if (selectedTenant) {
-      loadTenantData(selectedTenant.id);
-    } else if (!projectLoading) {
+      loadTenantData(selectedTenant);
+    }
+  }, [selectedTenant]);
+
+  async function loadTenants() {
+    try {
+      setLoading(true);
+      setError(null);
+      const [t, user] = await Promise.all([getTenants(), getCurrentUserInfo()]);
+      setTenants(t);
+      if (t.length > 0) {
+        const defaultId = user?.defaultTenantId;
+        const hasDefault = defaultId && t.some((tenant) => tenant.id === defaultId);
+        setSelectedTenant(hasDefault ? defaultId : t[0].id);
+      } else {
+        setLoading(false);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load projects");
       setLoading(false);
     }
-  }, [selectedTenant?.id, projectLoading]);
+  }
 
   async function loadTenantData(tenantId: string) {
     try {
@@ -251,38 +308,62 @@ export default function DashboardScreen() {
   const onRefresh = useCallback(async () => {
     if (!selectedTenant) return;
     setRefreshing(true);
-    await loadTenantData(selectedTenant.id);
+    await loadTenantData(selectedTenant);
     setRefreshing(false);
-  }, [selectedTenant?.id]);
+  }, [selectedTenant]);
+
+  const activeTenant = tenants.find((t) => t.id === selectedTenant);
 
   return (
-    <View style={styles.container}>
-      {(loading || projectLoading) && !refreshing ? (
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Storm Tracker</Text>
+        <TouchableOpacity onPress={signOut}>
+          <Text style={styles.signOutLink}>Sign Out</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Project Selector */}
+      <ProjectSelector
+        tenants={tenants}
+        selected={selectedTenant}
+        onSelect={setSelectedTenant}
+      />
+
+      {/* Accent bar */}
+      {activeTenant?.teenFavoriteColor && (
+        <View
+          style={[
+            styles.accentBar,
+            { backgroundColor: activeTenant.teenFavoriteColor },
+          ]}
+        />
+      )}
+
+      {/* Content */}
+      {loading && !refreshing ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={palette.primary} />
+          <ActivityIndicator size="large" color="#374151" />
         </View>
       ) : error ? (
         <View style={styles.centered}>
-          <Text variant="bodyMedium" style={styles.errorText}>
-            {error}
-          </Text>
-          <Button
-            mode="outlined"
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
             onPress={() =>
               selectedTenant
-                ? loadTenantData(selectedTenant.id)
-                : undefined
+                ? loadTenantData(selectedTenant)
+                : loadTenants()
             }
           >
-            Retry
-          </Button>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       ) : tenants.length === 0 ? (
         <View style={styles.centered}>
-          <Text variant="bodyLarge" style={styles.emptyText}>
-            No projects yet.
-          </Text>
-          <Text variant="bodySmall" style={styles.emptySubtext}>
+          <Text style={styles.emptyText}>No projects yet.</Text>
+          <Text style={styles.emptySubtext}>
             Create a project on the web app to get started.
           </Text>
         </View>
@@ -294,100 +375,63 @@ export default function DashboardScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {/* Signals */}
+          {/* Signals (alerts first) */}
           {signals.length > 0 && (
-            <List.Accordion
-              title={`Signals (${signals.length})`}
-              titleStyle={styles.sectionTitle}
-              style={styles.accordion}
-            >
-              <View style={styles.accordionContent}>
-                {signals.map((s) => (
-                  <SignalCard key={s.id} signal={s} />
-                ))}
-              </View>
-            </List.Accordion>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Signals</Text>
+              {signals.map((s) => (
+                <SignalCard key={s.id} signal={s} />
+              ))}
+            </View>
           )}
 
           {/* Episodes */}
           {episodes.length > 0 && (
-            <List.Accordion
-              title={`Possible Episodes (${episodes.length})`}
-              titleStyle={styles.sectionTitle}
-              style={styles.accordion}
-            >
-              <View style={styles.accordionContent}>
-                {episodes.map((ep) => (
-                  <EpisodeCard key={ep.id} episode={ep} />
-                ))}
-              </View>
-            </List.Accordion>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Possible Episodes</Text>
+              {episodes.map((ep) => (
+                <EpisodeCard key={ep.id} episode={ep} />
+              ))}
+            </View>
           )}
 
           {/* Suggestions */}
           {suggestions.length > 0 && (
-            <List.Accordion
-              title={`Suggestions (${suggestions.length})`}
-              titleStyle={styles.sectionTitle}
-              style={styles.accordion}
-            >
-              <View style={styles.accordionContent}>
-                {suggestions.map((s) => (
-                  <Surface key={s.id} style={styles.suggestionCard} elevation={2}>
-                    <Text
-                      variant="labelSmall"
-                      style={styles.suggestionCategory}
-                    >
-                      {s.category.replace(/_/g, " ")}
-                    </Text>
-                    <Text variant="titleSmall" style={styles.analysisTitle}>
-                      {s.title}
-                    </Text>
-                    <Text variant="bodySmall" style={styles.analysisDesc}>
-                      {s.description}
-                    </Text>
-                  </Surface>
-                ))}
-              </View>
-            </List.Accordion>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Suggestions</Text>
+              {suggestions.map((s) => (
+                <View key={s.id} style={styles.suggestionCard}>
+                  <Text style={styles.suggestionCategory}>
+                    {s.category.replace(/_/g, " ")}
+                  </Text>
+                  <Text style={styles.analysisTitle}>{s.title}</Text>
+                  <Text style={styles.analysisDesc}>{s.description}</Text>
+                </View>
+              ))}
+            </View>
           )}
 
           {/* Predictions */}
           {predictions.length > 0 && (
-            <List.Accordion
-              title={`Patterns (${predictions.length})`}
-              titleStyle={styles.sectionTitle}
-              style={styles.accordion}
-            >
-              <View style={styles.accordionContent}>
-                {predictions.map((p) => (
-                  <Surface key={p.id} style={styles.suggestionCard} elevation={2}>
-                    <Text variant="titleSmall" style={styles.analysisTitle}>
-                      {p.title}
-                    </Text>
-                    <Text variant="bodySmall" style={styles.analysisDesc}>
-                      {p.description}
-                    </Text>
-                    <Text variant="labelSmall" style={styles.confidenceText}>
-                      Confidence: {p.confidence.toLowerCase()}
-                    </Text>
-                  </Surface>
-                ))}
-              </View>
-            </List.Accordion>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Patterns</Text>
+              {predictions.map((p) => (
+                <View key={p.id} style={styles.suggestionCard}>
+                  <Text style={styles.analysisTitle}>{p.title}</Text>
+                  <Text style={styles.analysisDesc}>{p.description}</Text>
+                  <Text style={styles.confidenceText}>
+                    Confidence: {p.confidence.toLowerCase()}
+                  </Text>
+                </View>
+              ))}
+            </View>
           )}
-
-          <Divider style={styles.sectionDivider} />
 
           {/* Recent Entries */}
           <View style={styles.section}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Recent Entries
-            </Text>
+            <Text style={styles.sectionTitle}>Recent Entries</Text>
             {entries.length === 0 ? (
-              <Text variant="bodySmall" style={styles.emptySubtext}>
-                No entries yet.
-              </Text>
+              <Text style={styles.emptySubtext}>No entries yet.</Text>
             ) : (
               entries.map((entry) => (
                 <EntryCard key={entry.id} entry={entry} />
@@ -396,52 +440,84 @@ export default function DashboardScreen() {
           </View>
         </ScrollView>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 // ── Styles ──
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: palette.background },
+  container: { flex: 1, backgroundColor: "#ffffff" },
 
-  centered: {
-    flex: 1,
-    justifyContent: "center",
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    padding: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  errorText: { color: palette.error, textAlign: "center", marginBottom: 12 },
-  emptyText: { color: palette.textSecondary, marginBottom: 4 },
-  emptySubtext: { color: palette.textMuted, textAlign: "center" },
+  headerTitle: { fontSize: 22, fontWeight: "700", color: "#111827" },
+  signOutLink: { fontSize: 14, color: "#6B7280" },
+
+  projectRow: { maxHeight: 48 },
+  projectRowContent: { paddingHorizontal: 16, gap: 8 },
+  projectPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FAFAFA",
+  },
+  projectPillActive: {
+    backgroundColor: "#F3F4F6",
+    borderColor: "#374151",
+  },
+  projectPillText: { fontSize: 14, color: "#6B7280", fontWeight: "500" },
+  projectPillTextActive: { color: "#111827", fontWeight: "600" },
+  colorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 6,
+  },
+
+  accentBar: { height: 3, marginTop: 8 },
+
+  centered: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
+  errorText: { fontSize: 14, color: "#DC2626", textAlign: "center", marginBottom: 12 },
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+  },
+  retryText: { fontSize: 14, color: "#374151", fontWeight: "500" },
+  emptyText: { fontSize: 16, color: "#6B7280", marginBottom: 4 },
+  emptySubtext: { fontSize: 14, color: "#9CA3AF", textAlign: "center" },
 
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 32 },
 
-  section: { paddingHorizontal: 16, marginTop: 12 },
+  section: { paddingHorizontal: 16, marginTop: 20 },
   sectionTitle: {
+    fontSize: 16,
     fontWeight: "700",
-    color: palette.textSecondary,
-  },
-  sectionDivider: { marginVertical: 8, backgroundColor: palette.borderLight },
-
-  accordion: {
-    backgroundColor: palette.background,
-    paddingHorizontal: 0,
-  },
-  accordionContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
+    color: "#374151",
+    marginBottom: 10,
   },
 
   // Entry cards
   card: {
+    backgroundColor: "#FAFAFA",
+    borderRadius: 12,
+    padding: 14,
     marginBottom: 10,
-    borderRadius: radius.md,
-    backgroundColor: palette.card,
-  },
-  cardInner: {
-    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
   },
   cardHeader: {
     flexDirection: "row",
@@ -449,29 +525,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 4,
   },
-  cardDate: { color: palette.textPrimary },
-  moodChip: { borderRadius: radius.sm },
-  cardQuality: { color: palette.textSecondary, marginBottom: 6 },
-  cardMeta: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 4,
+  cardDate: { fontSize: 14, fontWeight: "600", color: "#374151" },
+  moodBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
   },
-  metaText: { color: palette.textSecondary },
-  metaQuickLog: { color: palette.warning, fontStyle: "italic" },
-  metaMissed: { color: palette.error },
-  reportedMood: { color: palette.textMuted, fontStyle: "italic", marginBottom: 4 },
-  cardNotes: { color: palette.textSecondary, marginTop: 4 },
+  moodBadgeText: { fontSize: 12, fontWeight: "600" },
+  cardQuality: { fontSize: 13, color: "#6B7280", marginBottom: 6 },
+  cardMeta: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 4 },
+  metaText: { fontSize: 12, color: "#6B7280" },
+  metaQuickLog: { fontSize: 12, color: "#D97706", fontStyle: "italic" },
+  metaMissed: { fontSize: 12, color: "#DC2626" },
+  reportedMood: { fontSize: 12, color: "#9CA3AF", fontStyle: "italic", marginBottom: 4 },
+  cardNotes: { fontSize: 13, color: "#6B7280", marginTop: 4 },
 
   // Analysis cards
   analysisCard: {
-    backgroundColor: palette.card,
-    borderRadius: radius.md,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 10,
     padding: 12,
     marginBottom: 8,
     borderLeftWidth: 3,
-    borderLeftColor: palette.textMuted,
+    borderLeftColor: "#9CA3AF",
   },
   analysisCardHeader: {
     flexDirection: "row",
@@ -479,22 +555,32 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 4,
   },
-  analysisTitle: { color: palette.textPrimary },
-  analysisDesc: { color: palette.textSecondary },
-  analysisMeta: { color: palette.textMuted },
-  levelChip: { alignSelf: "flex-start", marginBottom: 4, borderRadius: radius.sm },
+  analysisTitle: { fontSize: 14, fontWeight: "600", color: "#374151", marginBottom: 2 },
+  analysisDesc: { fontSize: 13, color: "#6B7280" },
+  analysisMeta: { fontSize: 12, color: "#9CA3AF" },
+
+  levelBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+    marginBottom: 4,
+  },
+  levelBadgeText: { fontSize: 11, fontWeight: "700" },
 
   suggestionCard: {
-    backgroundColor: palette.card,
-    borderRadius: radius.md,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 10,
     padding: 12,
     marginBottom: 8,
   },
   suggestionCategory: {
-    color: palette.textMuted,
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#9CA3AF",
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 2,
   },
-  confidenceText: { color: palette.textMuted, marginTop: 4 },
+  confidenceText: { fontSize: 12, color: "#9CA3AF", marginTop: 4 },
 });

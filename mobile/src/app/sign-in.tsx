@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import {
   View,
+  Text,
+  TextInput,
+  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
-import { Text, Button, ActivityIndicator, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/auth-context";
-import { palette, radius } from "@/lib/theme";
 
 export default function SignInScreen() {
   const { signIn } = useAuth();
@@ -29,7 +31,7 @@ export default function SignInScreen() {
     const result = await signIn(email.trim(), password);
 
     if (!result.success) {
-      setError(result.error ?? "Log in failed");
+      setError(result.error ?? "Sign in failed");
     }
 
     setLoading(false);
@@ -42,58 +44,59 @@ export default function SignInScreen() {
         style={styles.keyboardView}
       >
         <View style={styles.content}>
-          <Text variant="displaySmall" style={styles.logo}>⚡️</Text>
-          <Text variant="headlineMedium" style={styles.title}>Storm Tracker</Text>
-          <Text variant="bodyLarge" style={styles.subtitle}>Log in to continue</Text>
+          <Text style={styles.logo}>⚡️</Text>
+          <Text style={styles.title}>Storm Tracker</Text>
+          <Text style={styles.subtitle}>Sign in to continue</Text>
 
           <View style={styles.form}>
-            <TextInput
-              mode="outlined"
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              textContentType="emailAddress"
-              disabled={loading}
-              style={styles.input}
-              outlineColor={palette.border}
-              activeOutlineColor={palette.primary}
-            />
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                editable={!loading}
+              />
+            </View>
 
-            <TextInput
-              mode="outlined"
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter your password"
-              secureTextEntry
-              textContentType="password"
-              disabled={loading}
-              onSubmitEditing={handleSignIn}
-              style={styles.input}
-              outlineColor={palette.border}
-              activeOutlineColor={palette.primary}
-            />
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Enter your password"
+                placeholderTextColor="#9CA3AF"
+                secureTextEntry
+                textContentType="password"
+                editable={!loading}
+                onSubmitEditing={handleSignIn}
+              />
+            </View>
 
-            {error ? (
-              <Text variant="bodyMedium" style={styles.error}>{error}</Text>
-            ) : null}
+            {error ? <Text style={styles.error}>{error}</Text> : null}
 
-            <Button
-              mode="contained"
+            <TouchableOpacity
+              style={[
+                styles.button,
+                (loading || !email.trim() || !password) &&
+                  styles.buttonDisabled,
+              ]}
               onPress={handleSignIn}
               disabled={loading || !email.trim() || !password}
-              loading={loading}
-              style={styles.button}
-              contentStyle={styles.buttonContent}
-              labelStyle={styles.buttonLabel}
-              buttonColor={palette.primary}
             >
-              Log In
-            </Button>
+              {loading ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <Text style={styles.buttonText}>Sign In</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -104,7 +107,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.background,
+    backgroundColor: "#ffffff",
   },
   keyboardView: {
     flex: 1,
@@ -115,38 +118,61 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   logo: {
+    fontSize: 48,
     textAlign: "center",
     marginBottom: 12,
   },
   title: {
+    fontSize: 28,
     fontWeight: "700",
-    color: palette.primary,
+    color: "#111827",
     textAlign: "center",
     marginBottom: 4,
   },
   subtitle: {
-    color: palette.textSecondary,
+    fontSize: 16,
+    color: "#6B7280",
     textAlign: "center",
     marginBottom: 32,
   },
   form: {
     gap: 16,
   },
+  inputGroup: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#374151",
+  },
   input: {
-    backgroundColor: palette.surfaceAlt,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#111827",
+    backgroundColor: "#ffffff",
   },
   error: {
-    color: palette.error,
+    fontSize: 14,
+    color: "#DC2626",
     textAlign: "center",
   },
   button: {
-    borderRadius: radius.md,
+    backgroundColor: "#111827",
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: "center",
     marginTop: 8,
   },
-  buttonContent: {
-    paddingVertical: 6,
+  buttonDisabled: {
+    opacity: 0.5,
   },
-  buttonLabel: {
+  buttonText: {
+    color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",
   },

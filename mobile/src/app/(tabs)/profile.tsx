@@ -1,25 +1,30 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
+  Text,
   StyleSheet,
   ScrollView,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Alert,
 } from "react-native";
-import { Text, Button, ActivityIndicator, TextInput, Surface } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { authClient } from "@/lib/auth";
 import { getCurrentUserInfo, CurrentUser } from "@/lib/api";
-import { palette, radius } from "@/lib/theme";
 
 export default function ProfileScreen() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Display name
   const [name, setName] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [nameSaved, setNameSaved] = useState(false);
 
+  // Password change
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,6 +42,7 @@ export default function ProfileScreen() {
       setUser(u);
       setName(u?.name ?? "");
     } catch {
+      // Fall back to session data only
       const session = await authClient.getSession();
       if (session.data?.user) {
         const u = {
@@ -110,21 +116,21 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
-          <Text variant="headlineSmall" style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}>Profile</Text>
         </View>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={palette.primary} />
+          <ActivityIndicator size="large" color="#374151" />
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
-        <Text variant="headlineSmall" style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
       <KeyboardAvoidingView
@@ -137,103 +143,101 @@ export default function ProfileScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Account */}
           <Section title="Account">
-            <Surface style={styles.infoCard} elevation={2}>
-              <View style={styles.infoRow}>
-                <Text variant="bodyMedium" style={styles.infoLabel}>Email</Text>
-                <Text variant="bodyMedium" style={styles.infoValue}>{user?.email ?? "—"}</Text>
-              </View>
-            </Surface>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.infoValue}>{user?.email ?? "—"}</Text>
+            </View>
           </Section>
 
+          {/* Display Name */}
           <Section title="Display Name">
             <TextInput
-              mode="outlined"
-              label="Your name"
+              style={styles.input}
               value={name}
               onChangeText={(v) => {
                 setName(v);
                 setNameSaved(false);
               }}
               placeholder="Your name"
+              placeholderTextColor="#9CA3AF"
               autoCorrect={false}
               returnKeyType="done"
               onSubmitEditing={handleSaveName}
-              style={styles.input}
-              outlineColor={palette.border}
-              activeOutlineColor={palette.primary}
             />
-            <Button
-              mode="contained"
+            <TouchableOpacity
+              style={[
+                styles.button,
+                (!name.trim() || savingName) && styles.buttonDisabled,
+              ]}
               onPress={handleSaveName}
               disabled={!name.trim() || savingName}
-              loading={savingName}
-              style={styles.button}
-              contentStyle={styles.buttonContent}
-              buttonColor={palette.primary}
             >
-              {nameSaved ? "Saved" : "Save Name"}
-            </Button>
+              {savingName ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : nameSaved ? (
+                <Text style={styles.buttonText}>Saved ✓</Text>
+              ) : (
+                <Text style={styles.buttonText}>Save Name</Text>
+              )}
+            </TouchableOpacity>
           </Section>
 
+          {/* Change Password */}
           <Section title="Change Password">
             <TextInput
-              mode="outlined"
-              label="Current password"
+              style={styles.input}
               value={currentPassword}
               onChangeText={(v) => {
                 setCurrentPassword(v);
                 setPasswordError(null);
               }}
               placeholder="Current password"
+              placeholderTextColor="#9CA3AF"
               secureTextEntry
               autoCorrect={false}
               autoCapitalize="none"
-              style={styles.input}
-              outlineColor={palette.border}
-              activeOutlineColor={palette.primary}
             />
             <TextInput
-              mode="outlined"
-              label="New password (min 8 characters)"
+              style={[styles.input, styles.inputSpaced]}
               value={newPassword}
               onChangeText={(v) => {
                 setNewPassword(v);
                 setPasswordError(null);
               }}
               placeholder="New password (min 8 characters)"
+              placeholderTextColor="#9CA3AF"
               secureTextEntry
               autoCorrect={false}
               autoCapitalize="none"
-              style={[styles.input, styles.inputSpaced]}
-              outlineColor={palette.border}
-              activeOutlineColor={palette.primary}
             />
             <TextInput
-              mode="outlined"
-              label="Confirm new password"
+              style={[styles.input, styles.inputSpaced]}
               value={confirmPassword}
               onChangeText={(v) => {
                 setConfirmPassword(v);
                 setPasswordError(null);
               }}
               placeholder="Confirm new password"
+              placeholderTextColor="#9CA3AF"
               secureTextEntry
               autoCorrect={false}
               autoCapitalize="none"
               returnKeyType="done"
               onSubmitEditing={handleChangePassword}
-              style={[styles.input, styles.inputSpaced]}
-              outlineColor={palette.border}
-              activeOutlineColor={palette.primary}
             />
 
             {passwordError && (
-              <Text variant="bodySmall" style={styles.errorText}>{passwordError}</Text>
+              <Text style={styles.errorText}>{passwordError}</Text>
             )}
 
-            <Button
-              mode="contained"
+            <TouchableOpacity
+              style={[
+                styles.button,
+                (!currentPassword || !newPassword || !confirmPassword || savingPassword) &&
+                  styles.buttonDisabled,
+              ]}
               onPress={handleChangePassword}
               disabled={
                 !currentPassword ||
@@ -241,19 +245,21 @@ export default function ProfileScreen() {
                 !confirmPassword ||
                 savingPassword
               }
-              loading={savingPassword}
-              style={styles.button}
-              contentStyle={styles.buttonContent}
-              buttonColor={palette.primary}
             >
-              {passwordSaved ? "Password Updated" : "Change Password"}
-            </Button>
+              {savingPassword ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : passwordSaved ? (
+                <Text style={styles.buttonText}>Password Updated ✓</Text>
+              ) : (
+                <Text style={styles.buttonText}>Change Password</Text>
+              )}
+            </TouchableOpacity>
           </Section>
 
           <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -266,22 +272,22 @@ function Section({
 }) {
   return (
     <View style={styles.section}>
-      <Text variant="labelSmall" style={styles.sectionTitle}>{title}</Text>
+      <Text style={styles.sectionTitle}>{title}</Text>
       {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: palette.background },
+  container: { flex: 1, backgroundColor: "#ffffff" },
 
   header: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: palette.borderLight,
+    borderBottomColor: "#F3F4F6",
   },
-  headerTitle: { fontWeight: "700", color: palette.textPrimary },
+  headerTitle: { fontSize: 22, fontWeight: "700", color: "#111827" },
 
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
 
@@ -293,44 +299,51 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   sectionTitle: {
+    fontSize: 13,
     fontWeight: "700",
-    color: palette.textMuted,
+    color: "#9CA3AF",
     textTransform: "uppercase",
     letterSpacing: 0.6,
     marginBottom: 12,
   },
 
-  infoCard: {
-    borderRadius: radius.md,
-    backgroundColor: palette.card,
-    padding: 4,
-  },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 12,
-    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F9FAFB",
   },
-  infoLabel: { color: palette.textSecondary },
-  infoValue: { color: palette.textPrimary, fontWeight: "500" },
+  infoLabel: { fontSize: 14, color: "#6B7280" },
+  infoValue: { fontSize: 14, color: "#111827", fontWeight: "500" },
 
   input: {
-    backgroundColor: palette.surfaceAlt,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: "#111827",
+    backgroundColor: "#FAFAFA",
   },
   inputSpaced: { marginTop: 10 },
 
   errorText: {
-    color: palette.error,
+    fontSize: 13,
+    color: "#DC2626",
     marginTop: 8,
     marginBottom: 4,
   },
 
   button: {
-    borderRadius: radius.md,
+    backgroundColor: "#374151",
+    borderRadius: 10,
+    paddingVertical: 13,
+    alignItems: "center",
     marginTop: 12,
   },
-  buttonContent: {
-    paddingVertical: 4,
-  },
+  buttonDisabled: { opacity: 0.5 },
+  buttonText: { fontSize: 15, fontWeight: "600", color: "#ffffff" },
 });

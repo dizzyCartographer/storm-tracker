@@ -419,22 +419,6 @@ export async function setDefaultTenant(
   }
 }
 
-/** Update a tenant's profile fields via Neon Data API. */
-export async function updateTenantProfile(
-  tenantId: string,
-  data: Partial<Omit<TenantDetail, "id">>
-): Promise<void> {
-  const res = await neonFetch(`/tenants?id=eq.${tenantId}`, {
-    method: "PATCH",
-    headers: { Prefer: "return=minimal" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Failed to update project: ${res.status} ${body}`);
-  }
-}
-
 // ── Types ──
 
 export interface TenantSummary {
