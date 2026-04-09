@@ -22,6 +22,13 @@ export function HeaderMenu() {
         <Menu.Item
           onPress={() => {
             setOpen(false);
+            router.push("/journal-import");
+          }}
+          title="Import Journal"
+        />
+        <Menu.Item
+          onPress={() => {
+            setOpen(false);
             router.push("/(tabs)/projects");
           }}
           title="Projects"

@@ -4,8 +4,8 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
-import { Text, Chip, ActivityIndicator, Divider, Surface } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
+import { Text, Chip, ActivityIndicator, Divider, Surface, Button } from "react-native-paper";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { getEntryById, EntryRow } from "@/lib/api";
 import { palette, moodColors, radius } from "@/lib/theme";
 
@@ -50,7 +50,8 @@ function hasBehaviorDetail(entry: EntryRow): boolean {
 
 export default function EntryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [entry, setEntry] = useState<EntryRow | null>(null);
+  const router = useRouter();
+  const [entry, setEntry] = useState<(EntryRow & { tenantId?: string }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -272,6 +273,26 @@ export default function EntryDetailScreen() {
         </View>
       )}
 
+      {entry.tenantId && (
+        <View style={styles.editSection}>
+          <Button
+            mode="contained"
+            onPress={() =>
+              router.push({
+                pathname: "/log-edit",
+                params: { entryId: entry.id, tenantId: entry.tenantId },
+              })
+            }
+            buttonColor={palette.primary}
+            textColor="#ffffff"
+            style={styles.editButton}
+            icon="pencil"
+          >
+            Edit Entry
+          </Button>
+        </View>
+      )}
+
       <View style={{ height: 40 }} />
     </ScrollView>
   );
@@ -362,5 +383,12 @@ const styles = StyleSheet.create({
   notesText: {
     color: palette.textSecondary,
     lineHeight: 22,
+  },
+
+  editSection: {
+    marginTop: 24,
+  },
+  editButton: {
+    borderRadius: radius.md,
   },
 });

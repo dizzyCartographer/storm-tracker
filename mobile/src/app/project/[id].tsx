@@ -15,7 +15,7 @@ import {
   Divider,
   Surface,
 } from "react-native-paper";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
   getTenantById,
   getTenantMembers,
@@ -63,6 +63,7 @@ const PURPOSE_LABELS: Record<string, string> = {
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
+  const router = useRouter();
 
   const [tenant, setTenant] = useState<TenantDetail | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
@@ -162,6 +163,8 @@ export default function ProjectDetailScreen() {
   }
 
   const isDefault = currentUser?.defaultTenantId === id;
+  const userMembership = members.find((m) => m.userId === currentUser?.id);
+  const isOwner = userMembership?.role === "OWNER";
 
   return (
     <ScrollView
@@ -380,6 +383,18 @@ export default function ProjectDetailScreen() {
       </Section>
 
       <Section title="Actions">
+        {isOwner && (
+          <Button
+            mode="contained"
+            onPress={() => router.push({ pathname: "/project-edit", params: { projectId: id } })}
+            buttonColor={palette.primary}
+            textColor="#ffffff"
+            style={styles.actionButton}
+            icon="pencil"
+          >
+            Edit Project
+          </Button>
+        )}
         {isDefault ? (
           <Surface style={styles.defaultActiveRow} elevation={2}>
             <Text variant="bodyMedium" style={styles.defaultActiveText}>
@@ -580,5 +595,6 @@ const styles = StyleSheet.create({
   defaultActiveText: { fontWeight: "600", color: palette.success },
   actionButton: {
     borderRadius: radius.md,
+    marginBottom: 10,
   },
 });

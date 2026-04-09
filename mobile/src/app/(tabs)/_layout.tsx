@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Text, Divider } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/auth-context";
-import { ProjectProvider, useProject } from "@/lib/project-context";
+import { useProject } from "@/lib/project-context";
 import { ProjectSelector } from "@/components/project-selector";
 import { HeaderMenu } from "@/components/header-menu";
 import { palette } from "@/lib/theme";
@@ -92,6 +92,21 @@ function TabLayoutInner() {
             }}
           />
           <Tabs.Screen
+            name="import"
+            options={{
+              title: "AI Journal",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="sparkles-outline" size={size} color={color} />
+              ),
+            }}
+            listeners={{
+              tabPress: (e) => {
+                e.preventDefault();
+                router.push("/journal-import");
+              },
+            }}
+          />
+          <Tabs.Screen
             name="history"
             options={{
               title: "History",
@@ -119,11 +134,7 @@ function TabLayoutInner() {
 }
 
 export default function TabLayout() {
-  return (
-    <ProjectProvider>
-      <TabLayoutInner />
-    </ProjectProvider>
-  );
+  return <TabLayoutInner />;
 }
 
 const styles = StyleSheet.create({
