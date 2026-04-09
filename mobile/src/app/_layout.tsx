@@ -1,11 +1,13 @@
 import React from "react";
 import { Stack } from "expo-router";
+import { PaperProvider } from "react-native-paper";
 import { AuthProvider } from "@/lib/auth-context";
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
+    <PaperProvider>
+      <AuthProvider>
+        <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="entry/[id]"
@@ -27,7 +29,8 @@ export default function RootLayout() {
             headerStyle: { backgroundColor: "#ffffff" },
           }}
         />
-      </Stack>
-    </AuthProvider>
+        </Stack>
+      </AuthProvider>
+    </PaperProvider>
   );
 }
