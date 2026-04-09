@@ -291,6 +291,131 @@ export async function getEntryByDate(
   return rows.length > 0 ? rows[0] : null;
 }
 
+// ── Neon Data API read helpers: Project detail ──
+
+/** Get full details for a single tenant. */
+export async function getTenantById(
+  tenantId: string
+): Promise<TenantDetail | null> {
+  const res = await neonFetch(
+    `/tenants?id=eq.${tenantId}` +
+      `&select=id,name,description,purpose,"teenFullName","teenNickname","teenBirthday","teenFavoriteColor","teenInterests","teenSchool","teenFavoriteSubject","teenHasIep","teenDiagnosis","teenOtherHealth","teenPhotoUrl","onsetDate","familyHistory"` +
+      `&limit=1`
+  );
+  if (!res.ok) throw new Error("Failed to fetch tenant");
+  const rows: TenantDetail[] = await res.json();
+  return rows.length > 0 ? rows[0] : null;
+}
+
+/** Get all members of a tenant. */
+export async function getTenantMembers(
+  tenantId: string
+): Promise<MemberRow[]> {
+  const res = await neonFetch(
+    `/tenant_members?"tenantId"=eq.${tenantId}&select=id,"userId",role,"joinedAt"`
+  );
+  if (!res.ok) throw new Error("Failed to fetch members");
+  return res.json();
+}
+
+/** Get user display info for a list of user IDs. */
+export async function getUsersByIds(ids: string[]): Promise<UserInfoRow[]> {
+  if (ids.length === 0) return [];
+  const inClause = ids.map((id) => `"${id}"`).join(",");
+  const res = await neonFetch(
+    `/users?id=in.(${inClause})&select=id,name,email`
+  );
+  if (!res.ok) return []; // RLS may restrict reading other users — degrade gracefully
+  return res.json();
+}
+
+/** Get diagnostic frameworks linked to a tenant. */
+export async function getTenantFrameworkDetails(
+  tenantId: string
+): Promise<FrameworkSummary[]> {
+  const res = await neonFetch(
+    `/tenant_frameworks?"tenantId"=eq.${tenantId}&select="frameworkId"`
+  );
+  if (!res.ok) throw new Error("Failed to fetch tenant frameworks");
+  const rows: { frameworkId: string }[] = await res.json();
+  if (rows.length === 0) return [];
+
+  const inClause = rows.map((r) => `"${r.frameworkId}"`).join(",");
+  const fwRes = await neonFetch(
+    `/diagnostic_frameworks?id=in.(${inClause})&select=id,name,slug`
+  );
+  if (!fwRes.ok) throw new Error("Failed to fetch frameworks");
+  return fwRes.json();
+}
+
+/** Get active medications with full details (dosage, frequency, instructions). */
+export async function getFullMedications(
+  tenantId: string
+): Promise<FullMedicationRow[]> {
+  const res = await neonFetch(
+    `/medications?"tenantId"=eq.${tenantId}&"isActive"=eq.true` +
+      `&select=id,name,dosage,frequency,instructions,"startDate","isActive"` +
+      `&order="createdAt".asc`
+  );
+  if (!res.ok) throw new Error("Failed to fetch medications");
+  return res.json();
+}
+
+/** Get strategies with description and category. */
+export async function getFullStrategies(
+  tenantId: string
+): Promise<FullStrategyRow[]> {
+  const res = await neonFetch(
+    `/strategies?"tenantId"=eq.${tenantId}&select=id,name,description,category&order="createdAt".asc`
+  );
+  if (!res.ok) throw new Error("Failed to fetch strategies");
+  return res.json();
+}
+
+/** Get current user info including defaultTenantId from the database. */
+export async function getCurrentUserInfo(): Promise<CurrentUser | null> {
+  // Get session for base user info
+  const session = await authClient.getSession();
+  if (!session.data?.user) return null;
+  const userId = session.data.user.id;
+
+  // Fetch defaultTenantId from Neon Data API (custom field not always in session)
+  const res = await neonFetch(
+    `/users?id=eq.${userId}&select=id,name,email,"defaultTenantId"&limit=1`
+  );
+  if (!res.ok) {
+    return {
+      id: userId,
+      name: session.data.user.name ?? null,
+      email: session.data.user.email,
+      defaultTenantId: null,
+    };
+  }
+  const rows: CurrentUser[] = await res.json();
+  if (rows.length === 0) {
+    return {
+      id: userId,
+      name: session.data.user.name ?? null,
+      email: session.data.user.email,
+      defaultTenantId: null,
+    };
+  }
+  return rows[0];
+}
+
+/** Set the default tenant for the current user. */
+export async function setDefaultTenant(
+  userId: string,
+  tenantId: string
+): Promise<void> {
+  const res = await neonFetch(`/users?id=eq.${userId}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ defaultTenantId: tenantId }),
+  });
+  if (!res.ok) throw new Error("Failed to set default tenant");
+}
+
 // ── Types ──
 
 export interface TenantSummary {
@@ -390,4 +515,67 @@ export interface SuggestionRow {
   title: string;
   description: string;
   priority: string;
+}
+
+export interface TenantDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  purpose: string | null;
+  teenFullName: string | null;
+  teenNickname: string | null;
+  teenBirthday: string | null;
+  teenFavoriteColor: string | null;
+  teenInterests: string | null;
+  teenSchool: string | null;
+  teenFavoriteSubject: string | null;
+  teenHasIep: boolean | null;
+  teenDiagnosis: string | null;
+  teenOtherHealth: string | null;
+  teenPhotoUrl: string | null;
+  onsetDate: string | null;
+  familyHistory: string | null;
+}
+
+export interface MemberRow {
+  id: string;
+  userId: string;
+  role: string;
+  joinedAt: string;
+}
+
+export interface UserInfoRow {
+  id: string;
+  name: string | null;
+  email: string;
+}
+
+export interface FrameworkSummary {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface FullMedicationRow {
+  id: string;
+  name: string;
+  dosage: string | null;
+  frequency: string | null;
+  instructions: string | null;
+  startDate: string | null;
+  isActive: boolean;
+}
+
+export interface FullStrategyRow {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+}
+
+export interface CurrentUser {
+  id: string;
+  name: string | null;
+  email: string;
+  defaultTenantId: string | null;
 }
