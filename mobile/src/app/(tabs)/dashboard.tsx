@@ -101,14 +101,7 @@ function ProjectSelector({
                 : undefined,
             ]}
           >
-            {t.teenFavoriteColor && (
-              <View
-                style={[
-                  styles.colorDot,
-                  { backgroundColor: t.teenFavoriteColor },
-                ]}
-              />
-            )}
+
             <Text
               style={[
                 styles.projectPillText,
@@ -472,13 +465,6 @@ const styles = StyleSheet.create({
   },
   projectPillText: { fontSize: 14, color: "#6B7280", fontWeight: "500" },
   projectPillTextActive: { color: "#111827", fontWeight: "600" },
-  colorDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 6,
-  },
-
   accentBar: { height: 3, marginTop: 8 },
 
   centered: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
