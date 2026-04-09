@@ -17,6 +17,16 @@ export default function RootLayout() {
             headerStyle: { backgroundColor: "#ffffff" },
           }}
         />
+        <Stack.Screen
+          name="project/[id]"
+          options={{
+            headerShown: true,
+            headerTitle: "Project",
+            headerBackTitle: "Projects",
+            headerTintColor: "#374151",
+            headerStyle: { backgroundColor: "#ffffff" },
+          }}
+        />
       </Stack>
     </AuthProvider>
   );
