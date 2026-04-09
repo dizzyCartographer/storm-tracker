@@ -522,6 +522,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#E5E7EB",
     backgroundColor: "#FAFAFA",
+    justifyContent: "center",
+    alignItems: "center",
   },
   projectPillActive: {
     backgroundColor: "#F3F4F6",
