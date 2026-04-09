@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, ScrollView, RefreshControl, StyleSheet } from "react-native";
+import { View, ScrollView, RefreshControl, StyleSheet, TouchableOpacity } from "react-native";
 import {
   Text,
   Card,
@@ -93,20 +93,26 @@ function ProjectSelector({
       {tenants.map((t) => {
         const isActive = t.id === selected;
         return (
-          <Chip
+          <TouchableOpacity
             key={t.id}
-            selected={isActive}
             onPress={() => onSelect(t.id)}
-            mode={isActive ? "flat" : "outlined"}
             style={[
+              styles.projectPill,
+              isActive && styles.projectPillActive,
               isActive && t.teenFavoriteColor
-                ? { borderColor: t.teenFavoriteColor, borderWidth: 1.5 }
+                ? { borderColor: t.teenFavoriteColor }
                 : undefined,
             ]}
-            textStyle={{ fontWeight: isActive ? "600" : "400" }}
           >
-            {t.teenNickname || t.name}
-          </Chip>
+            <Text
+              style={[
+                styles.projectPillText,
+                isActive && styles.projectPillTextActive,
+              ]}
+            >
+              {t.teenNickname || t.name}
+            </Text>
+          </TouchableOpacity>
         );
       })}
     </ScrollView>
@@ -509,6 +515,20 @@ const styles = StyleSheet.create({
 
   projectRow: { maxHeight: 48 },
   projectRowContent: { paddingHorizontal: 16, gap: 8 },
+  projectPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FAFAFA",
+  },
+  projectPillActive: {
+    backgroundColor: "#F3F4F6",
+    borderColor: "#374151",
+  },
+  projectPillText: { fontSize: 14, color: "#6B7280", fontWeight: "500" },
+  projectPillTextActive: { color: "#111827", fontWeight: "600" },
 
   accentBar: { height: 3, marginTop: 8 },
 
