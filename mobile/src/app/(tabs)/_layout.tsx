@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Tabs, useRouter } from "expo-router";
 import { Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/lib/auth-context";
 
 const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 64;
@@ -36,28 +37,36 @@ export default function TabLayout() {
         name="dashboard"
         options={{
           title: "Dashboard",
-          tabBarIcon: ({ color }) => <TabIcon label="📊" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="log"
         options={{
           title: "Log",
-          tabBarIcon: ({ color }) => <TabIcon label="+" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="add-circle-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: "History",
-          tabBarIcon: ({ color }) => <TabIcon label="📅" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="projects"
         options={{
           title: "Projects",
-          tabBarIcon: ({ color }) => <TabIcon label="🗂️" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="folder-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -68,9 +77,4 @@ export default function TabLayout() {
       />
     </Tabs>
   );
-}
-
-function TabIcon({ label, color }: { label: string; color: string }) {
-  const { Text } = require("react-native");
-  return <Text style={{ fontSize: 20, color }}>{label}</Text>;
 }
