@@ -1,10 +1,19 @@
-import React from "react";
-import { Tabs } from "expo-router";
+import React, { useEffect } from "react";
+import { Tabs, useRouter } from "expo-router";
 import { Platform } from "react-native";
+import { useAuth } from "@/lib/auth-context";
 
 const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 64;
 
 export default function TabLayout() {
+  const { isSignedIn } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      router.replace("/");
+    }
+  }, [isSignedIn]);
   return (
     <Tabs
       screenOptions={{
