@@ -25,7 +25,8 @@
     "staging": {
       "ios": {
         "appleId": "maria.yarley@gmail.com",
-        "appleTeamId": "RC99K6SXQX"
+        "appleTeamId": "RC99K6SXQX",
+        "ascAppId": "6761926912"
       }
     },
     "production": {

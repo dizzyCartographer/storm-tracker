@@ -10,7 +10,7 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
-    name: isStaging ? 'Storm Tracker Dev' : config.name,
+    name: isStaging ? 'StormTrackRx Dev' : 'StormTrackRx',
     ios: {
       ...config.ios,
       bundleIdentifier: isStaging
