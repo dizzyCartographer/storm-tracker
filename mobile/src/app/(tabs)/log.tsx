@@ -1,18 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
   Alert,
   Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Text, ActivityIndicator, Button, Surface } from "react-native-paper";
 import {
-  getTenants,
   getFrameworkId,
   getBehaviorCategories,
   getBehaviorDefinitions,
@@ -21,7 +18,6 @@ import {
   getStrategies,
   getEntryByDate,
   saveEntry,
-  TenantSummary,
   BehaviorCategoryRow,
   BehaviorDefinitionRow,
   CustomItemRow,
@@ -29,21 +25,23 @@ import {
   StrategyRow,
   EntryRow,
 } from "@/lib/api";
+import { useProject } from "@/lib/project-context";
+import { palette, moodColors, radius } from "@/lib/theme";
 
 // ── Constants ──
 
 const MOODS = [
-  { value: "MANIC", label: "Manic", bg: "#FEF3C7", text: "#92400E" },
-  { value: "DEPRESSIVE", label: "Depressive", bg: "#DBEAFE", text: "#1E40AF" },
-  { value: "NEUTRAL", label: "Neutral", bg: "#F3F4F6", text: "#374151" },
-  { value: "MIXED", label: "Mixed", bg: "#EDE9FE", text: "#5B21B6" },
+  { value: "MANIC", label: "Manic", bg: moodColors.MANIC.bg, text: moodColors.MANIC.text },
+  { value: "DEPRESSIVE", label: "Depressive", bg: moodColors.DEPRESSIVE.bg, text: moodColors.DEPRESSIVE.text },
+  { value: "NEUTRAL", label: "Neutral", bg: moodColors.NEUTRAL.bg, text: moodColors.NEUTRAL.text },
+  { value: "MIXED", label: "Mixed", bg: moodColors.MIXED.bg, text: moodColors.MIXED.text },
 ];
 
 const DAY_QUALITIES = [
-  { value: "GOOD", label: "Good", bg: "#D1FAE5", text: "#065F46" },
-  { value: "NEUTRAL", label: "Neutral", bg: "#F3F4F6", text: "#374151" },
-  { value: "BAD", label: "Bad", bg: "#FEE2E2", text: "#991B1B" },
-  { value: "MIXED", label: "Mixed", bg: "#EDE9FE", text: "#5B21B6" },
+  { value: "GOOD", label: "Good", bg: palette.secondaryFaint, text: "#065F46" },
+  { value: "NEUTRAL", label: "Neutral", bg: moodColors.NEUTRAL.bg, text: palette.textSecondary },
+  { value: "BAD", label: "Bad", bg: palette.errorBg, text: palette.error },
+  { value: "MIXED", label: "Mixed", bg: moodColors.MIXED.bg, text: moodColors.MIXED.text },
 ];
 
 const IMPAIRMENT_DOMAINS = [
@@ -63,8 +61,8 @@ const MENSTRUAL_OPTIONS = [
 ];
 
 const POLE_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  manic: { bg: "#FEF3C7", text: "#92400E", dot: "#F59E0B" },
-  depressive: { bg: "#DBEAFE", text: "#1E40AF", dot: "#3B82F6" },
+  manic: { bg: moodColors.MANIC.bg, text: moodColors.MANIC.text, dot: moodColors.MANIC.dot },
+  depressive: { bg: moodColors.DEPRESSIVE.bg, text: moodColors.DEPRESSIVE.text, dot: moodColors.DEPRESSIVE.dot },
 };
 
 // ── Helpers ──
@@ -103,9 +101,7 @@ function parseExamples(raw: string | null): string[] {
 // ── Main Component ──
 
 export default function LogScreen() {
-  // Tenant state
-  const [tenants, setTenants] = useState<TenantSummary[]>([]);
-  const [activeTenant, setActiveTenant] = useState<TenantSummary | null>(null);
+  const { selectedTenant: activeTenant, loading: projectLoading } = useProject();
 
   // Form state
   const [date, setDate] = useState(todayStr());
@@ -133,23 +129,9 @@ export default function LogScreen() {
   const [expandedExamples, setExpandedExamples] = useState<Set<string>>(new Set());
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
-  // ── Load tenants ──
-  useEffect(() => {
-    (async () => {
-      try {
-        const t = await getTenants();
-        setTenants(t);
-        if (t.length > 0) setActiveTenant(t[0]);
-      } catch (e) {
-        console.error("Failed to load tenants:", e);
-      }
-    })();
-  }, []);
-
-  // ── Load reference data when tenant changes ──
   useEffect(() => {
     if (!activeTenant) {
-      setLoading(false);
+      if (!projectLoading) setLoading(false);
       return;
     }
     let cancelled = false;
@@ -193,7 +175,6 @@ export default function LogScreen() {
     };
   }, [activeTenant?.id]);
 
-  // ── Load existing entry when date or tenant changes ──
   useEffect(() => {
     if (!activeTenant) return;
     let cancelled = false;
@@ -239,7 +220,6 @@ export default function LogScreen() {
     setExpandedExamples(new Set());
   }
 
-  // ── Group behaviors by category ──
   const behaviorsByCategory = useMemo(() => {
     const map = new Map<string, BehaviorDefinitionRow[]>();
     for (const b of behaviors) {
@@ -250,7 +230,6 @@ export default function LogScreen() {
     return map;
   }, [behaviors]);
 
-  // ── Toggle helpers ──
   function toggleSet(
     setter: React.Dispatch<React.SetStateAction<Set<string>>>,
     key: string
@@ -272,7 +251,6 @@ export default function LogScreen() {
     });
   }
 
-  // ── Save ──
   const handleSave = useCallback(async () => {
     if (!activeTenant) return;
     setSaving(true);
@@ -294,7 +272,6 @@ export default function LogScreen() {
         existingEntry ? "Entry Updated" : "Entry Saved",
         `Log for ${formatDateDisplay(date)} saved successfully.`
       );
-      // Reload the entry to get computed values
       const updated = await getEntryByDate(activeTenant.id, date);
       setExistingEntry(updated);
     } catch (e) {
@@ -318,78 +295,28 @@ export default function LogScreen() {
     existingEntry,
   ]);
 
-  // ── Render ──
-
-  if (loading) {
+  if (loading || projectLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.container}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#374151" />
-          <Text style={styles.loadingText}>Loading...</Text>
+          <ActivityIndicator size="large" color={palette.primary} />
+          <Text variant="bodySmall" style={styles.loadingText}>Loading...</Text>
         </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (tenants.length === 0) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.centered}>
-          <Text style={styles.emptyText}>No projects found</Text>
-        </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
-        <Text style={styles.pageTitle}>Daily Log</Text>
-
-        {/* Project selector */}
-        {tenants.length > 1 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.tenantBar}
-          >
-            {tenants.map((t) => (
-              <TouchableOpacity
-                key={t.id}
-                style={[
-                  styles.tenantPill,
-                  activeTenant?.id === t.id && styles.tenantPillActive,
-                ]}
-                onPress={() => setActiveTenant(t)}
-              >
-                {t.teenFavoriteColor && (
-                  <View
-                    style={[
-                      styles.colorDot,
-                      { backgroundColor: t.teenFavoriteColor },
-                    ]}
-                  />
-                )}
-                <Text
-                  style={[
-                    styles.tenantPillText,
-                    activeTenant?.id === t.id && styles.tenantPillTextActive,
-                  ]}
-                >
-                  {t.teenNickname ?? t.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
+        <Text variant="headlineSmall" style={styles.pageTitle}>Daily Log</Text>
 
         {/* Date selector */}
-        <View style={styles.dateRow}>
+        <Surface style={styles.dateRow} elevation={3}>
           <TouchableOpacity
             style={styles.dateArrow}
             onPress={() => setDate(shiftDate(date, -1))}
@@ -397,9 +324,9 @@ export default function LogScreen() {
             <Text style={styles.dateArrowText}>‹</Text>
           </TouchableOpacity>
           <View style={styles.dateCenter}>
-            <Text style={styles.dateText}>{formatDateDisplay(date)}</Text>
+            <Text variant="titleMedium" style={styles.dateText}>{formatDateDisplay(date)}</Text>
             {existingEntry && (
-              <Text style={styles.existingBadge}>Editing existing entry</Text>
+              <Text variant="labelSmall" style={styles.existingBadge}>Editing existing entry</Text>
             )}
           </View>
           <TouchableOpacity
@@ -418,7 +345,7 @@ export default function LogScreen() {
               ›
             </Text>
           </TouchableOpacity>
-        </View>
+        </Surface>
 
         {/* Quick Log — Mood */}
         <SectionHeader title="Overall Mood" />
@@ -486,13 +413,10 @@ export default function LogScreen() {
                 style={styles.sectionHeaderRow}
                 onPress={() => toggleSection(`behavior-${cat.slug}`)}
               >
-                <View
-                  style={[styles.poleDot, { backgroundColor: pole.dot }]}
-                />
-                <Text style={styles.sectionTitle}>{cat.name} Criteria</Text>
-                <Text style={styles.chevron}>{isCollapsed ? "▸" : "▾"}</Text>
+                <Text variant="titleSmall" style={styles.sectionTitle}>{cat.name} Criteria</Text>
+                <Text variant="bodySmall" style={styles.chevron}>{isCollapsed ? "▸" : "▾"}</Text>
                 {checkedBehaviors.size > 0 && (
-                  <Text style={[styles.countBadge, { backgroundColor: pole.bg, color: pole.text }]}>
+                  <Text variant="labelSmall" style={[styles.countBadge, { backgroundColor: pole.bg, color: pole.text }]}>
                     {defs.filter((d) => checkedBehaviors.has(d.itemKey)).length}
                   </Text>
                 )}
@@ -544,16 +468,16 @@ export default function LogScreen() {
                       )}
 
                       {isExpanded && examples.length > 0 && (
-                        <View style={styles.examplesPanel}>
-                          <Text style={styles.examplesHeader}>
+                        <Surface style={styles.examplesPanel} elevation={0}>
+                          <Text variant="labelSmall" style={styles.examplesHeader}>
                             This might look like:
                           </Text>
                           {examples.map((ex, i) => (
-                            <Text key={i} style={styles.exampleItem}>
+                            <Text key={i} variant="bodySmall" style={styles.exampleItem}>
                               • {ex}
                             </Text>
                           ))}
-                        </View>
+                        </Surface>
                       )}
                     </View>
                   );
@@ -616,7 +540,7 @@ export default function LogScreen() {
             const current = impairments[domain.key] ?? "NONE";
             return (
               <View key={domain.key} style={styles.impairmentRow}>
-                <Text style={styles.impairmentLabel}>{domain.label}</Text>
+                <Text variant="bodyMedium" style={styles.impairmentLabel}>{domain.label}</Text>
                 <View style={styles.impairmentPills}>
                   {IMPAIRMENT_LEVELS.map((level) => (
                     <TouchableOpacity
@@ -678,7 +602,7 @@ export default function LogScreen() {
                     style={[
                       styles.pill,
                       missed
-                        ? { backgroundColor: "#FEF3C7", borderColor: "#D97706" }
+                        ? { backgroundColor: palette.warningBg, borderColor: palette.warning }
                         : styles.pillInactive,
                     ]}
                     onPress={() => toggleSet(setMissedMeds, med.id)}
@@ -687,7 +611,7 @@ export default function LogScreen() {
                       style={[
                         styles.pillText,
                         missed
-                          ? { color: "#92400E" }
+                          ? { color: moodColors.MANIC.text }
                           : styles.pillTextInactive,
                       ]}
                     >
@@ -719,7 +643,7 @@ export default function LogScreen() {
                     style={[
                       styles.pill,
                       checked
-                        ? { backgroundColor: "#D1FAE5", borderColor: "#059669" }
+                        ? { backgroundColor: palette.secondaryFaint, borderColor: palette.secondary }
                         : styles.pillInactive,
                     ]}
                     onPress={() => toggleSet(setCheckedStrategies, s.id)}
@@ -794,36 +718,36 @@ export default function LogScreen() {
           numberOfLines={4}
           textAlignVertical="top"
           placeholder="How was the day? Any observations..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={palette.textMuted}
           value={notes}
           onChangeText={setNotes}
         />
 
         {/* Save button */}
-        <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+        <Button
+          mode="contained"
           onPress={handleSave}
           disabled={saving}
+          loading={saving}
+          buttonColor={palette.primary}
+          textColor="#ffffff"
+          style={styles.saveButton}
+          contentStyle={styles.saveButtonContent}
+          labelStyle={styles.saveButtonText}
         >
-          {saving ? (
-            <ActivityIndicator color="#ffffff" size="small" />
-          ) : (
-            <Text style={styles.saveButtonText}>
-              {existingEntry ? "Update Entry" : "Save Entry"}
-            </Text>
-          )}
-        </TouchableOpacity>
+          {existingEntry ? "Update Entry" : "Save Entry"}
+        </Button>
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 // ── Sub-components ──
 
 function SectionHeader({ title }: { title: string }) {
-  return <Text style={styles.sectionTitle}>{title}</Text>;
+  return <Text variant="titleSmall" style={styles.sectionTitle}>{title}</Text>;
 }
 
 function CollapsibleSection({
@@ -849,10 +773,10 @@ function CollapsibleSection({
         style={styles.sectionHeaderRow}
         onPress={() => onToggle(sectionKey)}
       >
-        <Text style={styles.sectionTitle}>{title}</Text>
-        <Text style={styles.chevron}>{isCollapsed ? "▸" : "▾"}</Text>
+        <Text variant="titleSmall" style={styles.sectionTitle}>{title}</Text>
+        <Text variant="bodySmall" style={styles.chevron}>{isCollapsed ? "▸" : "▾"}</Text>
         {count > 0 && (
-          <Text style={styles.countBadgeGeneric}>{count}</Text>
+          <Text variant="labelSmall" style={styles.countBadgeGeneric}>{count}</Text>
         )}
       </TouchableOpacity>
       {!isCollapsed && children}
@@ -863,39 +787,17 @@ function CollapsibleSection({
 // ── Styles ──
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffffff" },
+  container: { flex: 1, backgroundColor: palette.background },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 8, color: "#6B7280", fontSize: 14 },
-  emptyText: { color: "#6B7280", fontSize: 16 },
+  loadingText: { marginTop: 8, color: palette.textMuted, fontSize: 14 },
   scroll: { flex: 1 },
   scrollContent: { padding: 16 },
   pageTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#111827",
+    color: palette.textPrimary,
     marginBottom: 12,
   },
-
-  // Tenant selector
-  tenantBar: { marginBottom: 16 },
-  tenantPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#F3F4F6",
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  tenantPillActive: {
-    backgroundColor: "#E5E7EB",
-    borderColor: "#374151",
-  },
-  tenantPillText: { fontSize: 14, color: "#6B7280" },
-  tenantPillTextActive: { color: "#111827", fontWeight: "600" },
-  colorDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
 
   // Date selector
   dateRow: {
@@ -905,17 +807,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingVertical: 8,
     paddingHorizontal: 4,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
+    backgroundColor: palette.surfaceAlt,
+    borderRadius: radius.md,
   },
   dateArrow: { padding: 8 },
-  dateArrowText: { fontSize: 28, color: "#374151", fontWeight: "300" },
-  dateArrowDisabled: { color: "#D1D5DB" },
+  dateArrowText: { fontSize: 28, color: palette.primary, fontWeight: "300" },
+  dateArrowDisabled: { color: palette.textMuted },
   dateCenter: { alignItems: "center" },
-  dateText: { fontSize: 16, fontWeight: "600", color: "#111827" },
+  dateText: { fontSize: 16, fontWeight: "600", color: palette.textPrimary },
   existingBadge: {
     fontSize: 11,
-    color: "#D97706",
+    color: palette.warning,
     marginTop: 2,
     fontWeight: "500",
   },
@@ -930,22 +832,21 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#374151",
+    color: palette.textSecondary,
     marginBottom: 8,
   },
   chevron: {
     fontSize: 14,
-    color: "#9CA3AF",
+    color: palette.textMuted,
     marginLeft: 6,
     marginBottom: 8,
   },
-  poleDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
   countBadge: {
     fontSize: 12,
     fontWeight: "600",
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     marginLeft: 8,
     overflow: "hidden",
     marginBottom: 8,
@@ -955,10 +856,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     marginLeft: 8,
-    backgroundColor: "#E5E7EB",
-    color: "#374151",
+    backgroundColor: palette.borderLight,
+    color: palette.textSecondary,
     overflow: "hidden",
     marginBottom: 8,
   },
@@ -972,26 +873,38 @@ const styles = StyleSheet.create({
   },
   pill: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
     borderWidth: 1,
+    backgroundColor: palette.card,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
   pillInactive: {
-    backgroundColor: "#F9FAFB",
-    borderColor: "#E5E7EB",
+    backgroundColor: palette.card,
+    borderColor: palette.border,
   },
   pillText: { fontSize: 14, fontWeight: "500" },
-  pillTextInactive: { color: "#6B7280" },
+  pillTextInactive: { color: palette.textMuted },
 
   // Behavior items
   behaviorItem: { marginBottom: 6 },
   behaviorPill: {
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 8,
+    borderRadius: radius.md,
     borderWidth: 1,
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: palette.card,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
   behaviorPillText: { fontSize: 14, fontWeight: "500", flex: 1 },
   safetyBadge: { fontSize: 14, marginLeft: 6 },
@@ -1000,31 +913,31 @@ const styles = StyleSheet.create({
   examplesToggle: {
     position: "absolute",
     right: 12,
-    top: 10,
+    top: 8,
     width: 24,
     height: 24,
-    borderRadius: 12,
-    backgroundColor: "#E5E7EB",
+    borderRadius: radius.md,
+    backgroundColor: palette.borderLight,
     justifyContent: "center",
     alignItems: "center",
   },
-  examplesToggleText: { fontSize: 13, color: "#6B7280", fontWeight: "600" },
+  examplesToggleText: { fontSize: 13, color: palette.textMuted, fontWeight: "600" },
   examplesPanel: {
     marginTop: 4,
     marginLeft: 8,
     padding: 10,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 8,
+    backgroundColor: palette.surfaceAlt,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: palette.border,
   },
   examplesHeader: {
     fontSize: 12,
     fontStyle: "italic",
-    color: "#6B7280",
+    color: palette.textSecondary,
     marginBottom: 4,
   },
-  exampleItem: { fontSize: 12, color: "#4B5563", lineHeight: 18 },
+  exampleItem: { fontSize: 12, color: palette.textSecondary, lineHeight: 18 },
 
   // Impairment
   impairmentRow: {
@@ -1033,50 +946,55 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: palette.borderLight,
   },
-  impairmentLabel: { fontSize: 14, color: "#374151", flex: 1 },
+  impairmentLabel: { fontSize: 14, color: palette.textSecondary, flex: 1 },
   impairmentPills: { flexDirection: "row", gap: 4 },
   impairmentPill: {
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingVertical: 5,
+    borderRadius: radius.sm,
     borderWidth: 1,
+    backgroundColor: palette.card,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 1.5,
+    elevation: 1,
   },
   impairmentPillInactive: {
-    backgroundColor: "#F9FAFB",
-    borderColor: "#E5E7EB",
+    backgroundColor: palette.card,
+    borderColor: palette.border,
   },
-  impairmentNone: { backgroundColor: "#F3F4F6", borderColor: "#9CA3AF" },
-  impairmentPresent: { backgroundColor: "#FEF3C7", borderColor: "#D97706" },
-  impairmentSevere: { backgroundColor: "#FEE2E2", borderColor: "#DC2626" },
+  impairmentNone: { backgroundColor: palette.borderLight, borderColor: palette.textMuted },
+  impairmentPresent: { backgroundColor: palette.warningBg, borderColor: palette.warning },
+  impairmentSevere: { backgroundColor: palette.errorBg, borderColor: palette.error },
   impairmentPillText: { fontSize: 12, fontWeight: "500" },
-  impairmentPillTextActive: { color: "#111827" },
-  impairmentPillTextInactive: { color: "#9CA3AF" },
+  impairmentPillTextActive: { color: palette.textPrimary },
+  impairmentPillTextInactive: { color: palette.textMuted },
 
   // Menstrual
-  clearLink: { color: "#6B7280", fontSize: 13, marginLeft: 4, marginTop: 8 },
+  clearLink: { color: palette.textMuted, fontSize: 13, marginLeft: 4, marginTop: 8 },
 
   // Notes
   notesInput: {
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
+    borderColor: palette.border,
+    borderRadius: radius.md,
     padding: 12,
     fontSize: 14,
-    color: "#111827",
+    color: palette.textPrimary,
     minHeight: 100,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: palette.surfaceAlt,
     marginBottom: 20,
   },
 
   // Save
   saveButton: {
-    backgroundColor: "#374151",
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
+    borderRadius: radius.md,
   },
-  saveButtonDisabled: { opacity: 0.6 },
-  saveButtonText: { color: "#ffffff", fontSize: 16, fontWeight: "600" },
+  saveButtonContent: {
+    paddingVertical: 6,
+  },
+  saveButtonText: { fontSize: 16, fontWeight: "600" },
 });
