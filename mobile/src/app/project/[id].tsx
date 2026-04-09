@@ -127,8 +127,9 @@ export default function ProjectDetailScreen() {
       setSettingDefault(true);
       await setDefaultTenant(currentUser.id, id);
       setCurrentUser({ ...currentUser, defaultTenantId: id });
-    } catch {
-      Alert.alert("Error", "Failed to set default project. Please try again.");
+    } catch (e) {
+      console.error("setDefaultTenant error:", e);
+      Alert.alert("Error", e instanceof Error ? e.message : "Failed to set default project.");
     } finally {
       setSettingDefault(false);
     }

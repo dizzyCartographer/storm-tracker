@@ -413,7 +413,10 @@ export async function setDefaultTenant(
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify({ defaultTenantId: tenantId }),
   });
-  if (!res.ok) throw new Error("Failed to set default tenant");
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Failed to set default tenant: ${res.status} ${body}`);
+  }
 }
 
 // ── Types ──

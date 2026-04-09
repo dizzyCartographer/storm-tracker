@@ -34,6 +34,10 @@ export const auth = betterAuth({
       jwt: {
         issuer: process.env.STRM_TRKR_BETTER_AUTH_URL,
         expirationTime: "15m",
+        definePayload: (session) => ({
+          ...session.user,
+          role: "authenticated",
+        }),
       },
     }),
     nextCookies(), // MUST be last — ordering matters
