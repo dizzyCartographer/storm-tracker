@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
-  Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
+  StyleSheet,
 } from "react-native";
+import { Text, Card, Chip, ActivityIndicator, Divider } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   getTenants,
+  getCurrentUserInfo,
   getEntriesByRange,
   TenantSummary,
   EntryRow,
@@ -19,9 +19,17 @@ import {
 
 // ── Constants ──
 
-const MOOD_COLORS: Record<string, { bg: string; text: string; dot: string; label: string }> = {
+const MOOD_COLORS: Record<
+  string,
+  { bg: string; text: string; dot: string; label: string }
+> = {
   MANIC: { bg: "#FEF3C7", text: "#92400E", dot: "#F59E0B", label: "Manic" },
-  DEPRESSIVE: { bg: "#DBEAFE", text: "#1E40AF", dot: "#3B82F6", label: "Depressive" },
+  DEPRESSIVE: {
+    bg: "#DBEAFE",
+    text: "#1E40AF",
+    dot: "#3B82F6",
+    label: "Depressive",
+  },
   MIXED: { bg: "#EDE9FE", text: "#5B21B6", dot: "#8B5CF6", label: "Mixed" },
   NEUTRAL: { bg: "#F3F4F6", text: "#374151", dot: "#9CA3AF", label: "Neutral" },
 };
@@ -50,7 +58,10 @@ function todayParts(): { year: number; month: number } {
   return { year: d.getFullYear(), month: d.getMonth() };
 }
 
-function monthRange(year: number, month: number): { start: string; end: string } {
+function monthRange(
+  year: number,
+  month: number
+): { start: string; end: string } {
   const start = `${year}-${String(month + 1).padStart(2, "0")}-01`;
   const lastDay = new Date(year, month + 1, 0).getDate();
   const end = `${year}-${String(month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
@@ -118,13 +129,17 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Load tenants
+  // Load tenants with default project support
   useEffect(() => {
     (async () => {
       try {
-        const t = await getTenants();
+        const [t, user] = await Promise.all([getTenants(), getCurrentUserInfo()]);
         setTenants(t);
-        if (t.length > 0) setActiveTenant(t[0]);
+        if (t.length > 0) {
+          const defaultId = user?.defaultTenantId;
+          const hasDefault = defaultId && t.some((tenant) => tenant.id === defaultId);
+          setActiveTenant(hasDefault ? t.find((tenant) => tenant.id === defaultId)! : t[0]);
+        }
       } catch (e) {
         console.error("Failed to load tenants:", e);
       }
@@ -175,7 +190,9 @@ export default function HistoryScreen() {
   const weeks = useMemo(() => calendarGrid(year, month), [year, month]);
 
   // Selected day entries
-  const selectedEntries = selectedDay ? entriesByDay.get(selectedDay) ?? [] : [];
+  const selectedEntries = selectedDay
+    ? entriesByDay.get(selectedDay) ?? []
+    : [];
 
   // Month navigation
   function prevMonth() {
@@ -207,7 +224,7 @@ export default function HistoryScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#374151" />
+          <ActivityIndicator size="large" />
         </View>
       </SafeAreaView>
     );
@@ -217,7 +234,9 @@ export default function HistoryScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>No projects found</Text>
+          <Text variant="bodyLarge" style={styles.emptyText}>
+            No projects found
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -232,7 +251,9 @@ export default function HistoryScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <Text style={styles.pageTitle}>History</Text>
+        <Text variant="headlineSmall" style={styles.pageTitle}>
+          History
+        </Text>
 
         {/* Project selector */}
         {tenants.length > 1 && (
@@ -240,49 +261,53 @@ export default function HistoryScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.tenantBar}
+            contentContainerStyle={{ gap: 8 }}
           >
-            {tenants.map((t) => (
-              <TouchableOpacity
-                key={t.id}
-                style={[
-                  styles.tenantPill,
-                  activeTenant?.id === t.id && styles.tenantPillActive,
-                ]}
-                onPress={() => setActiveTenant(t)}
-              >
-                {t.teenFavoriteColor && (
-                  <View
-                    style={[
-                      styles.colorDot,
-                      { backgroundColor: t.teenFavoriteColor },
-                    ]}
-                  />
-                )}
-                <Text
+            {tenants.map((t) => {
+              const isActive = activeTenant?.id === t.id;
+              return (
+                <TouchableOpacity
+                  key={t.id}
                   style={[
-                    styles.tenantPillText,
-                    activeTenant?.id === t.id && styles.tenantPillTextActive,
+                    styles.projectPill,
+                    isActive && styles.projectPillActive,
+                    isActive && t.teenFavoriteColor
+                      ? { borderColor: t.teenFavoriteColor }
+                      : undefined,
                   ]}
+                  onPress={() => setActiveTenant(t)}
                 >
-                  {t.teenNickname ?? t.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.projectPillText,
+                      isActive && styles.projectPillTextActive,
+                    ]}
+                  >
+                    {t.teenNickname ?? t.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         )}
 
         {/* Month navigation */}
         <View style={styles.monthNav}>
           <TouchableOpacity onPress={prevMonth} style={styles.monthArrow}>
-            <Text style={styles.monthArrowText}>‹</Text>
+            <Text variant="headlineMedium" style={styles.monthArrowText}>
+              ‹
+            </Text>
           </TouchableOpacity>
-          <Text style={styles.monthLabel}>{monthLabel(year, month)}</Text>
+          <Text variant="titleMedium" style={styles.monthLabel}>
+            {monthLabel(year, month)}
+          </Text>
           <TouchableOpacity
             onPress={nextMonth}
             style={styles.monthArrow}
             disabled={isCurrentMonth}
           >
             <Text
+              variant="headlineMedium"
               style={[
                 styles.monthArrowText,
                 isCurrentMonth && styles.monthArrowDisabled,
@@ -299,7 +324,9 @@ export default function HistoryScreen() {
           <View style={styles.calendarRow}>
             {DAY_NAMES.map((name) => (
               <View key={name} style={styles.calendarHeaderCell}>
-                <Text style={styles.dayHeaderText}>{name}</Text>
+                <Text variant="labelSmall" style={styles.dayHeaderText}>
+                  {name}
+                </Text>
               </View>
             ))}
           </View>
@@ -358,12 +385,15 @@ export default function HistoryScreen() {
         {/* Selected day detail */}
         {selectedDay !== null && (
           <View style={styles.detailSection}>
-            <Text style={styles.detailDate}>
+            <Divider style={{ marginBottom: 12 }} />
+            <Text variant="titleMedium" style={styles.detailDate}>
               {formatDateFull(dateStr(year, month, selectedDay))}
             </Text>
 
             {selectedEntries.length === 0 ? (
-              <Text style={styles.noEntries}>No entries logged</Text>
+              <Text variant="bodySmall" style={styles.noEntries}>
+                No entries logged
+              </Text>
             ) : (
               selectedEntries.map((entry) => (
                 <EntryCard key={entry.id} entry={entry} />
@@ -385,8 +415,7 @@ function EntryCard({ entry }: { entry: EntryRow }) {
   const mood = displayMood(entry);
   const moodStyle = MOOD_COLORS[mood] ?? MOOD_COLORS.NEUTRAL;
   const hasDetail = hasBehaviorDetail(entry);
-  const overridden =
-    entry.computedMood && entry.computedMood !== entry.mood;
+  const overridden = entry.computedMood && entry.computedMood !== entry.mood;
 
   const activeImpairments = Object.entries(entry.impairments ?? {}).filter(
     ([, v]) => v !== "NONE"
@@ -395,106 +424,116 @@ function EntryCard({ entry }: { entry: EntryRow }) {
   const behaviors = entry.behaviorKeys ?? [];
 
   return (
-    <TouchableOpacity
+    <Card
       style={styles.card}
       onPress={() => router.push(`/entry/${entry.id}`)}
-      activeOpacity={0.7}
+      mode="contained"
     >
-      {/* Mood badge + meta */}
-      <View style={styles.cardHeader}>
-        <View style={[styles.moodBadge, { backgroundColor: moodStyle.bg }]}>
-          <Text style={[styles.moodBadgeText, { color: moodStyle.text }]}>
+      <Card.Content>
+        {/* Mood badge + meta */}
+        <View style={styles.cardHeader}>
+          <Chip
+            compact
+            textStyle={{ fontSize: 12, color: moodStyle.text }}
+            style={{ backgroundColor: moodStyle.bg }}
+          >
             {moodStyle.label}
+          </Chip>
+          <Text variant="bodySmall" style={styles.qualityText}>
+            {DAY_QUALITY_LABELS[entry.dayQuality] ?? entry.dayQuality}
           </Text>
         </View>
-        <Text style={styles.qualityText}>
-          {DAY_QUALITY_LABELS[entry.dayQuality] ?? entry.dayQuality}
-        </Text>
-      </View>
 
-      {!hasDetail && (
-        <Text style={styles.quickLogBadge}>Quick log only</Text>
-      )}
+        {!hasDetail && (
+          <Text variant="labelSmall" style={styles.quickLogBadge}>
+            Quick log only
+          </Text>
+        )}
 
-      {overridden && (
-        <Text style={styles.overrideText}>
-          Reported {MOOD_COLORS[entry.mood]?.label ?? entry.mood} mood
-        </Text>
-      )}
+        {overridden && (
+          <Text variant="labelSmall" style={styles.overrideText}>
+            Reported {MOOD_COLORS[entry.mood]?.label ?? entry.mood} mood
+          </Text>
+        )}
 
-      {/* Behaviors */}
-      {behaviors.length > 0 && (
-        <View style={styles.tagSection}>
-          <Text style={styles.tagLabel}>Behaviors</Text>
-          <View style={styles.tagRow}>
-            {behaviors.map((key) => (
-              <View key={key} style={styles.tag}>
-                <Text style={styles.tagText}>
+        {/* Behaviors */}
+        {behaviors.length > 0 && (
+          <View style={styles.tagSection}>
+            <Text variant="labelSmall" style={styles.tagLabel}>
+              Behaviors
+            </Text>
+            <View style={styles.tagRow}>
+              {behaviors.map((key) => (
+                <Chip key={key} compact textStyle={styles.tagChipText} style={styles.tagChip}>
                   {key.replace(/-/g, " ")}
-                </Text>
-              </View>
-            ))}
+                </Chip>
+              ))}
+            </View>
           </View>
-        </View>
-      )}
+        )}
 
-      {/* Impairments */}
-      {activeImpairments.length > 0 && (
-        <View style={styles.tagSection}>
-          <Text style={styles.tagLabel}>Impairments</Text>
-          <View style={styles.tagRow}>
-            {activeImpairments.map(([domain, severity]) => (
-              <View
-                key={domain}
-                style={[
-                  styles.tag,
-                  severity === "SEVERE" && styles.tagSevere,
-                ]}
-              >
-                <Text
+        {/* Impairments */}
+        {activeImpairments.length > 0 && (
+          <View style={styles.tagSection}>
+            <Text variant="labelSmall" style={styles.tagLabel}>
+              Impairments
+            </Text>
+            <View style={styles.tagRow}>
+              {activeImpairments.map(([domain, severity]) => (
+                <Chip
+                  key={domain}
+                  compact
+                  textStyle={[
+                    styles.tagChipText,
+                    severity === "SEVERE" && { color: "#991B1B" },
+                  ]}
                   style={[
-                    styles.tagText,
-                    severity === "SEVERE" && styles.tagTextSevere,
+                    styles.tagChip,
+                    severity === "SEVERE" && { backgroundColor: "#FEE2E2" },
                   ]}
                 >
                   {IMPAIRMENT_LABELS[domain] ?? domain}: {severity.toLowerCase()}
-                </Text>
-              </View>
-            ))}
+                </Chip>
+              ))}
+            </View>
           </View>
-        </View>
-      )}
+        )}
 
-      {/* Missed meds */}
-      {missedMeds.length > 0 && (
-        <View style={styles.tagSection}>
-          <Text style={styles.tagLabel}>
-            Missed medications ({missedMeds.length})
-          </Text>
-        </View>
-      )}
-
-      {/* Menstrual */}
-      {entry.menstrualSeverity && (
-        <View style={styles.tagSection}>
-          <View style={[styles.tag, { backgroundColor: "#FCE7F3" }]}>
-            <Text style={[styles.tagText, { color: "#9D174D" }]}>
-              Period: {entry.menstrualSeverity.toLowerCase()}
+        {/* Missed meds */}
+        {missedMeds.length > 0 && (
+          <View style={styles.tagSection}>
+            <Text variant="labelSmall" style={styles.tagLabel}>
+              Missed medications ({missedMeds.length})
             </Text>
           </View>
-        </View>
-      )}
+        )}
 
-      {/* Notes */}
-      {entry.notes && (
-        <View style={styles.notesSection}>
-          <Text style={styles.tagLabel}>Notes</Text>
-          <Text style={styles.notesText} numberOfLines={4}>
-            {entry.notes}
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
+        {/* Menstrual */}
+        {entry.menstrualSeverity && (
+          <View style={styles.tagSection}>
+            <Chip
+              compact
+              textStyle={{ fontSize: 11, color: "#9D174D" }}
+              style={{ backgroundColor: "#FCE7F3", alignSelf: "flex-start" }}
+            >
+              Period: {entry.menstrualSeverity.toLowerCase()}
+            </Chip>
+          </View>
+        )}
+
+        {/* Notes */}
+        {entry.notes && (
+          <View style={styles.notesSection}>
+            <Text variant="labelSmall" style={styles.tagLabel}>
+              Notes
+            </Text>
+            <Text variant="bodySmall" style={styles.notesText} numberOfLines={4}>
+              {entry.notes}
+            </Text>
+          </View>
+        )}
+      </Card.Content>
+    </Card>
   );
 }
 
@@ -503,36 +542,33 @@ function EntryCard({ entry }: { entry: EntryRow }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#ffffff" },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { color: "#6B7280", fontSize: 16 },
+  emptyText: { color: "#6B7280" },
   scroll: { flex: 1 },
   scrollContent: { padding: 16 },
   pageTitle: {
-    fontSize: 22,
     fontWeight: "700",
     color: "#111827",
     marginBottom: 12,
   },
 
-  // Tenant selector
+  // Project selector (matches dashboard)
   tenantBar: { marginBottom: 16 },
-  tenantPill: {
-    flexDirection: "row",
-    alignItems: "center",
+  projectPill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#F3F4F6",
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: "transparent",
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FAFAFA",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  tenantPillActive: {
-    backgroundColor: "#E5E7EB",
+  projectPillActive: {
+    backgroundColor: "#F3F4F6",
     borderColor: "#374151",
   },
-  tenantPillText: { fontSize: 14, color: "#6B7280" },
-  tenantPillTextActive: { color: "#111827", fontWeight: "600" },
-  colorDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+  projectPillText: { fontSize: 14, color: "#6B7280", fontWeight: "500" },
+  projectPillTextActive: { color: "#111827", fontWeight: "600" },
 
   // Month nav
   monthNav: {
@@ -544,9 +580,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   monthArrow: { padding: 8 },
-  monthArrowText: { fontSize: 28, color: "#374151", fontWeight: "300" },
+  monthArrowText: { color: "#374151", fontWeight: "300" },
   monthArrowDisabled: { color: "#D1D5DB" },
-  monthLabel: { fontSize: 18, fontWeight: "700", color: "#111827" },
+  monthLabel: { fontWeight: "700", color: "#111827" },
 
   // Calendar
   calendar: {
@@ -561,7 +597,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 6,
   },
-  dayHeaderText: { fontSize: 12, fontWeight: "600", color: "#9CA3AF" },
+  dayHeaderText: { color: "#9CA3AF" },
   calendarCell: {
     flex: 1,
     alignItems: "center",
@@ -592,42 +628,29 @@ const styles = StyleSheet.create({
   // Detail section
   detailSection: { marginTop: 4 },
   detailDate: {
-    fontSize: 16,
     fontWeight: "600",
     color: "#111827",
     marginBottom: 12,
   },
-  noEntries: { color: "#9CA3AF", fontSize: 14, fontStyle: "italic" },
+  noEntries: { color: "#9CA3AF", fontStyle: "italic" },
 
   // Entry card
   card: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    padding: 14,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    backgroundColor: "#F9FAFB",
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
   },
-  moodBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  moodBadgeText: { fontSize: 13, fontWeight: "600" },
-  qualityText: { fontSize: 13, color: "#6B7280", marginLeft: 8 },
+  qualityText: { color: "#6B7280", marginLeft: 8 },
   quickLogBadge: {
-    fontSize: 12,
     color: "#D97706",
     fontWeight: "500",
     marginBottom: 6,
   },
   overrideText: {
-    fontSize: 12,
     color: "#6B7280",
     fontStyle: "italic",
     marginBottom: 6,
@@ -636,23 +659,17 @@ const styles = StyleSheet.create({
   // Tags
   tagSection: { marginTop: 8 },
   tagLabel: {
-    fontSize: 12,
     fontWeight: "600",
     color: "#6B7280",
     marginBottom: 4,
   },
   tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  tag: {
+  tagChip: {
     backgroundColor: "#E5E7EB",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
   },
-  tagSevere: { backgroundColor: "#FEE2E2" },
-  tagText: { fontSize: 12, color: "#374151" },
-  tagTextSevere: { color: "#991B1B" },
+  tagChipText: { fontSize: 11, color: "#374151" },
 
   // Notes
   notesSection: { marginTop: 8 },
-  notesText: { fontSize: 13, color: "#374151", lineHeight: 20 },
+  notesText: { color: "#374151", lineHeight: 20 },
 });
