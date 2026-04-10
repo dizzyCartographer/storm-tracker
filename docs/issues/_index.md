@@ -25,6 +25,12 @@ Each issue is a `.md` file in this directory with YAML frontmatter. This index i
 | [ST-039](ST-039-mobile-reports-wave-graph.md) | Reports and wave graph on mobile | enhancement | open | high | mobile, reports | 2026-04-10 |
 | [ST-040](ST-040-mobile-projects-crud.md) | Full projects CRUD on mobile | enhancement | open | high | mobile, projects | 2026-04-10 |
 | [ST-048](ST-048-design-system-library-selection.md) | Finalize mobile design system library decision | tech-debt | open | medium | mobile, theming | 2026-04-10 |
+| [ST-051](ST-051-set-app-icon.md) | Set app icon from brand SVG | enhancement | open | high | mobile, theming | 2026-04-10 |
+| [ST-052](ST-052-splash-screen.md) | Add branded splash screen | enhancement | open | high | mobile, theming | 2026-04-10 |
+| [ST-053](ST-053-create-account-sign-in.md) | Add "Create Account" option to sign-in screen | enhancement | open | high | mobile, auth | 2026-04-10 |
+| [ST-054](ST-054-remove-import-journal-hamburger.md) | Remove "Import Journal" from hamburger menu | enhancement | open | medium | mobile, navigation | 2026-04-10 |
+| [ST-055](ST-055-ai-journal-tab-navigation.md) | Make AI Journal a proper tab screen with persistent tab bar | bug | open | high | mobile, navigation | 2026-04-10 |
+| [ST-056](ST-056-ai-journal-title-header-redundancy.md) | Fix AI Journal page title and redundant header | bug | open | medium | mobile, navigation | 2026-04-10 |
 
 ## Low Urgency — High Priority
 

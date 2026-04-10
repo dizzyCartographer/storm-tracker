@@ -33,16 +33,6 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
-          name="journal-import"
-          options={{
-            headerShown: true,
-            headerTitle: "Import Journal",
-            headerBackTitle: "Back",
-            headerTintColor: palette.primary,
-            headerStyle: { backgroundColor: palette.background },
-          }}
-        />
-        <Stack.Screen
           name="log-edit"
           options={{
             headerShown: true,

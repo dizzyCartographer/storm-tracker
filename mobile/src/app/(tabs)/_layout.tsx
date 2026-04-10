@@ -99,12 +99,6 @@ function TabLayoutInner() {
                 <Ionicons name="sparkles-outline" size={size} color={color} />
               ),
             }}
-            listeners={{
-              tabPress: (e) => {
-                e.preventDefault();
-                router.push("/journal-import");
-              },
-            }}
           />
           <Tabs.Screen
             name="history"
