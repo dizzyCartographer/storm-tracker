@@ -20,12 +20,11 @@ storm-tracker/
 │       ├── ui-requirements.md       # UI/UX specifications
 │       ├── architecture-standards.md # Data access, computation, and modeling standards
 │       ├── app-purpose-and-liability-constraints.md # Purpose and liability guardrails
+│       ├── future-enhancements.md # Planned future enhancements
 │       ├── storm-tracker-ios-conversion-plan.md # iOS conversion roadmap
 │       ├── storm-tracker-work-log.md # Running log of sessions, decisions, and work context
+│       ├── tech-debt.md             # Known architectural debt tracker
 │       └── feedback/             # Corrections and process rules (auto-loaded)
-├── docs/issues/          # File-based issue tracker (ST-### prefixed)
-│   └── _index.md         # Auto-updated summary table (loaded every session)
-├── docs/archive/         # Retired planning docs (not auto-loaded)
 └── CLAUDE.md         # This file — loaded into every Claude session
 ```
 
@@ -45,6 +44,7 @@ When adding a new context file, add an `@` import below **and** update the tree 
 @docs/context/diagnostic-resources.md
 @docs/context/branding-style-guide.md
 @docs/context/functional-requirements.md
+@docs/context/iterative-functional-requirements.md
 @docs/context/ui-requirements.md
 @docs/context/data-architecture-diagnostic-frameworks.md
 @docs/context/application-architecture-standards.md
@@ -52,9 +52,10 @@ When adding a new context file, add an `@` import below **and** update the tree 
 @docs/context/storm-tracker-development-plan.md
 @docs/context/storm-tracker-ios-conversion-plan.md
 @docs/context/app-purpose-and-liability-constraints.md
+@docs/context/future-enhancements.md
 @docs/context/storm-tracker-work-log.md
-@docs/context/feedback/*.md
-@docs/issues/_index.md
+@docs/context/tech-debt.md
+@docs/context/feedback/\*.md
 
 ## Workflow Rules
 
@@ -69,5 +70,3 @@ When adding a new context file, add an `@` import below **and** update the tree 
 - **Check git state at session start.** Run `git branch -a` and `git worktree list` early. Clean up anything left over from previous sessions before starting new work.
 
 - **Maintain the work log.** `docs/context/work-log.md` is the primary continuity mechanism across conversations. Append to it as things happen — when a decision is made, a feature is started or completed, a roadblock is discovered, or an architecture change is agreed upon. Do not wait for a session to end. The goal is that a new conversation can read this file and pick up exactly where the last one left off.
-
-- **Update issue index on every change.** When creating, modifying, or closing an issue in `docs/issues/`, regenerate `docs/issues/_index.md` from the YAML frontmatter of all issue files. The index is sorted by urgency (blocking → soon → low), then by priority (critical → high → medium → low). Always assign the next sequential ST number when creating a new issue.
