@@ -124,6 +124,7 @@ export default function LogScreen() {
 
   // UI state
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [existingEntry, setExistingEntry] = useState<EntryRow | null>(null);
   const [expandedExamples, setExpandedExamples] = useState<Set<string>>(new Set());
@@ -138,6 +139,7 @@ export default function LogScreen() {
 
     (async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const fwId = await getFrameworkId(activeTenant.id);
 
@@ -165,6 +167,7 @@ export default function LogScreen() {
         }
       } catch (e) {
         console.error("Failed to load form data:", e);
+        if (!cancelled) setLoadError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -401,7 +404,48 @@ export default function LogScreen() {
           ))}
         </View>
 
-        {/* Behavior Checklist */}
+        {/* Behavior Checklist — retry banner if load failed */}
+        {loadError && categories.length === 0 && (
+          <Surface style={styles.errorBanner} elevation={2}>
+            <Text variant="bodySmall" style={styles.errorBannerText}>
+              Behavior checklist failed to load.
+            </Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => {
+                // Re-trigger the useEffect by toggling a counter
+                setLoadError(false);
+                setCategories([]);
+                setBehaviors([]);
+                setLoading(true);
+                // Force re-run by setting loading — the effect will re-run
+                // because we clear categories, but we need the effect to re-fire.
+                // Simplest: just call the load inline.
+                (async () => {
+                  try {
+                    const fwId = await getFrameworkId(activeTenant!.id);
+                    if (fwId) {
+                      const cats = await getBehaviorCategories(fwId);
+                      setCategories(cats);
+                      if (cats.length > 0) {
+                        const defs = await getBehaviorDefinitions(cats.map((c) => c.id));
+                        setBehaviors(defs);
+                      }
+                    }
+                  } catch (e) {
+                    console.error("Retry failed:", e);
+                    setLoadError(true);
+                  } finally {
+                    setLoading(false);
+                  }
+                })();
+              }}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </Surface>
+        )}
+
         {categories.map((cat) => {
           const pole = POLE_COLORS[cat.slug] ?? POLE_COLORS.manic;
           const defs = behaviorsByCategory.get(cat.id) ?? [];
@@ -987,6 +1031,36 @@ const styles = StyleSheet.create({
     minHeight: 100,
     backgroundColor: palette.surfaceAlt,
     marginBottom: 20,
+  },
+
+  // Error banner
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: palette.warningBg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.warning,
+  },
+  errorBannerText: {
+    color: palette.warning,
+    fontWeight: "500",
+    flex: 1,
+  },
+  retryButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    backgroundColor: palette.warning,
+    borderRadius: radius.sm,
+    marginLeft: 8,
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 13,
   },
 
   // Save
