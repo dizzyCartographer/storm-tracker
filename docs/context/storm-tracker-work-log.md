@@ -564,3 +564,69 @@ Created 6 issue files (ST-051 through ST-056) in `docs/issues/` with YAML frontm
 4. **Phase 20.7** — Remove recomputation from web read paths — still open.
 
 ***
+
+## Session: 2026-04-11 — Issue Triage, Behavior Checklist Bug Fix, Rollback Recovery
+
+### What Happened
+
+Two-part session (context compaction mid-session). First part: created 10 new issues for mobile feature parity and investigated a behavior checklist bug. Attempted code fixes for the bug based on a JWKS cold-cache theory but couldn't reproduce it in the simulator. User requested a full code rollback — Claude mistakenly deleted the new issue files along with the code changes.
+
+Second part (this conversation): Recreated all 10 issue files, upgraded ST-043, and successfully reproduced and fixed the behavior checklist bug.
+
+### Key Decisions Made
+
+1. **ST-043 upgraded to full offline mode.** Changed from a thin write queue to a comprehensive offline mode with read cache (stale-while-revalidate on launch) and write queue with conflict resolution. Priority raised to high, urgency to soon.
+
+2. **Behavior checklist bug root cause identified.** Intermittent JWKS cold-cache failures from Neon Data API cause `getFrameworkId` or `getBehaviorCategories` to throw. The `catch` block silently swallowed the error, leaving `categories` as an empty array — no behavior checklist rendered, no feedback to the user.
+
+### Work Completed
+
+- **10 new issue files created** (ST-057 through ST-066):
+  - ST-057: Diagnostic reference page on mobile
+  - ST-058: Document attachments on mobile entries
+  - ST-059: PDF report generation on mobile
+  - ST-060: Web rewrite from Next.js to Vite SPA (tech-debt)
+  - ST-061: Invite link acceptance on mobile
+  - ST-062: Email-based invites with member name resolution
+  - ST-063: iPad layout adaptation
+  - ST-064: Fix premature "no data" messages during loading
+  - ST-065: Behavior checklist not displaying on mobile log screen
+  - ST-066: Mobile project edit form UX parity with web
+
+- **ST-043 upgraded** from "Offline queue for mobile entries" (medium/low) to "Offline mode with read cache and write queue" (high/soon).
+
+- **ST-065 fix** — `mobile/src/app/(tabs)/log.tsx`:
+  - Added `loadError` state tracking
+  - When framework data fetch fails, an amber retry banner appears with a "Retry" button instead of silently showing no behavior checklist
+  - Verified working in simulator: debug line showed `cats=2 defs=17` on successful load, retry banner appears on failure
+
+- **`docs/issues/_index.md`** — Updated with all 10 new issues in correct urgency/priority sections. ST-043 moved from "Low Urgency — Medium" to "Soon". ST-065 set to on-stage.
+
+### Issues Encountered
+
+- **Rollback scope miscommunication.** User said "roll everything back" meaning code changes only. Claude interpreted it as ALL changes including issue documentation files. 10 issue files were deleted and had to be recreated from memory in the next conversation. Lesson: "roll back" means code unless explicitly stated otherwise.
+
+- **Bug not reproducible initially.** Behavior checklist bug could not be reproduced in the simulator during the first conversation. In the second conversation, the user confirmed it was happening — adding a debug line (`cats=X defs=X`) revealed the data was actually loading fine at that moment. The bug is intermittent, tied to JWKS failures.
+
+### Process Notes
+
+- **Debug approach that worked:** Adding a visible red debug line to the screen (`DEBUG: cats=2 defs=17 tenant=ffcb5241`) was more effective than trying to capture Metro/simulator logs. Confirmed the data pipeline was intact when it worked, proving the issue was intermittent fetch failures.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed (bbea9b7) |
+| `main` | Behind staging |
+| No worktrees | Clean |
+
+### What's Next
+
+1. **Merge staging → main** when user approves after TestFlight verification.
+2. **ST-064** — Fix premature "no data" messages (related to ST-043 offline cache).
+3. **ST-040** — Full projects CRUD on mobile.
+4. **ST-039** — Reports and wave graph on mobile.
+5. **Create Prisma migration for database grants** — still open (ST-004).
+6. **Phase 20.7** — Remove recomputation from web read paths — still open.
+
+***
