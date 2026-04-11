@@ -2,7 +2,7 @@
 
 Each issue is a `.md` file in this directory with YAML frontmatter. This index is auto-generated from frontmatter whenever issues are created or modified.
 
-**Status key:** open | in-progress | done | deferred
+**Status key:** open | in-progress | on-stage | done | deferred
 **Urgency key:** blocking | soon | low
 **Type key:** bug | enhancement | tech-debt
 
@@ -25,6 +25,12 @@ Each issue is a `.md` file in this directory with YAML frontmatter. This index i
 | [ST-039](ST-039-mobile-reports-wave-graph.md) | Reports and wave graph on mobile | enhancement | open | high | mobile, reports | 2026-04-10 |
 | [ST-040](ST-040-mobile-projects-crud.md) | Full projects CRUD on mobile | enhancement | open | high | mobile, projects | 2026-04-10 |
 | [ST-048](ST-048-design-system-library-selection.md) | Finalize mobile design system library decision | tech-debt | open | medium | mobile, theming | 2026-04-10 |
+| [ST-051](ST-051-set-app-icon.md) | Set app icon from brand SVG | enhancement | on-stage | high | mobile, theming | 2026-04-10 |
+| [ST-052](ST-052-splash-screen.md) | Add branded splash screen | enhancement | on-stage | high | mobile, theming | 2026-04-10 |
+| [ST-053](ST-053-create-account-sign-in.md) | Add "Create Account" option to sign-in screen | enhancement | on-stage | high | mobile, auth | 2026-04-10 |
+| [ST-054](ST-054-remove-import-journal-hamburger.md) | Remove "Import Journal" from hamburger menu | enhancement | on-stage | medium | mobile, navigation | 2026-04-10 |
+| [ST-055](ST-055-ai-journal-tab-navigation.md) | Make AI Journal a proper tab screen with persistent tab bar | bug | on-stage | high | mobile, navigation | 2026-04-10 |
+| [ST-056](ST-056-ai-journal-title-header-redundancy.md) | Fix AI Journal page title and redundant header | bug | on-stage | medium | mobile, navigation | 2026-04-10 |
 
 ## Low Urgency — High Priority
 
