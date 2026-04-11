@@ -516,3 +516,51 @@ Built three new mobile screens (AI journal import, log edit, project edit) and a
 4. **Phase 20.7** — Remove recomputation from web read paths — still open.
 
 ***
+
+## Session: 2026-04-11 — UI Polish Sprint (ST-051 through ST-056)
+
+### What Happened
+
+Quick polish session to address 6 small issues that were bugging the user. All completed in one pass, pushed to staging, and submitted as TestFlight build #7.
+
+### Work Completed
+
+1. **ST-051 — App icon from brand SVG.** Used `sharp` (already a Next.js dependency) to convert `docs/branding/storm-tracker-icon-v23.svg` to all required PNGs: `icon.png` (1024×1024), `splash-icon.png` (288×288), `favicon.png` (48×48), Android adaptive icon foreground (with safe zone padding), background (solid teal), and monochrome. Replaced all Expo default placeholder icons.
+
+2. **ST-052 — Branded splash screen.** Updated `mobile/app.json`: splash background color from blue `#208AEF` to brand teal `#0D9488`, splash icon set to brand image at 200px width. Also fixed iOS icon path — was pointing to nonexistent `./assets/expo.icon`, now points to `./assets/images/icon.png`. Android adaptive icon background color also updated to teal.
+
+3. **ST-053 — Create Account on sign-in screen.** Added `signUp()` function to `mobile/src/lib/auth.ts` (calls `authClient.signUp.email()`), exposed through `auth-context.tsx`. Sign-in screen now toggles between Log In and Sign Up modes with a text button. Sign Up mode adds Name and Confirm Password fields with validation (8-char minimum, password match).
+
+4. **ST-054 — Remove "Import Journal" from hamburger menu.** Removed the menu item from `header-menu.tsx`. It was redundant with the AI Journal tab.
+
+5. **ST-055 — AI Journal as proper tab.** Moved all journal import content from the root-level stack screen (`journal-import.tsx`) into `(tabs)/import.tsx`. Removed the `tabPress` listener intercept from `(tabs)/_layout.tsx`. Removed the `journal-import` Stack.Screen registration from `_layout.tsx`. The AI Journal tab now renders inline like Dashboard, Log, and History — persistent tab bar, no back button.
+
+6. **ST-056 — AI Journal title fix.** Removed the redundant in-page "Import Journal" heading (the stack header is gone since it's now a tab). Step 2 (Review & Edit) keeps its own title. Tab label reads "AI Journal".
+
+### Issues Created
+
+Created 6 issue files (ST-051 through ST-056) in `docs/issues/` with YAML frontmatter. Updated `docs/issues/_index.md` with all 6 new entries in the "Soon" section.
+
+### TestFlight Build
+
+- **Build #7** submitted via `eas build --platform ios --profile staging --auto-submit`
+- Build ID: `047949c6-b108-400b-9c13-e220386514e6`
+- App: StormTrackRx Dev (`com.stormtracker.dev`)
+- In free tier queue at time of session end
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed with polish commit (ecd0aa9) |
+| `main` | Behind staging |
+| No worktrees | Clean |
+
+### What's Next
+
+1. **Verify TestFlight build #7** — check app icon and splash on device.
+2. **Merge staging → main** when user approves.
+3. **Create Prisma migration for database grants** — still open (ST-004).
+4. **Phase 20.7** — Remove recomputation from web read paths — still open.
+
+***

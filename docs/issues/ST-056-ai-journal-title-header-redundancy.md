@@ -2,7 +2,7 @@
 id: ST-056
 title: Fix AI Journal page title and redundant header
 type: bug
-status: open
+status: on-stage
 priority: medium
 urgency: soon
 components:

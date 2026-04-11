@@ -2,7 +2,7 @@
 id: ST-053
 title: Add "Create Account" option to sign-in screen
 type: enhancement
-status: open
+status: on-stage
 priority: high
 urgency: soon
 components:

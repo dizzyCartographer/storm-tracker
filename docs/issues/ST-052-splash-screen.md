@@ -2,7 +2,7 @@
 id: ST-052
 title: Add branded splash screen
 type: enhancement
-status: open
+status: on-stage
 priority: high
 urgency: soon
 components:
