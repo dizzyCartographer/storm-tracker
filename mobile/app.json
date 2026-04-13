@@ -8,7 +8,7 @@
     "scheme": "stormtracker",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.stormtracker.dev",
+      "bundleIdentifier": "com.stormtracker.app",
       "buildNumber": "8",
       "icon": "./assets/images/icon.png",
       "appleTeamId": "RC99K6SXQX",
