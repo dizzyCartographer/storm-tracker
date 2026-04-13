@@ -12,7 +12,7 @@ Each issue is a `.md` file in this directory with YAML frontmatter. This index i
 
 | ID | Title | Type | Status | Priority | Components | Created |
 |----|-------|------|--------|----------|------------|---------|
-| [ST-050](ST-050-local-xcode-build-workflow.md) | Set up local Xcode build workflow | enhancement | open | high | mobile, infrastructure | 2026-04-10 |
+| [ST-050](ST-050-local-xcode-build-workflow.md) | Set up local Xcode build workflow | enhancement | done | high | mobile, infrastructure | 2026-04-10 |
 | [ST-065](ST-065-behavior-checklist-not-displaying.md) | Behavior checklist not displaying on mobile log screen | bug | on-stage | high | mobile, log | 2026-04-11 |
 
 ## Soon

@@ -8,8 +8,10 @@
     "scheme": "stormtracker",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.stormtracker.app",
+      "bundleIdentifier": "com.stormtracker.dev",
+      "buildNumber": "8",
       "icon": "./assets/images/icon.png",
+      "appleTeamId": "RC99K6SXQX",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
