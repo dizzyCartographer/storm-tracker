@@ -9,32 +9,61 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
+import { Text, Button, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/auth-context";
 
 export default function SignInScreen() {
-  const { signIn } = useAuth();
+  const { signIn, signUp } = useAuth();
+  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSignIn() {
+  const isSignUp = mode === "sign-up";
+
+  async function handleSubmit() {
     if (!email.trim() || !password) {
       setError("Email and password are required");
       return;
     }
 
+    if (isSignUp) {
+      if (!name.trim()) {
+        setError("Name is required");
+        return;
+      }
+      if (password.length < 8) {
+        setError("Password must be at least 8 characters");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords don't match");
+        return;
+      }
+    }
+
     setError("");
     setLoading(true);
 
-    const result = await signIn(email.trim(), password);
+    const result = isSignUp
+      ? await signUp(email.trim(), password, name.trim())
+      : await signIn(email.trim(), password);
 
     if (!result.success) {
-      setError(result.error ?? "Sign in failed");
+      setError(result.error ?? (isSignUp ? "Sign up failed" : "Log in failed"));
     }
 
     setLoading(false);
+  }
+
+  function toggleMode() {
+    setMode(isSignUp ? "sign-in" : "sign-up");
+    setError("");
+    setConfirmPassword("");
   }
 
   return (
@@ -44,59 +73,101 @@ export default function SignInScreen() {
         style={styles.keyboardView}
       >
         <View style={styles.content}>
-          <Text style={styles.logo}>⚡️</Text>
-          <Text style={styles.title}>Storm Tracker</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+          <Text variant="displaySmall" style={styles.logo}>⚡️</Text>
+          <Text variant="headlineMedium" style={styles.title}>Storm Tracker</Text>
+          <Text variant="bodyLarge" style={styles.subtitle}>
+            {isSignUp ? "Create your account" : "Log in to continue"}
+          </Text>
 
           <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+            {isSignUp && (
               <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@example.com"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="none"
+                mode="outlined"
+                label="Name"
+                value={name}
+                onChangeText={setName}
+                placeholder="Your name"
+                autoCapitalize="words"
                 autoCorrect={false}
-                keyboardType="email-address"
-                textContentType="emailAddress"
-                editable={!loading}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
+                textContentType="name"
+                disabled={loading}
                 style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Enter your password"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry
-                textContentType="password"
-                editable={!loading}
-                onSubmitEditing={handleSignIn}
+                outlineColor={palette.border}
+                activeOutlineColor={palette.primary}
               />
-            </View>
+            )}
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            <TextInput
+              mode="outlined"
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              disabled={loading}
+              style={styles.input}
+              outlineColor={palette.border}
+              activeOutlineColor={palette.primary}
+            />
 
-            <TouchableOpacity
-              style={[
-                styles.button,
-                (loading || !email.trim() || !password) &&
-                  styles.buttonDisabled,
-              ]}
-              onPress={handleSignIn}
+            <TextInput
+              mode="outlined"
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              placeholder={isSignUp ? "At least 8 characters" : "Enter your password"}
+              secureTextEntry
+              textContentType={isSignUp ? "newPassword" : "password"}
+              disabled={loading}
+              onSubmitEditing={isSignUp ? undefined : handleSubmit}
+              style={styles.input}
+              outlineColor={palette.border}
+              activeOutlineColor={palette.primary}
+            />
+
+            {isSignUp && (
+              <TextInput
+                mode="outlined"
+                label="Confirm Password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Re-enter your password"
+                secureTextEntry
+                textContentType="newPassword"
+                disabled={loading}
+                onSubmitEditing={handleSubmit}
+                style={styles.input}
+                outlineColor={palette.border}
+                activeOutlineColor={palette.primary}
+              />
+            )}
+
+            {error ? (
+              <Text variant="bodyMedium" style={styles.error}>{error}</Text>
+            ) : null}
+
+            <Button
+              mode="contained"
+              onPress={handleSubmit}
               disabled={loading || !email.trim() || !password}
             >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" size="small" />
-              ) : (
-                <Text style={styles.buttonText}>Sign In</Text>
-              )}
-            </TouchableOpacity>
+              {isSignUp ? "Create Account" : "Log In"}
+            </Button>
+
+            <Button
+              mode="text"
+              onPress={toggleMode}
+              disabled={loading}
+              textColor={palette.primary}
+              labelStyle={styles.toggleLabel}
+            >
+              {isSignUp
+                ? "Already have an account? Log in"
+                : "Don't have an account? Sign up"}
+            </Button>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -175,5 +246,8 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  toggleLabel: {
+    fontSize: 14,
   },
 });

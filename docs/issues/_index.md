@@ -12,7 +12,8 @@ Each issue is a `.md` file in this directory with YAML frontmatter. This index i
 
 | ID | Title | Type | Status | Priority | Components | Created |
 |----|-------|------|--------|----------|------------|---------|
-| [ST-050](ST-050-local-xcode-build-workflow.md) | Set up local Xcode build workflow | enhancement | open | high | mobile, infrastructure | 2026-04-10 |
+| [ST-050](ST-050-local-xcode-build-workflow.md) | Set up local Xcode build workflow | enhancement | done | high | mobile, infrastructure | 2026-04-10 |
+| [ST-065](ST-065-behavior-checklist-not-displaying.md) | Behavior checklist not displaying on mobile log screen | bug | on-stage | high | mobile, log | 2026-04-11 |
 
 ## Soon
 
@@ -31,6 +32,13 @@ Each issue is a `.md` file in this directory with YAML frontmatter. This index i
 | [ST-054](ST-054-remove-import-journal-hamburger.md) | Remove "Import Journal" from hamburger menu | enhancement | on-stage | medium | mobile, navigation | 2026-04-10 |
 | [ST-055](ST-055-ai-journal-tab-navigation.md) | Make AI Journal a proper tab screen with persistent tab bar | bug | on-stage | high | mobile, navigation | 2026-04-10 |
 | [ST-056](ST-056-ai-journal-title-header-redundancy.md) | Fix AI Journal page title and redundant header | bug | on-stage | medium | mobile, navigation | 2026-04-10 |
+| [ST-059](ST-059-mobile-pdf-reports.md) | PDF report generation on mobile | enhancement | open | medium | mobile, reports | 2026-04-11 |
+| [ST-061](ST-061-mobile-invite-acceptance.md) | Invite link acceptance on mobile | enhancement | open | high | mobile, projects, auth | 2026-04-11 |
+| [ST-062](ST-062-email-invites-member-names.md) | Email-based invites with member name resolution | enhancement | open | high | projects, auth, mobile, web | 2026-04-11 |
+| [ST-063](ST-063-ipad-layout.md) | iPad layout adaptation | enhancement | open | medium | mobile, theming | 2026-04-11 |
+| [ST-064](ST-064-loading-state-premature-display.md) | Fix premature "no data" messages during loading | bug | open | high | mobile, dashboard | 2026-04-11 |
+| [ST-066](ST-066-mobile-project-edit-ux.md) | Mobile project edit form UX parity with web | enhancement | open | medium | mobile, projects | 2026-04-11 |
+| [ST-043](ST-043-offline-queue.md) | Offline mode with read cache and write queue | enhancement | open | high | mobile | 2026-04-10 |
 
 ## Low Urgency — High Priority
 
@@ -45,6 +53,7 @@ Each issue is a `.md` file in this directory with YAML frontmatter. This index i
 | [ST-045](ST-045-app-icons-splash-screenshots.md) | App icons, splash screen, screenshots | enhancement | open | high | mobile, theming | 2026-04-10 |
 | [ST-046](ST-046-privacy-policy.md) | Privacy policy for health-adjacent data | enhancement | open | high | infrastructure | 2026-04-10 |
 | [ST-047](ST-047-app-store-submission.md) | App Store submission and review | enhancement | open | high | mobile | 2026-04-10 |
+| [ST-060](ST-060-vite-web-rewrite.md) | Rewrite web app from Next.js to Vite SPA | tech-debt | open | high | web, infrastructure | 2026-04-11 |
 
 ## Low Urgency — Medium Priority
 
@@ -68,8 +77,9 @@ Each issue is a `.md` file in this directory with YAML frontmatter. This index i
 | [ST-037](ST-037-camera-attachments.md) | Camera for attachments | enhancement | open | medium | mobile, documents | 2026-04-10 |
 | [ST-038](ST-038-face-id-touch-id.md) | Face ID / Touch ID | enhancement | open | medium | mobile, auth | 2026-04-10 |
 | [ST-041](ST-041-mobile-medications-strategies.md) | Medications/strategies on mobile | enhancement | open | medium | mobile, medications, strategies | 2026-04-10 |
-| [ST-043](ST-043-offline-queue.md) | Offline queue for mobile | enhancement | open | medium | mobile | 2026-04-10 |
 | [ST-049](ST-049-color-typography-system.md) | Define color palette and typography | enhancement | open | medium | theming | 2026-04-10 |
+| [ST-057](ST-057-mobile-diagnostic-reference.md) | Diagnostic reference page on mobile | enhancement | open | medium | mobile, reference | 2026-04-11 |
+| [ST-058](ST-058-mobile-document-attachments.md) | Document attachments on mobile entries | enhancement | open | medium | mobile, documents | 2026-04-11 |
 
 ## Low Urgency — Low Priority
 

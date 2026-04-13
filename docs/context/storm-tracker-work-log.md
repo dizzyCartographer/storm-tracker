@@ -564,3 +564,164 @@ Created 6 issue files (ST-051 through ST-056) in `docs/issues/` with YAML frontm
 4. **Phase 20.7** — Remove recomputation from web read paths — still open.
 
 ***
+
+## Session: 2026-04-11 — Issue Triage, Behavior Checklist Bug Fix, Rollback Recovery
+
+### What Happened
+
+Two-part session (context compaction mid-session). First part: created 10 new issues for mobile feature parity and investigated a behavior checklist bug. Attempted code fixes for the bug based on a JWKS cold-cache theory but couldn't reproduce it in the simulator. User requested a full code rollback — Claude mistakenly deleted the new issue files along with the code changes.
+
+Second part (this conversation): Recreated all 10 issue files, upgraded ST-043, and successfully reproduced and fixed the behavior checklist bug.
+
+### Key Decisions Made
+
+1. **ST-043 upgraded to full offline mode.** Changed from a thin write queue to a comprehensive offline mode with read cache (stale-while-revalidate on launch) and write queue with conflict resolution. Priority raised to high, urgency to soon.
+
+2. **Behavior checklist bug root cause identified.** Intermittent JWKS cold-cache failures from Neon Data API cause `getFrameworkId` or `getBehaviorCategories` to throw. The `catch` block silently swallowed the error, leaving `categories` as an empty array — no behavior checklist rendered, no feedback to the user.
+
+### Work Completed
+
+- **10 new issue files created** (ST-057 through ST-066):
+  - ST-057: Diagnostic reference page on mobile
+  - ST-058: Document attachments on mobile entries
+  - ST-059: PDF report generation on mobile
+  - ST-060: Web rewrite from Next.js to Vite SPA (tech-debt)
+  - ST-061: Invite link acceptance on mobile
+  - ST-062: Email-based invites with member name resolution
+  - ST-063: iPad layout adaptation
+  - ST-064: Fix premature "no data" messages during loading
+  - ST-065: Behavior checklist not displaying on mobile log screen
+  - ST-066: Mobile project edit form UX parity with web
+
+- **ST-043 upgraded** from "Offline queue for mobile entries" (medium/low) to "Offline mode with read cache and write queue" (high/soon).
+
+- **ST-065 fix** — `mobile/src/app/(tabs)/log.tsx`:
+  - Added `loadError` state tracking
+  - When framework data fetch fails, an amber retry banner appears with a "Retry" button instead of silently showing no behavior checklist
+  - Verified working in simulator: debug line showed `cats=2 defs=17` on successful load, retry banner appears on failure
+
+- **`docs/issues/_index.md`** — Updated with all 10 new issues in correct urgency/priority sections. ST-043 moved from "Low Urgency — Medium" to "Soon". ST-065 set to on-stage.
+
+### Issues Encountered
+
+- **Rollback scope miscommunication.** User said "roll everything back" meaning code changes only. Claude interpreted it as ALL changes including issue documentation files. 10 issue files were deleted and had to be recreated from memory in the next conversation. Lesson: "roll back" means code unless explicitly stated otherwise.
+
+- **Bug not reproducible initially.** Behavior checklist bug could not be reproduced in the simulator during the first conversation. In the second conversation, the user confirmed it was happening — adding a debug line (`cats=X defs=X`) revealed the data was actually loading fine at that moment. The bug is intermittent, tied to JWKS failures.
+
+### Process Notes
+
+- **Debug approach that worked:** Adding a visible red debug line to the screen (`DEBUG: cats=2 defs=17 tenant=ffcb5241`) was more effective than trying to capture Metro/simulator logs. Confirmed the data pipeline was intact when it worked, proving the issue was intermittent fetch failures.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed (bbea9b7) |
+| `main` | Behind staging |
+| No worktrees | Clean |
+
+### What's Next
+
+1. **Merge staging → main** when user approves after TestFlight verification.
+2. **ST-064** — Fix premature "no data" messages (related to ST-043 offline cache).
+3. **ST-040** — Full projects CRUD on mobile.
+4. **ST-039** — Reports and wave graph on mobile.
+5. **Create Prisma migration for database grants** — still open (ST-004).
+6. **Phase 20.7** — Remove recomputation from web read paths — still open.
+
+***
+
+## Session: 2026-04-13 — Local Xcode Build Workflow (ST-050)
+
+### What Happened
+
+Established a local Xcode → TestFlight build workflow, replacing EAS cloud builds. The session was painful — multiple hours of debugging signing, certificates, provisioning profiles, and CocoaPods issues. Build #8 successfully submitted to TestFlight and installed on device.
+
+### Key Decisions Made
+
+1. **Local Xcode builds replace EAS.** No more EAS cloud build queue (1+ hour waits, 15 builds/month limit). Archive via `xcodebuild` command line, distribute via Xcode Organizer.
+
+2. **`appleTeamId` and `buildNumber` must be in `app.json`.** Without these, `expo prebuild --clean` generates an Xcode project with empty `DEVELOPMENT_TEAM` and `CFBundleVersion = 1`. These were the root cause of most signing errors.
+
+3. **Command-line archive, GUI distribute.** `xcodebuild archive` with `CODE_SIGN_STYLE=Automatic` handles the build correctly. Distribution to TestFlight is done via Xcode Organizer (Window → Organizer → Distribute App → App Store Connect).
+
+4. **EAS-managed certificates must be cleaned up.** EAS created its own distribution certificates and provisioning profiles in the cloud. These don't include the local Mac's certificates, causing "profile doesn't include signing certificate" errors. Solution: delete stale EAS profiles from developer.apple.com and revoked/duplicate certs from Keychain Access, then create a fresh Apple Distribution certificate via Xcode.
+
+### Work Completed
+
+- **`mobile/app.json`** — Added `appleTeamId: "RC99K6SXQX"` and `buildNumber: "8"` to `ios` config. These persist across `expo prebuild --clean` runs.
+
+- **ST-050 issue** — Marked done. Added full workflow documentation with commands, key details, and troubleshooting notes.
+
+- **`docs/issues/_index.md`** — Updated ST-050 status to done.
+
+- **TestFlight build #8** — Archived via `xcodebuild`, distributed via Xcode Organizer, installed on device.
+
+### Issues Encountered
+
+- **Claude AI in Xcode broke the previous working build.** User had a working Xcode project. Claude's Xcode AI integration made changes while trying to fix the app icon, corrupting the project config. Required a full `expo prebuild --clean` which lost all manual Xcode settings.
+
+- **`expo prebuild --clean` resets signing config.** Without `appleTeamId` in `app.json`, the generated project has `DEVELOPMENT_TEAM = ""`. Without `buildNumber`, it resets to `1`. Both fields must be in `app.json`.
+
+- **CocoaPods symlink error.** First `pod install` failed with `No such file or directory @ rb_file_s_symlink`. Caused by leftover `build 2` and `Headers 2` directories from a previous broken build. Fixed by wiping `ios/` and running fresh prebuild.
+
+- **Xcode workspace wouldn't open.** Spinning/hanging when trying to open `.xcworkspace`. Fixed by killing Xcode, clearing derived data, and clearing Xcode caches.
+
+- **Modulemap errors.** Stale derived data from failed builds caused "modulemap not found" errors. Fixed by clearing `~/Library/Developer/Xcode/DerivedData/StormTrackRx-*`.
+
+- **Provisioning profile / certificate mismatch.** EAS had created distribution certificates stored in the cloud that didn't match local certificates. Provisioning profiles referenced the EAS certs. Fix: delete stale profiles from developer.apple.com, delete duplicate/revoked certs from Keychain Access, create fresh Apple Distribution cert in Xcode.
+
+- **Multiple distribution certificates in Keychain.** Had 3 distribution certs (one revoked). Xcode picked the wrong one. Fix: delete all, create one fresh one.
+
+### Lessons Learned
+
+- **Never delete the `ios/` directory unnecessarily.** It contains manual Xcode config (signing, build settings) that `expo prebuild` doesn't fully regenerate. Only wipe it when native dependencies change.
+
+- **Put everything in `app.json`.** Any setting that `expo prebuild` can read from `app.json` should be there, not manually configured in Xcode. Manual Xcode config is lost on `prebuild --clean`.
+
+- **EAS and local signing don't mix.** EAS manages its own certificates in the cloud. When switching to local builds, clean up EAS artifacts from both the portal and Keychain.
+
+- **`xcodebuild archive` from command line is more reliable than Xcode GUI** for React Native/Expo projects. Handles pod dependency ordering correctly and avoids GUI quirks.
+
+### Build Workflow (for future reference)
+
+```bash
+cd mobile
+
+# Bump buildNumber in app.json first
+
+# Regenerate native project (only if native deps changed)
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo prebuild --platform ios --clean
+
+# Archive
+xcodebuild archive \
+  -workspace ios/StormTrackRx.xcworkspace \
+  -scheme StormTrackRx \
+  -configuration Release \
+  -destination "generic/platform=iOS" \
+  -archivePath ~/Library/Developer/Xcode/Archives/StormTrackRx.xcarchive \
+  CODE_SIGN_STYLE=Automatic \
+  DEVELOPMENT_TEAM=RC99K6SXQX
+
+# Distribute: Xcode → Window → Organizer → Distribute App → App Store Connect
+```
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current branch |
+| `main` | Behind staging |
+| No worktrees | Clean |
+
+### What's Next
+
+1. **Commit and push** `app.json` changes (appleTeamId, buildNumber) to staging.
+2. **Merge staging → main** when user approves.
+3. **ST-064** — Fix premature "no data" messages.
+4. **ST-040** — Full projects CRUD on mobile.
+5. **ST-039** — Reports and wave graph on mobile.
+6. **ST-004** — Database grants in migration — still open.
+7. **Phase 20.7** — Remove recomputation from web read paths — still open.
+
+***

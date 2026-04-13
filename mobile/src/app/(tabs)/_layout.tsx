@@ -15,59 +15,105 @@ export default function TabLayout() {
     }
   }, [isSignedIn]);
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#374151",
-        tabBarInactiveTintColor: "#9CA3AF",
-        tabBarStyle: {
-          height: TAB_BAR_HEIGHT,
-          paddingBottom: Platform.OS === "ios" ? 28 : 8,
-          paddingTop: 8,
-          borderTopColor: "#E5E7EB",
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "600",
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color }) => <TabIcon label="📊" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="log"
-        options={{
-          title: "Log",
-          tabBarIcon: ({ color }) => <TabIcon label="+" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: "History",
-          tabBarIcon: ({ color }) => <TabIcon label="📅" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="projects"
-        options={{
-          title: "Projects",
-          tabBarIcon: ({ color }) => <TabIcon label="🗂️" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => <TabIcon label="👤" color={color} />,
-        }}
-      />
-    </Tabs>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      {/* Header — app title + hamburger */}
+      <View style={styles.header}>
+        <Text variant="headlineSmall" style={styles.headerTitle}>
+          Storm Tracker
+        </Text>
+        <HeaderMenu />
+      </View>
+
+      {/* Project selector */}
+      {tenants.length > 1 && (
+        <ProjectSelector
+          tenants={tenants}
+          selectedId={selectedTenant?.id ?? null}
+          onSelect={setSelectedTenantId}
+        />
+      )}
+
+      {/* Accent bar */}
+      {selectedTenant?.teenFavoriteColor && (
+        <Divider
+          style={[
+            styles.accentBar,
+            { backgroundColor: selectedTenant.teenFavoriteColor },
+          ]}
+        />
+      )}
+
+      {/* Tab screens render here */}
+      <View style={styles.content}>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: palette.primary,
+            tabBarInactiveTintColor: palette.textMuted,
+            tabBarStyle: {
+              height: TAB_BAR_HEIGHT,
+              paddingBottom: Platform.OS === "ios" ? 28 : 8,
+              paddingTop: 8,
+              borderTopColor: palette.borderLight,
+              backgroundColor: palette.background,
+            },
+            tabBarLabelStyle: {
+              fontSize: 12,
+              fontWeight: "600",
+            },
+          }}
+        >
+          <Tabs.Screen
+            name="dashboard"
+            options={{
+              title: "Dashboard",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="grid-outline" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="log"
+            options={{
+              title: "Log",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="add-circle-outline" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="import"
+            options={{
+              title: "AI Journal",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="sparkles-outline" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="history"
+            options={{
+              title: "History",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="calendar-outline" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="projects"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{
+              href: null,
+            }}
+          />
+        </Tabs>
+      </View>
+    </SafeAreaView>
   );
 }
 

@@ -27,7 +27,29 @@ export default function RootLayout() {
             headerStyle: { backgroundColor: "#ffffff" },
           }}
         />
-      </Stack>
-    </AuthProvider>
+        <Stack.Screen
+          name="log-edit"
+          options={{
+            headerShown: true,
+            headerTitle: "Edit Log",
+            headerBackTitle: "Back",
+            headerTintColor: palette.primary,
+            headerStyle: { backgroundColor: palette.background },
+          }}
+        />
+        <Stack.Screen
+          name="project-edit"
+          options={{
+            headerShown: true,
+            headerTitle: "Edit Project",
+            headerBackTitle: "Back",
+            headerTintColor: palette.primary,
+            headerStyle: { backgroundColor: palette.background },
+          }}
+        />
+        </Stack>
+        </ProjectProvider>
+      </AuthProvider>
+    </PaperProvider>
   );
 }

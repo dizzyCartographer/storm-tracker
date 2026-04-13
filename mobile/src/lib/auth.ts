@@ -43,6 +43,33 @@ export async function signIn(
 }
 
 /**
+ * Sign up with email, password, and name via Better Auth.
+ */
+export async function signUp(
+  email: string,
+  password: string,
+  name: string
+): Promise<{ success: true } | { success: false; error: string }> {
+  try {
+    const result = await authClient.signUp.email({ email, password, name });
+
+    if (result.error) {
+      return {
+        success: false,
+        error: result.error.message ?? "Sign up failed",
+      };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Network error",
+    };
+  }
+}
+
+/**
  * Sign out — clears the Better Auth session.
  */
 export async function signOut(): Promise<void> {
