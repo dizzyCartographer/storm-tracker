@@ -38,6 +38,7 @@ Each issue is a `.md` file in this directory with YAML frontmatter. This index i
 | [ST-063](ST-063-ipad-layout.md) | iPad layout adaptation | enhancement | open | medium | mobile, theming | 2026-04-11 |
 | [ST-064](ST-064-loading-state-premature-display.md) | Fix premature "no data" messages during loading | bug | open | high | mobile, dashboard | 2026-04-11 |
 | [ST-066](ST-066-mobile-project-edit-ux.md) | Mobile project edit form UX parity with web | enhancement | open | medium | mobile, projects | 2026-04-11 |
+| [ST-067](ST-067-dynamic-app-icon-per-build-profile.md) | Dynamic app icon per build profile (dev vs production) | enhancement | on-stage | high | mobile, infrastructure, theming | 2026-04-13 |
 | [ST-043](ST-043-offline-queue.md) | Offline mode with read cache and write queue | enhancement | open | high | mobile | 2026-04-10 |
 
 ## Low Urgency — High Priority
