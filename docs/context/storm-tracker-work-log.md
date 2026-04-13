@@ -716,12 +716,32 @@ xcodebuild archive \
 
 ### What's Next
 
-1. **Commit and push** `app.json` changes (appleTeamId, buildNumber) to staging.
-2. **Merge staging → main** when user approves.
-3. **ST-064** — Fix premature "no data" messages.
-4. **ST-040** — Full projects CRUD on mobile.
-5. **ST-039** — Reports and wave graph on mobile.
-6. **ST-004** — Database grants in migration — still open.
-7. **Phase 20.7** — Remove recomputation from web read paths — still open.
+1. **ST-064** — Fix premature "no data" messages.
+2. **ST-040** — Full projects CRUD on mobile.
+3. **ST-039** — Reports and wave graph on mobile.
+4. **ST-004** — Database grants in migration — still open.
+5. **Phase 20.7** — Remove recomputation from web read paths — still open.
+
+### Additional Work (same session)
+
+- **Merged staging → main.** Resolved conflicts from earlier revert commit (`5d46ffe`). Two delete/modify conflicts on `import.tsx` and `header-menu.tsx` — kept staging versions. Main and staging now fully in sync.
+
+- **Dynamic bundle ID.** Changed `app.json` default bundle ID to production (`com.stormtracker.app`). Updated `app.config.js` to override to `com.stormtracker.dev` when `APP_ENV=staging`. Local build workflow: `npx expo prebuild --platform ios --clean` for production, `APP_ENV=staging npx expo prebuild --platform ios --clean` for staging.
+
+- **`.gitignore` cleanup.** Added `.obsidian/`, `*.base`, and `docs/issues/untitled*` / `docs/issues/Untitled*` patterns.
+
+- **Production archive succeeded.** Build 2, bundle `com.stormtracker.app`, archived with `-allowProvisioningUpdates` flag (needed for first-time production profile auto-generation).
+
+- **Staging build #8** submitted to TestFlight and installed on device.
+
+- **Note:** `-allowProvisioningUpdates` flag needed on first archive for a new bundle ID. Xcode auto-creates the provisioning profile. Subsequent archives for the same bundle ID shouldn't need it.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, in sync with main |
+| `main` | In sync with staging |
+| No worktrees | Clean |
 
 ***
