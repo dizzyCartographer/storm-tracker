@@ -17,6 +17,10 @@ dist/
 # misc
 .DS_Store
 *.pem
+.obsidian/
+*.base
+docs/issues/untitled*
+docs/issues/Untitled*
 
 # debug
 npm-debug.log*
