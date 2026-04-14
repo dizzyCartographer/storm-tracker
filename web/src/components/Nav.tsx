@@ -1,0 +1,47 @@
+import { Link, useLocation } from "react-router";
+import { useAuth } from "../lib/auth-context";
+
+const links = [
+  { path: "/dashboard", label: "Dashboard" },
+  { path: "/history", label: "History" },
+  { path: "/reports", label: "Reports" },
+  { path: "/projects", label: "Projects" },
+];
+
+export default function Nav() {
+  const { signOut } = useAuth();
+  const location = useLocation();
+
+  return (
+    <nav className="bg-white border-b border-[#D1E8E4] px-4 py-3">
+      <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Link to="/dashboard" className="text-lg font-bold text-[#0D9488]">
+            Storm Tracker
+          </Link>
+          <div className="hidden sm:flex items-center gap-1">
+            {links.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === link.path
+                    ? "bg-[#CCFBF1] text-[#0D9488]"
+                    : "text-[#475569] hover:text-[#0F172A] hover:bg-[#F0FDFA]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={signOut}
+          className="text-sm text-[#475569] hover:text-[#0F172A] border border-[#D1E8E4] rounded-lg px-3 py-1.5"
+        >
+          Sign Out
+        </button>
+      </div>
+    </nav>
+  );
+}

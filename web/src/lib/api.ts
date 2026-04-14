@@ -1,5 +1,22 @@
-import { authClient, signOut } from "./auth";
+import { signOut } from "./auth";
 import { API_BASE_URL, NEON_DATA_API_URL } from "./config";
+// Data layer — all reads via Neon Data API, auth via cookie-based session
+
+// ── Get JWT for Neon Data API requests ──
+
+async function getJwt(): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/token`, {
+      method: "GET",
+      credentials: "include",
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 // ── Authenticated fetch for custom API endpoints ──
 
@@ -29,8 +46,7 @@ export async function neonFetch(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const tokenResult = await authClient.token();
-  const jwt = tokenResult?.token;
+  const jwt = await getJwt();
 
   if (!jwt) {
     await signOut();
@@ -341,9 +357,13 @@ export async function getFullStrategies(
 }
 
 export async function getCurrentUserInfo(): Promise<CurrentUser | null> {
-  const session = await authClient.getSession();
-  if (!session.data?.user) return null;
-  const userId = session.data.user.id;
+  const sessionRes = await fetch(`${API_BASE_URL}/api/auth/get-session`, {
+    credentials: "include",
+  });
+  if (!sessionRes.ok) return null;
+  const session = await sessionRes.json();
+  if (!session?.user) return null;
+  const userId = session.user.id;
 
   const res = await neonFetch(
     `/users?id=eq.${userId}&select=id,name,email,"defaultTenantId"&limit=1`
@@ -351,8 +371,8 @@ export async function getCurrentUserInfo(): Promise<CurrentUser | null> {
   if (!res.ok) {
     return {
       id: userId,
-      name: session.data.user.name ?? null,
-      email: session.data.user.email,
+      name: session.user.name ?? null,
+      email: session.user.email,
       defaultTenantId: null,
     };
   }
@@ -360,8 +380,8 @@ export async function getCurrentUserInfo(): Promise<CurrentUser | null> {
   if (rows.length === 0) {
     return {
       id: userId,
-      name: session.data.user.name ?? null,
-      email: session.data.user.email,
+      name: session.user.name ?? null,
+      email: session.user.email,
       defaultTenantId: null,
     };
   }
