@@ -81,7 +81,7 @@ When adding a new context file, add an `@` import below **and** update the tree 
 
 ## Workflow Rules
 
-- **Commit and push after every phase.** When a development plan phase is complete, create a commit and push to `origin/main` immediately. Do not wait for the user to ask.
+- **Commit and push after every phase.** When a development plan phase is complete, create a commit and push to `origin/staging` immediately. Do not wait for the user to ask.
 
 - **Commit before auto-save can.** Stage and commit with a proper message immediately after completing a logical unit of work. Do not leave modified files sitting in the working tree for auto-commit to pick up. If auto-commits have already been made with generic messages, squash them into a single descriptive commit before pushing (unless already pushed to remote).
 
