@@ -904,3 +904,54 @@ Started session intending to clean up tech debt (ST-001 through ST-004). While a
 3. **Mobile work** — ST-064, ST-040, ST-039 still in the queue.
 
 ***
+
+## Session: 2026-04-14 — ST-060 Plan Approval, Vite Scaffold, Workflow Improvements
+
+### What Happened
+
+Continuation of the architecture decision session. Scoped and planned the full ST-060 Vite rewrite (9 phases), got user approval, scaffolded the Vite app, and wrapped up with documentation and workflow improvements.
+
+### Key Decisions Made
+
+1. **9-phase development plan approved for ST-060.** Phases 0 (scaffold) through 8 (cutover). Each phase has explicit goals, files to create/port, and verification steps. Plan is documented in both the plan file and the ST-060 issue.
+
+2. **RLS gap resolution: migration, not serverless functions.** Missing INSERT policy on `tenants` table will be added via a Postgres migration in Phase 5.
+
+3. **Mobile entry writes: decide after trigger test.** Phase 3 will verify whether Postgres BEFORE triggers fire correctly via PostgREST upsert. If they do, mobile can drop its custom `/api/mobile/entries` endpoint.
+
+4. **In-progress issues auto-loaded.** New CLAUDE.md workflow rule: at session start, read the full issue file for every issue with `status: in-progress` in the index. This ensures active development plans (like ST-060's 9-phase plan) are always in context.
+
+### Work Completed
+
+- **ST-060 development plan** — 9 phases scoped with the user in plan mode. Covers scaffold, auth, data layer, entry writes + trigger verification, dashboard/history/reports, RLS migration + CRUD, serverless functions, polish, and cutover. Includes key files to port table (11 source→target mappings) and what doesn't get ported.
+
+- **`web/` scaffold** — Created via `npm create vite@latest web -- --template react-ts`. Bare scaffold only — dependencies not installed, no Tailwind/Router/etc yet.
+
+- **`docs/issues/ST-060-vite-web-rewrite.md`** — Updated with the full 9-phase plan (226 lines). Originally only had the summary; user caught that the plan content wasn't in the issue file.
+
+- **`CLAUDE.md`** — Added workflow rule: "Read in-progress issues at session start."
+
+- **Issue updates from prior conversation carried over:** ST-001, ST-002, ST-003 marked superseded. Issue index regenerated.
+
+### Issues Encountered
+
+- **Edit tool deleted the issue file.** When updating ST-060 with the full plan, the Edit tool's replacement resulted in a deletion (file disappeared from git). ContextStore's auto-sync committed the Write tool's restoration before Claude could commit it. No data lost — ContextStore saved it.
+
+- **ContextStore auto-commits.** ContextStore committed the ST-060 file update with a generic "Update ST-060-vite-web-rewrite.md" message before Claude could commit with a descriptive message. This is a known behavior of ContextStore's auto-sync — it picks up file changes and pushes them immediately.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed (0d2ed11) |
+| `main` | Behind staging |
+| No worktrees | Clean |
+
+### What's Next
+
+1. **Phase 0 of ST-060** — Install dependencies in `web/`, add Tailwind v4, React Router, Recharts, Zod, better-auth. Create `vercel.json`, test serverless function, minimal `App.tsx`. Deploy to staging.
+2. **Phase 1** — Auth layer (Better Auth serverless handler with pg adapter, auth client, sign-in/sign-up pages).
+3. **ST-004** — Database grants in migration — still open.
+4. **Mobile work** — ST-064, ST-040, ST-039 still in the queue.
+
+***
