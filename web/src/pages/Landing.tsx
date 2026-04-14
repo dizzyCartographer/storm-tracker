@@ -22,7 +22,7 @@ export default function Landing() {
     <div className="min-h-screen bg-[#EDF5F4] flex flex-col">
       <main className="flex flex-1 flex-col items-center justify-center p-8">
         <div className="flex items-center gap-3 mb-4">
-          <Logo size={40} color="#0D9488" />
+          <Logo size={40} />
           <h1 className="text-4xl font-bold tracking-tight text-[#0F172A]">
             Storm Tracker
           </h1>

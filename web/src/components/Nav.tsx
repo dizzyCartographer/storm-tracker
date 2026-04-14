@@ -20,7 +20,7 @@ export default function Nav() {
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link to="/dashboard" className="flex items-center gap-2 text-lg font-bold text-[#0D9488]">
-            <Logo color="#0D9488" size={24} />
+            <Logo size={24} />
             Storm Tracker
           </Link>
           <div className="hidden sm:flex items-center gap-1">
