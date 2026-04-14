@@ -459,6 +459,222 @@ export async function updateTenantProfile(
   }
 }
 
+// ── Tenant CRUD ──
+
+export async function createTenant(data: {
+  name: string;
+  description?: string;
+  purpose?: string;
+  teenFullName?: string;
+  teenNickname?: string;
+  teenBirthday?: string;
+  teenFavoriteColor?: string;
+  teenInterests?: string;
+  teenSchool?: string;
+  teenFavoriteSubject?: string;
+  teenHasIep?: boolean;
+  teenDiagnosis?: string;
+  teenOtherHealth?: string;
+  onsetDate?: string;
+  familyHistory?: string;
+}): Promise<string> {
+  const id = crypto.randomUUID();
+  const res = await neonFetch("/rpc/create_tenant_with_owner", {
+    method: "POST",
+    body: JSON.stringify({
+      p_id: id,
+      p_name: data.name,
+      p_description: data.description ?? null,
+      p_purpose: data.purpose ?? "ONGOING_TRACKING",
+      p_teen_full_name: data.teenFullName ?? null,
+      p_teen_nickname: data.teenNickname ?? null,
+      p_teen_birthday: data.teenBirthday ?? null,
+      p_teen_favorite_color: data.teenFavoriteColor ?? null,
+      p_teen_interests: data.teenInterests ?? null,
+      p_teen_school: data.teenSchool ?? null,
+      p_teen_favorite_subject: data.teenFavoriteSubject ?? null,
+      p_teen_has_iep: data.teenHasIep ?? false,
+      p_teen_diagnosis: data.teenDiagnosis ?? null,
+      p_teen_other_health: data.teenOtherHealth ?? null,
+      p_onset_date: data.onsetDate ?? null,
+      p_family_history: data.familyHistory ?? null,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed to create project: ${res.status} ${err}`);
+  }
+  return id;
+}
+
+export async function deleteTenant(tenantId: string): Promise<void> {
+  const res = await neonFetch(`/tenants?id=eq.${tenantId}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`Failed to delete project: ${res.status}`);
+}
+
+// ── Medication CRUD ──
+
+export async function createMedication(data: {
+  tenantId: string;
+  name: string;
+  dosage?: string;
+  frequency?: string;
+  instructions?: string;
+  startDate?: string;
+}): Promise<FullMedicationRow> {
+  const now = new Date().toISOString();
+  const res = await neonFetch("/medications", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      id: crypto.randomUUID(),
+      tenantId: data.tenantId,
+      name: data.name,
+      dosage: data.dosage ?? null,
+      frequency: data.frequency ?? null,
+      instructions: data.instructions ?? null,
+      startDate: data.startDate ?? null,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    }),
+  });
+  if (!res.ok) throw new Error(`Failed to create medication: ${res.status}`);
+  const rows = await res.json();
+  return rows[0];
+}
+
+export async function updateMedication(
+  id: string,
+  data: Partial<{ name: string; dosage: string; frequency: string; instructions: string; isActive: boolean; endDate: string }>
+): Promise<void> {
+  const res = await neonFetch(`/medications?id=eq.${id}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ ...data, updatedAt: new Date().toISOString() }),
+  });
+  if (!res.ok) throw new Error(`Failed to update medication: ${res.status}`);
+}
+
+export async function deleteMedication(id: string): Promise<void> {
+  const res = await neonFetch(`/medications?id=eq.${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`Failed to delete medication: ${res.status}`);
+}
+
+// ── Strategy CRUD ──
+
+export async function createStrategy(data: {
+  tenantId: string;
+  name: string;
+  description?: string;
+  category?: string;
+}): Promise<FullStrategyRow> {
+  const now = new Date().toISOString();
+  const res = await neonFetch("/strategies", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      id: crypto.randomUUID(),
+      tenantId: data.tenantId,
+      name: data.name,
+      description: data.description ?? null,
+      category: data.category ?? null,
+      isDefault: false,
+      createdAt: now,
+      updatedAt: now,
+    }),
+  });
+  if (!res.ok) throw new Error(`Failed to create strategy: ${res.status}`);
+  const rows = await res.json();
+  return rows[0];
+}
+
+export async function deleteStrategy(id: string): Promise<void> {
+  const res = await neonFetch(`/strategies?id=eq.${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`Failed to delete strategy: ${res.status}`);
+}
+
+// ── Custom Checklist Items ──
+
+export async function createCustomItem(data: {
+  tenantId: string;
+  label: string;
+}): Promise<CustomItemRow> {
+  const now = new Date().toISOString();
+  const res = await neonFetch("/custom_checklist_items", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      id: crypto.randomUUID(),
+      tenantId: data.tenantId,
+      label: data.label,
+      createdAt: now,
+      updatedAt: now,
+    }),
+  });
+  if (!res.ok) throw new Error(`Failed to create custom item: ${res.status}`);
+  const rows = await res.json();
+  return rows[0];
+}
+
+export async function deleteCustomItem(id: string): Promise<void> {
+  const res = await neonFetch(`/custom_checklist_items?id=eq.${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`Failed to delete custom item: ${res.status}`);
+}
+
+// ── Invites ──
+
+export async function createInvite(data: {
+  tenantId: string;
+  role: string;
+}): Promise<{ id: string; token: string; expiresAt: string }> {
+  const now = new Date();
+  const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const token = crypto.randomUUID();
+  const res = await neonFetch("/invites", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      id: crypto.randomUUID(),
+      tenantId: data.tenantId,
+      token,
+      role: data.role,
+      status: "PENDING",
+      expiresAt: expires.toISOString(),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    }),
+  });
+  if (!res.ok) throw new Error(`Failed to create invite: ${res.status}`);
+  const rows = await res.json();
+  return rows[0];
+}
+
+export async function getInvites(tenantId: string): Promise<InviteRow[]> {
+  const res = await neonFetch(
+    `/invites?"tenantId"=eq.${tenantId}&order="createdAt".desc`
+  );
+  if (!res.ok) throw new Error("Failed to fetch invites");
+  return res.json();
+}
+
+export async function deleteInvite(id: string): Promise<void> {
+  const res = await neonFetch(`/invites?id=eq.${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`Failed to delete invite: ${res.status}`);
+}
+
+export async function acceptInvite(token: string): Promise<string> {
+  const res = await neonFetch("/rpc/accept_invite", {
+    method: "POST",
+    body: JSON.stringify({ p_token: token }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed to accept invite: ${res.status} ${err}`);
+  }
+  return res.json();
+}
+
 // ── Types ──
 
 export interface TenantSummary {
@@ -614,6 +830,16 @@ export interface FullStrategyRow {
   name: string;
   description: string | null;
   category: string | null;
+}
+
+export interface InviteRow {
+  id: string;
+  tenantId: string;
+  token: string;
+  role: string;
+  status: string;
+  expiresAt: string;
+  createdAt: string;
 }
 
 export interface CurrentUser {

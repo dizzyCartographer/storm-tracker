@@ -36,12 +36,24 @@ export default function Nav() {
             ))}
           </div>
         </div>
-        <button
-          onClick={signOut}
-          className="text-sm text-[#475569] hover:text-[#0F172A] border border-[#D1E8E4] rounded-lg px-3 py-1.5"
-        >
-          Sign Out
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/profile"
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === "/profile"
+                ? "bg-[#CCFBF1] text-[#0D9488]"
+                : "text-[#475569] hover:text-[#0F172A] hover:bg-[#F0FDFA]"
+            }`}
+          >
+            Profile
+          </Link>
+          <button
+            onClick={signOut}
+            className="text-sm text-[#475569] hover:text-[#0F172A] border border-[#D1E8E4] rounded-lg px-3 py-1.5"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
     </nav>
   );

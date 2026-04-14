@@ -7,6 +7,10 @@ import Log from "./pages/Log";
 import LogDetail from "./pages/LogDetail";
 import History from "./pages/History";
 import Reports from "./pages/Reports";
+import Projects from "./pages/Projects";
+import ProjectCreate from "./pages/ProjectCreate";
+import ProjectDetail from "./pages/ProjectDetail";
+import Profile from "./pages/Profile";
 
 function ProtectedRoute() {
   const { isLoading, isSignedIn } = useAuth();
@@ -39,6 +43,10 @@ export default function App() {
               <Route path="/log/:id" element={<LogDetail />} />
               <Route path="/history" element={<History />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/create" element={<ProjectCreate />} />
+              <Route path="/projects/:id" element={<ProjectDetail />} />
+              <Route path="/profile" element={<Profile />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
