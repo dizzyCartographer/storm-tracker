@@ -1,4 +1,4 @@
-# Storm Tracker — Claude Context
+# Storm Tracker — CLAUDE.md
 
 This file is automatically loaded by Claude Code at the start of every session.
 
