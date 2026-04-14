@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router";
 import { useAuth } from "../lib/auth-context";
+import { Logo } from "./Logo";
 
 const links = [
   { path: "/dashboard", label: "Dashboard" },
@@ -18,7 +19,8 @@ export default function Nav() {
     <nav className="bg-white border-b border-[#D1E8E4] px-4 py-3">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link to="/dashboard" className="text-lg font-bold text-[#0D9488]">
+          <Link to="/dashboard" className="flex items-center gap-2 text-lg font-bold text-[#0D9488]">
+            <Logo color="#0D9488" size={24} />
             Storm Tracker
           </Link>
           <div className="hidden sm:flex items-center gap-1">

@@ -675,6 +675,79 @@ export async function acceptInvite(token: string): Promise<string> {
   return res.json();
 }
 
+// ── Reference data (diagnostic framework display) ──
+
+export async function getActiveFrameworks(): Promise<{ id: string; name: string; slug: string; description: string | null }[]> {
+  const res = await neonFetch(
+    `/diagnostic_frameworks?"isActive"=eq.true&select=id,name,slug,description`
+  );
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getFrameworkPoles(frameworkId: string): Promise<ReferencePole[]> {
+  const res = await neonFetch(
+    `/criterion_poles?"frameworkId"=eq.${frameworkId}&select=id,slug,name,direction,"sortOrder"&order="sortOrder"`
+  );
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getCriteriaByPoles(poleIds: string[]): Promise<ReferenceCriterion[]> {
+  if (poleIds.length === 0) return [];
+  const inClause = poleIds.map((id) => `"${id}"`).join(",");
+  const res = await neonFetch(
+    `/criteria?"poleId"=in.(${inClause})&select=id,number,name,"criterionType","poleId"&order=number`
+  );
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getBehaviorCriterionMappings(frameworkId: string): Promise<ReferenceBehaviorMapping[]> {
+  // Get all behavior definitions for this framework's categories, with their criterion mappings
+  const catRes = await neonFetch(
+    `/framework_behavior_categories?"frameworkId"=eq.${frameworkId}&select=id`
+  );
+  if (!catRes.ok) return [];
+  const cats: { id: string }[] = await catRes.json();
+  if (cats.length === 0) return [];
+
+  const catIds = cats.map((c) => `"${c.id}"`).join(",");
+  const defRes = await neonFetch(
+    `/behavior_definitions?"categoryId"=in.(${catIds})&select=id,"itemKey"`
+  );
+  if (!defRes.ok) return [];
+  const defs: { id: string; itemKey: string }[] = await defRes.json();
+  if (defs.length === 0) return [];
+
+  const defIds = defs.map((d) => `"${d.id}"`).join(",");
+  const mapRes = await neonFetch(
+    `/behavior_criterion_mappings?"behaviorDefinitionId"=in.(${defIds})&select=id,"behaviorDefinitionId","criterionId"`
+  );
+  if (!mapRes.ok) return [];
+  return mapRes.json();
+}
+
+export async function getClassificationRules(frameworkId: string): Promise<ReferenceClassificationRule[]> {
+  const res = await neonFetch(
+    `/classification_rules?"frameworkId"=eq.${frameworkId}` +
+      `&select=id,"classificationLabel","ruleType","poleId","gateRequired","minStandardCriteria","coreRequired","gateOnlyAdjustment","minOppositeCriteria",priority` +
+      `&order=priority.desc`
+  );
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getEpisodeThresholds(frameworkId: string): Promise<ReferenceEpisodeThreshold[]> {
+  const res = await neonFetch(
+    `/episode_thresholds?"frameworkId"=eq.${frameworkId}` +
+      `&select=id,"episodeLabel","confidenceLevel","poleId","minDays","requiresDsmSymptoms"` +
+      `&order="minDays"`
+  );
+  if (!res.ok) return [];
+  return res.json();
+}
+
 // ── Types ──
 
 export interface TenantSummary {
@@ -847,4 +920,48 @@ export interface CurrentUser {
   name: string | null;
   email: string;
   defaultTenantId: string | null;
+}
+
+export interface ReferencePole {
+  id: string;
+  slug: string;
+  name: string;
+  direction: number;
+  sortOrder: number;
+}
+
+export interface ReferenceCriterion {
+  id: string;
+  number: number;
+  name: string;
+  criterionType: "GATE" | "CORE" | "STANDARD";
+  poleId: string;
+}
+
+export interface ReferenceBehaviorMapping {
+  id: string;
+  behaviorDefinitionId: string;
+  criterionId: string;
+}
+
+export interface ReferenceClassificationRule {
+  id: string;
+  classificationLabel: string;
+  ruleType: string;
+  poleId: string;
+  gateRequired: boolean;
+  minStandardCriteria: number;
+  coreRequired: boolean;
+  gateOnlyAdjustment: number;
+  minOppositeCriteria: number;
+  priority: number;
+}
+
+export interface ReferenceEpisodeThreshold {
+  id: string;
+  episodeLabel: string;
+  confidenceLevel: string;
+  poleId: string;
+  minDays: number;
+  requiresDsmSymptoms: boolean;
 }
