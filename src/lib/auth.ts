@@ -14,6 +14,7 @@ export const auth = betterAuth({
     const origins: string[] = [
       "stormtracker://",
       "http://localhost:3000",
+      "http://localhost:5173",
     ];
     if (process.env.STRM_TRKR_BETTER_AUTH_URL) {
       origins.push(process.env.STRM_TRKR_BETTER_AUTH_URL);
