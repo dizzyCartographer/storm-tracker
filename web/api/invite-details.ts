@@ -1,4 +1,4 @@
-import { neonFetchServer } from "./_auth";
+import { neonFetchServer } from "./_auth.js";
 
 // Public endpoint — returns invite details without requiring auth
 // Uses server-side connection to bypass RLS for invite lookup

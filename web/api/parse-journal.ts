@@ -1,7 +1,7 @@
 import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod/v4";
-import { getSessionUser, getJwtFromCookies, neonFetchServer } from "./_auth";
+import { getSessionUser, getJwtFromCookies, neonFetchServer } from "./_auth.js";
 
 const parsedEntrySchema = z.object({
   date: z

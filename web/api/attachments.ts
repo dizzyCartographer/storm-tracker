@@ -1,5 +1,5 @@
 import { put, del } from "@vercel/blob";
-import { getSessionUser, getJwtFromCookies, neonFetchServer } from "./_auth";
+import { getSessionUser, getJwtFromCookies, neonFetchServer } from "./_auth.js";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
