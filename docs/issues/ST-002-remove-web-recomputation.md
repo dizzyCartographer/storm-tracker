@@ -2,7 +2,7 @@
 id: ST-002
 title: Remove recomputation from web read paths
 type: tech-debt
-status: open
+status: superseded
 priority: high
 urgency: low
 components:
@@ -14,9 +14,9 @@ source: session
 created: 2026-04-07
 completed:
 dev-plan-ref: Phase 20.7
+superseded-by: ST-060
 ---
 
-Web dashboard, reports, and history still call TypeScript analysis functions on every read instead of reading from the persisted `episodes`, `prodrome_signals`, `predictions`, and `suggestions` tables. Postgres triggers already populate these tables at write time.
+**Superseded by ST-060.** The Vite SPA rewrite reads from persisted tables via Neon Data API. No recomputation possible — the TypeScript analysis functions won't exist in the new app.
 
-**Risk:** Inconsistency between what mobile shows (persisted) and what web shows (recomputed). Performance cost on every page load.
-**Fix:** Update web components to query persisted tables. Delete `/api/mobile/analysis/[tenantId]` endpoint.
+~~Web dashboard, reports, and history still call TypeScript analysis functions on every read instead of reading from the persisted tables. Postgres triggers already populate these tables at write time.~~

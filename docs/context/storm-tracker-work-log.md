@@ -857,3 +857,50 @@ Cleaned up ContextStore duplication artifacts, set up a fresh ContextStore space
 7. **Phase 20.7** — Remove recomputation from web read paths — still open.
 
 ***
+
+## Session: 2026-04-14 — Web App Architecture Decision (ST-060)
+
+### What Happened
+
+Started session intending to clean up tech debt (ST-001 through ST-004). While analyzing ST-002 (remove web recomputation), discovered that fixing it would require adding new Prisma models that ST-060 (Vite rewrite) would immediately rip out. This led to a strategic decision: skip patching the old web app and build a new one instead.
+
+### Key Decisions Made
+
+1. **Web app is NOT being sunset.** User confirmed web stays — needed for admin features around diagnostic frameworks and project management. Both web and mobile must coexist. This resolves the long-standing ambiguity from April 7 ("web may or may not be sunset").
+
+2. **ST-060 approved and prioritized.** New Vite + React SPA replaces the Next.js web app. Technology justification completed per architecture standards (8-question process). All questions answered, stack justified.
+
+3. **ST-060 supersedes ST-001, ST-002, ST-003.** No point patching the old architecture when it's being replaced:
+   - ST-001 (web bypasses RLS) — gone when Prisma is eliminated
+   - ST-002 (web recomputes on read) — gone when server actions are eliminated
+   - ST-003 (custom GET endpoints) — gone when Next.js `src/` is deleted
+
+4. **Technology stack approved:**
+   - Vite + React + TypeScript + Tailwind (SPA)
+   - Neon Data API with JWT/RLS for all data access (same as mobile)
+   - Better Auth client for authentication
+   - 2 Vercel serverless functions for server-side secrets: Anthropic API (journal parsing) and Vercel Blob (attachments)
+   - No ORM, no SSR, no server-side rendering
+
+5. **Repo structure: same repo, `web/` directory.**
+   - New web app lives in `web/` alongside `mobile/`
+   - Old Next.js app stays in `src/` running in production until new web is verified
+   - No separate repo — shared docs, shared database migrations, solo developer
+   - Isolation via Vercel deploy config (each directory deploys independently)
+
+6. **Vite chosen over alternatives.** Evaluated: Next.js (rejected — SSR unnecessary, Prisma fights RLS), Remix (rejected — server loaders not needed when data is client-side), Rsbuild/Rspack (rejected — overkill for app size), Parcel (rejected — smaller ecosystem). Vite is the React team's recommendation for SPAs, has the largest ecosystem, and Vercel deploys it natively.
+
+### Issues Updated
+
+- **ST-060** — Status: in-progress, urgency: now. Added full technology justification, supersedes list, and repo structure plan.
+- **ST-001** — Status: superseded by ST-060.
+- **ST-002** — Status: superseded by ST-060.
+- **ST-003** — Status: superseded by ST-060.
+
+### What's Next
+
+1. **Scope and plan ST-060** — phased development plan for the Vite web app.
+2. **ST-004** — Database grants in migration — still open, needed for both web and mobile.
+3. **Mobile work** — ST-064, ST-040, ST-039 still in the queue.
+
+***
