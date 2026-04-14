@@ -722,7 +722,7 @@ export async function getBehaviorCriterionMappings(frameworkId: string): Promise
 
   const defIds = defs.map((d) => `"${d.id}"`).join(",");
   const mapRes = await neonFetch(
-    `/behavior_criterion_mappings?"behaviorDefinitionId"=in.(${defIds})&select=id,"behaviorDefinitionId","criterionId"`
+    `/behavior_criterion_mappings?"behaviorId"=in.(${defIds})&select=id,"behaviorId","criterionId"`
   );
   if (!mapRes.ok) return [];
   return mapRes.json();
@@ -940,7 +940,7 @@ export interface ReferenceCriterion {
 
 export interface ReferenceBehaviorMapping {
   id: string;
-  behaviorDefinitionId: string;
+  behaviorId: string;
   criterionId: string;
 }
 

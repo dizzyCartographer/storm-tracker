@@ -100,9 +100,9 @@ export default function Reference() {
         // Build behavior criterion mappings grouped by behavior
         const behaviorMappingsMap = new Map<string, ReferenceBehaviorMapping[]>();
         for (const m of mappings) {
-          const existing = behaviorMappingsMap.get(m.behaviorDefinitionId) ?? [];
+          const existing = behaviorMappingsMap.get(m.behaviorId) ?? [];
           existing.push(m);
-          behaviorMappingsMap.set(m.behaviorDefinitionId, existing);
+          behaviorMappingsMap.set(m.behaviorId, existing);
         }
 
         // Group behaviors by category with resolved criterion mappings
