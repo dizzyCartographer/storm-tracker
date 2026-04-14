@@ -725,3 +725,66 @@ xcodebuild archive \
 7. **Phase 20.7** — Remove recomputation from web read paths — still open.
 
 ***
+
+## Session: 2026-04-14 — Dynamic App Icon per Build Profile (ST-067)
+
+### What Happened
+
+Short session to make dev and production builds visually distinguishable on the home screen. Created ST-067, implemented it, pushed to staging, and built for TestFlight.
+
+### Work Completed
+
+- **ST-067 — Dynamic app icon per build profile.** Converted `docs/branding/storm-tracker-icon-dev-v6.svg` (mint grid background + cloud + "DEV" banner) to PNGs at 3 sizes: `icon-dev.png` (1024×1024), `splash-icon-dev.png` (288×288), `favicon-dev.png` (48×48).
+
+- **`mobile/app.config.js`** — Updated to dynamically select icon and splash image based on `APP_ENV`. Moved splash screen plugin config from static `app.json` into `app.config.js` so it can also be dynamic. Removed EAS-specific language from comments — all references now describe local Xcode build workflow.
+
+- **`mobile/app.json`** — Bumped `buildNumber` from 8 to 9.
+
+- **TestFlight build #9** — Archived via `xcodebuild` with `StormTrackRxDev` workspace/scheme. Opened in Xcode Organizer for distribution.
+
+### Issues Encountered
+
+- **Workspace/scheme name mismatch.** `APP_ENV=staging expo prebuild --clean` generates `StormTrackRxDev.xcworkspace` and scheme `StormTrackRxDev` (not `StormTrackRx`) because the app name is "StormTrackRx Dev". The archive command needed the correct workspace and scheme names.
+
+- **Xcode "workspace has disappeared" dialog.** Opening the archive triggered a warning about the old `StormTrackRx.xcodeproj` being gone. This is expected after `prebuild --clean` regenerates with a different name. Dismissed with "Close" — harmless.
+
+### Key Detail for Future Builds
+
+Staging builds generate different Xcode project names than production:
+
+| Build | Workspace | Scheme |
+|-------|-----------|--------|
+| Production | `StormTrackRx.xcworkspace` | `StormTrackRx` |
+| Staging | `StormTrackRxDev.xcworkspace` | `StormTrackRxDev` |
+
+The archive command must match:
+
+```bash
+# Staging
+APP_ENV=staging LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo prebuild --platform ios --clean
+xcodebuild archive -workspace ios/StormTrackRxDev.xcworkspace -scheme StormTrackRxDev ...
+
+# Production
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo prebuild --platform ios --clean
+xcodebuild archive -workspace ios/StormTrackRx.xcworkspace -scheme StormTrackRx ...
+```
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed (bd9094f) |
+| `main` | Behind staging |
+| No worktrees | Clean |
+
+### What's Next
+
+1. **Verify TestFlight build #9** — confirm dev icon appears on device.
+2. **Merge staging → main** when user approves.
+3. **ST-064** — Fix premature "no data" messages.
+4. **ST-040** — Full projects CRUD on mobile.
+5. **ST-039** — Reports and wave graph on mobile.
+6. **ST-004** — Database grants in migration — still open.
+7. **Phase 20.7** — Remove recomputation from web read paths — still open.
+
+***
