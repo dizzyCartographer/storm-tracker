@@ -1,4 +1,4 @@
-# Storm Tracker — Claude Context
+# Storm Tracker — CLAUDE.md
 
 This file is automatically loaded by Claude Code at the start of every session.
 
@@ -34,7 +34,6 @@ storm-tracker/
 │   │   ├── app-purpose-and-liability-constraints.md # Purpose and liability guardrails
 │   │   ├── storm-tracker-ios-conversion-plan.md # iOS conversion roadmap
 │   │   ├── storm-tracker-work-log.md      # Running log of sessions, decisions, and work context
-│   │   ├── tooling.md                     # Development tools (ContextStore config, symlinks)
 │   │   └── feedback/                      # Corrections and process rules (auto-loaded)
 │   ├── issues/       # File-based issue tracker (ST-001 through ST-050+)
 │   │   └── _index.md # Auto-generated issue index (loaded every session)
@@ -75,13 +74,12 @@ When adding a new context file, add an `@` import below **and** update the tree 
 @docs/context/storm-tracker-ios-conversion-plan.md
 @docs/context/app-purpose-and-liability-constraints.md
 @docs/context/storm-tracker-work-log.md
-@docs/context/tooling.md
 @docs/context/feedback/\*.md
-@docs/issues/_index.md
+@docs/issues/\_index.md
 
 ## Workflow Rules
 
-- **Commit and push after every phase.** When a development plan phase is complete, create a commit and push to `origin/staging` immediately. Do not wait for the user to ask.
+- **Commit and push after every phase.** When a development plan phase is complete, create a commit and push to `origin/main` immediately. Do not wait for the user to ask.
 
 - **Commit before auto-save can.** Stage and commit with a proper message immediately after completing a logical unit of work. Do not leave modified files sitting in the working tree for auto-commit to pick up. If auto-commits have already been made with generic messages, squash them into a single descriptive commit before pushing (unless already pushed to remote).
 
@@ -91,6 +89,6 @@ When adding a new context file, add an `@` import below **and** update the tree 
 
 - **Check git state at session start.** Run `git branch -a` and `git worktree list` early. Clean up anything left over from previous sessions before starting new work.
 
-- **Maintain the work log.** `docs/context/storm-tracker-work-log.md` is the primary continuity mechanism across conversations. Append to it as things happen — when a decision is made, a feature is started or completed, a roadblock is discovered, or an architecture change is agreed upon. Do not wait for a session to end. The goal is that a new conversation can read this file and pick up exactly where the last one left off.
+- **Maintain the work log.** `docs/context/work-log.md` is the primary continuity mechanism across conversations. Append to it as things happen — when a decision is made, a feature is started or completed, a roadblock is discovered, or an architecture change is agreed upon. Do not wait for a session to end. The goal is that a new conversation can read this file and pick up exactly where the last one left off.
 
 - **Update issue index on every change.** When creating, modifying, or closing an issue in `docs/issues/`, regenerate `docs/issues/_index.md` from the YAML frontmatter of all issue files. The index is loaded into every session via the `@docs/issues/_index.md` import above.
