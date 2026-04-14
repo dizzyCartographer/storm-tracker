@@ -877,3 +877,101 @@ Cleaned up ContextStore duplication artifacts, set up a fresh ContextStore space
 7. **Phase 20.7** — Remove recomputation from web read paths — still open.
 
 ***
+
+## Session: 2026-04-14 — Web App Architecture Decision (ST-060)
+
+### What Happened
+
+Started session intending to clean up tech debt (ST-001 through ST-004). While analyzing ST-002 (remove web recomputation), discovered that fixing it would require adding new Prisma models that ST-060 (Vite rewrite) would immediately rip out. This led to a strategic decision: skip patching the old web app and build a new one instead.
+
+### Key Decisions Made
+
+1. **Web app is NOT being sunset.** User confirmed web stays — needed for admin features around diagnostic frameworks and project management. Both web and mobile must coexist. This resolves the long-standing ambiguity from April 7 ("web may or may not be sunset").
+
+2. **ST-060 approved and prioritized.** New Vite + React SPA replaces the Next.js web app. Technology justification completed per architecture standards (8-question process). All questions answered, stack justified.
+
+3. **ST-060 supersedes ST-001, ST-002, ST-003.** No point patching the old architecture when it's being replaced:
+   - ST-001 (web bypasses RLS) — gone when Prisma is eliminated
+   - ST-002 (web recomputes on read) — gone when server actions are eliminated
+   - ST-003 (custom GET endpoints) — gone when Next.js `src/` is deleted
+
+4. **Technology stack approved:**
+   - Vite + React + TypeScript + Tailwind (SPA)
+   - Neon Data API with JWT/RLS for all data access (same as mobile)
+   - Better Auth client for authentication
+   - 2 Vercel serverless functions for server-side secrets: Anthropic API (journal parsing) and Vercel Blob (attachments)
+   - No ORM, no SSR, no server-side rendering
+
+5. **Repo structure: same repo, `web/` directory.**
+   - New web app lives in `web/` alongside `mobile/`
+   - Old Next.js app stays in `src/` running in production until new web is verified
+   - No separate repo — shared docs, shared database migrations, solo developer
+   - Isolation via Vercel deploy config (each directory deploys independently)
+
+6. **Vite chosen over alternatives.** Evaluated: Next.js (rejected — SSR unnecessary, Prisma fights RLS), Remix (rejected — server loaders not needed when data is client-side), Rsbuild/Rspack (rejected — overkill for app size), Parcel (rejected — smaller ecosystem). Vite is the React team's recommendation for SPAs, has the largest ecosystem, and Vercel deploys it natively.
+
+### Issues Updated
+
+- **ST-060** — Status: in-progress, urgency: now. Added full technology justification, supersedes list, and repo structure plan.
+- **ST-001** — Status: superseded by ST-060.
+- **ST-002** — Status: superseded by ST-060.
+- **ST-003** — Status: superseded by ST-060.
+
+### What's Next
+
+1. **Scope and plan ST-060** — phased development plan for the Vite web app.
+2. **ST-004** — Database grants in migration — still open, needed for both web and mobile.
+3. **Mobile work** — ST-064, ST-040, ST-039 still in the queue.
+
+***
+
+## Session: 2026-04-14 — ST-060 Plan Approval, Vite Scaffold, Workflow Improvements
+
+### What Happened
+
+Continuation of the architecture decision session. Scoped and planned the full ST-060 Vite rewrite (9 phases), got user approval, scaffolded the Vite app, and wrapped up with documentation and workflow improvements.
+
+### Key Decisions Made
+
+1. **9-phase development plan approved for ST-060.** Phases 0 (scaffold) through 8 (cutover). Each phase has explicit goals, files to create/port, and verification steps. Plan is documented in both the plan file and the ST-060 issue.
+
+2. **RLS gap resolution: migration, not serverless functions.** Missing INSERT policy on `tenants` table will be added via a Postgres migration in Phase 5.
+
+3. **Mobile entry writes: decide after trigger test.** Phase 3 will verify whether Postgres BEFORE triggers fire correctly via PostgREST upsert. If they do, mobile can drop its custom `/api/mobile/entries` endpoint.
+
+4. **In-progress issues auto-loaded.** New CLAUDE.md workflow rule: at session start, read the full issue file for every issue with `status: in-progress` in the index. This ensures active development plans (like ST-060's 9-phase plan) are always in context.
+
+### Work Completed
+
+- **ST-060 development plan** — 9 phases scoped with the user in plan mode. Covers scaffold, auth, data layer, entry writes + trigger verification, dashboard/history/reports, RLS migration + CRUD, serverless functions, polish, and cutover. Includes key files to port table (11 source→target mappings) and what doesn't get ported.
+
+- **`web/` scaffold** — Created via `npm create vite@latest web -- --template react-ts`. Bare scaffold only — dependencies not installed, no Tailwind/Router/etc yet.
+
+- **`docs/issues/ST-060-vite-web-rewrite.md`** — Updated with the full 9-phase plan (226 lines). Originally only had the summary; user caught that the plan content wasn't in the issue file.
+
+- **`CLAUDE.md`** — Added workflow rule: "Read in-progress issues at session start."
+
+- **Issue updates from prior conversation carried over:** ST-001, ST-002, ST-003 marked superseded. Issue index regenerated.
+
+### Issues Encountered
+
+- **Edit tool deleted the issue file.** When updating ST-060 with the full plan, the Edit tool's replacement resulted in a deletion (file disappeared from git). ContextStore's auto-sync committed the Write tool's restoration before Claude could commit it. No data lost — ContextStore saved it.
+
+- **ContextStore auto-commits.** ContextStore committed the ST-060 file update with a generic "Update ST-060-vite-web-rewrite.md" message before Claude could commit with a descriptive message. This is a known behavior of ContextStore's auto-sync — it picks up file changes and pushes them immediately.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed (0d2ed11) |
+| `main` | Behind staging |
+| No worktrees | Clean |
+
+### What's Next
+
+1. **Phase 0 of ST-060** — Install dependencies in `web/`, add Tailwind v4, React Router, Recharts, Zod, better-auth. Create `vercel.json`, test serverless function, minimal `App.tsx`. Deploy to staging.
+2. **Phase 1** — Auth layer (Better Auth serverless handler with pg adapter, auth client, sign-in/sign-up pages).
+3. **ST-004** — Database grants in migration — still open.
+4. **Mobile work** — ST-064, ST-040, ST-039 still in the queue.
+
+***

@@ -1,28 +1,29 @@
 # ContextStore ignore file
-
 # Patterns follow .gitignore syntax
 
 # AI agent files
-
-# Dependencies
-
 AGENTS.md
-CLAUDE.md
-
-node_modules/
 
 # Dependencies
-
-# Build output
-
 node_modules/
 
-build/
-dist/
-.build/
-
 # Build output
-
 build/
 dist/
 .build/
+
+# Application source code — Claude Code manages these, not ContextStore
+src/
+web/
+mobile/
+prisma/
+scripts/
+.claude/
+
+# Config files at repo root
+*.ts
+*.js
+*.json
+*.mjs
+*.cjs
+!docs/**

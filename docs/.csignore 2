@@ -1,13 +1,28 @@
 # ContextStore ignore file
+
 # Patterns follow .gitignore syntax
 
 # AI agent files
-AGENTS.md
 
 # Dependencies
+
+AGENTS.md
+CLAUDE.md
+
 node_modules/
 
+# Dependencies
+
 # Build output
+
+node_modules/
+
+build/
+dist/
+.build/
+
+# Build output
+
 build/
 dist/
 .build/

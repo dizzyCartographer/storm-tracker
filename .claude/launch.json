@@ -8,6 +8,14 @@
       "env": { "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" },
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "/opt/homebrew/bin/npx",
+      "runtimeArgs": ["vite"],
+      "env": { "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" },
+      "port": 5173,
+      "cwd": "web"
     }
   ]
 }

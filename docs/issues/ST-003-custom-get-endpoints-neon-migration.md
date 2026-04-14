@@ -2,7 +2,7 @@
 id: ST-003
 title: Custom GET endpoints should use Neon Data API
 type: tech-debt
-status: open
+status: superseded
 priority: medium
 urgency: low
 components:
@@ -12,13 +12,9 @@ source: session
 created: 2026-04-07
 completed:
 dev-plan-ref:
+superseded-by: ST-060
 ---
 
-Three mobile API routes exist for reads that should go through Neon Data API:
-- `GET /api/mobile/analysis/[tenantId]`
-- `GET /api/mobile/frameworks/[tenantId]`
-- `GET /api/mobile/tenants`
+**Superseded by ST-060.** The custom GET endpoints live in the Next.js app (`src/`). When `src/` is deleted after the Vite rewrite, these endpoints go with it. Mobile already reads via Neon Data API for most data. The remaining endpoints (`/api/mobile/analysis/[tenantId]`, `/api/mobile/frameworks/[tenantId]`) will be fully replaced before `src/` is removed.
 
-**Risk:** Maintenance burden, bypasses RLS, inconsistent with architecture.
-**Fix:** Mobile reads via Neon Data API. Delete the endpoints.
-**When:** As mobile screens are built that consume this data.
+~~Three mobile API routes exist for reads that should go through Neon Data API.~~
