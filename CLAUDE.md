@@ -94,3 +94,5 @@ When adding a new context file, add an `@` import below **and** update the tree 
 - **Maintain the work log.** `docs/context/storm-tracker-work-log.md` is the primary continuity mechanism across conversations. Append to it as things happen — when a decision is made, a feature is started or completed, a roadblock is discovered, or an architecture change is agreed upon. Do not wait for a session to end. The goal is that a new conversation can read this file and pick up exactly where the last one left off.
 
 - **Update issue index on every change.** When creating, modifying, or closing an issue in `docs/issues/`, regenerate `docs/issues/_index.md` from the YAML frontmatter of all issue files. The index is loaded into every session via the `@docs/issues/_index.md` import above.
+
+- **Read in-progress issues at session start.** The issue index (`docs/issues/_index.md`) is loaded every session. Any issue with `status: in-progress` contains an active development plan. At the start of every session, read the full issue file for each in-progress issue listed in the index. These are the current workstreams — their plans, decisions, and phase details are needed context.
