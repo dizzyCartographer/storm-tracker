@@ -11,6 +11,7 @@ import Projects from "./pages/Projects";
 import ProjectCreate from "./pages/ProjectCreate";
 import ProjectDetail from "./pages/ProjectDetail";
 import Profile from "./pages/Profile";
+import JournalImport from "./pages/JournalImport";
 
 function ProtectedRoute() {
   const { isLoading, isSignedIn } = useAuth();
@@ -47,6 +48,7 @@ export default function App() {
               <Route path="/projects/create" element={<ProjectCreate />} />
               <Route path="/projects/:id" element={<ProjectDetail />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/journal-import" element={<JournalImport />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -6,6 +6,7 @@ const links = [
   { path: "/log", label: "+ Log" },
   { path: "/history", label: "History" },
   { path: "/reports", label: "Reports" },
+  { path: "/journal-import", label: "AI Import" },
   { path: "/projects", label: "Projects" },
 ];
 
