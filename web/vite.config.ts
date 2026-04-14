@@ -10,6 +10,9 @@ export default defineConfig({
       "/api/auth": {
         target: "https://storm-tracker-murex.vercel.app",
         changeOrigin: true,
+        headers: {
+          Origin: "https://storm-tracker-murex.vercel.app",
+        },
       },
     },
   },
