@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from "./lib/auth-context";
 import SignIn from "./pages/SignIn";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
+import Log from "./pages/Log";
+import LogDetail from "./pages/LogDetail";
 
 function ProtectedRoute() {
   const { isLoading, isSignedIn } = useAuth();
@@ -31,6 +33,8 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/log" element={<Log />} />
+              <Route path="/log/:id" element={<LogDetail />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

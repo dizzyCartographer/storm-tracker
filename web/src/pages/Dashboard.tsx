@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { useProject } from "../lib/project-context";
 import {
   getRecentEntries,
@@ -90,9 +91,10 @@ export default function Dashboard() {
                   : null;
               const style = getMoodStyle(classification);
               return (
-                <div
+                <Link
+                  to={`/log/${entry.id}`}
                   key={entry.id}
-                  className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3"
+                  className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 hover:shadow-md transition-shadow block"
                 >
                   <span className={`w-3 h-3 rounded-full shrink-0 ${style.dot}`} />
                   <div className="flex-1 min-w-0">
@@ -117,7 +119,7 @@ export default function Dashboard() {
                       <p className="text-xs text-[#94A3B8] mt-1 truncate">{entry.notes}</p>
                     )}
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

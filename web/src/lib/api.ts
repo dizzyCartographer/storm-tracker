@@ -20,6 +20,7 @@ async function getJwt(): Promise<string | null> {
 
 // ── Authenticated fetch for custom API endpoints ──
 
+// Used for custom server endpoints (journal parsing, attachments)
 export async function apiFetch(
   path: string,
   options: RequestInit = {}
@@ -78,10 +79,11 @@ export async function neonFetch(
   return res;
 }
 
-// ── Custom endpoint helpers (write-time computation) ──
+// ── Entry write helpers (direct to Neon Data API — triggers handle scoring) ──
 
 export async function saveEntry(data: {
   tenantId: string;
+  userId: string;
   mood: string;
   dayQuality: string;
   behaviorKeys?: string[];
@@ -91,13 +93,52 @@ export async function saveEntry(data: {
   impairments?: Record<string, string>;
   notes?: string;
   menstrualSeverity?: string | null;
-  date?: string;
+  date: string;
+  id?: string;
 }) {
-  const res = await apiFetch("/api/mobile/entries", {
+  const now = new Date().toISOString();
+  const entry = {
+    id: data.id || crypto.randomUUID(),
+    date: data.date,
+    mood: data.mood,
+    dayQuality: data.dayQuality,
+    behaviorKeys: data.behaviorKeys ?? [],
+    customItemIds: data.customItemIds ?? [],
+    strategyIds: data.strategyIds ?? [],
+    missedMedIds: data.missedMedIds ?? [],
+    impairments: data.impairments ?? {},
+    notes: data.notes ?? null,
+    menstrualSeverity: data.menstrualSeverity ?? null,
+    userId: data.userId,
+    tenantId: data.tenantId,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const res = await neonFetch("/entries", {
     method: "POST",
-    body: JSON.stringify(data),
+    headers: {
+      Prefer: "return=representation, resolution=merge-duplicates",
+    },
+    body: JSON.stringify(entry),
   });
-  return res.json();
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message ?? `Save failed: ${res.status}`);
+  }
+
+  const rows = await res.json();
+  return rows[0];
+}
+
+export async function deleteEntry(id: string) {
+  const res = await neonFetch(`/entries?id=eq.${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    throw new Error(`Delete failed: ${res.status}`);
+  }
 }
 
 // ── Neon Data API read helpers ──
