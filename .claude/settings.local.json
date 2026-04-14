@@ -117,7 +117,22 @@
       "Bash(rm /Users/mariayarley/Documents/GitHub/storm-tracker/src/lib/mobile-auth.ts)",
       "Bash(ls src/app/api/mobile/entries/route.ts src/app/api/mobile/tenants/route.ts src/app/api/mobile/analysis/*/route.ts src/app/api/mobile/frameworks/*/route.ts src/lib/mobile-auth.ts)",
       "Bash(curl -s \"http://127.0.0.1:8081/src/app/log-edit.bundle?platform=ios\")",
-      "Bash(curl -s \"http://127.0.0.1:8081/src/app/project-edit.bundle?platform=ios\")"
+      "Bash(curl -s \"http://127.0.0.1:8081/src/app/project-edit.bundle?platform=ios\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://storm-tracker-murex.vercel.app/api/auth/ok)",
+      "Bash(curl -s https://storm-tracker-murex.vercel.app/api/auth/ok)",
+      "Bash(curl -s -D - https://storm-tracker-murex.vercel.app/api/auth/ok)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s https://storm-tracker-murex.vercel.app/api/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://storm-tracker-murex.vercel.app/api/auth-debug)",
+      "Bash(curl -s https://storm-tracker-murex.vercel.app/api/auth-debug)",
+      "Bash(curl -s -w \"\\\\n%{http_code}\" https://storm-tracker-murex.vercel.app/api/auth/ok)",
+      "Bash(curl -s -X POST https://storm-tracker-murex.vercel.app/api/auth/sign-in/email -H 'Content-Type: application/json' -d '{\"email\":\"claude@stormtracker.dev\",\"password\":\"TestPass123!\"}' -w '\\\\n%{http_code}')",
+      "Bash(curl -s -w \"\\\\n%{http_code}\" -X POST https://storm-tracker-murex.vercel.app/api/auth/sign-in/email -H \"Content-Type: application/json\" -d '{}')",
+      "Bash(curl -s -w \"\\\\n%{http_code}\" https://storm-tracker-murex.vercel.app/api/auth/sign-in/email)",
+      "Bash(curl -s -X POST https://storm-tracker-murex.vercel.app/api/auth/sign-in/email -H 'Content-Type: application/json' -d '{\"email\":\"claude@stormtracker.dev\",\"password\":\"TestPass123!\"}')",
+      "Bash(curl -s -D - -X POST https://storm-tracker-murex.vercel.app/api/auth/sign-in/email -H 'Content-Type: application/json' -d '{\"email\":\"claude@stormtracker.dev\",\"password\":\"TestPass123!\"}')",
+      "Bash(mkdir -p api/auth)",
+      "Bash(mv api/auth.ts api/auth/\\\\[...path\\\\].ts)"
     ]
   }
 }
