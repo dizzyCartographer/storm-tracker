@@ -411,8 +411,8 @@ function MedicationsSection({
       const med = await createMedication({
         tenantId,
         name: name.trim(),
-        dosage: dosage.trim() || null,
-        frequency: frequency.trim() || null,
+        dosage: dosage.trim() || undefined,
+        frequency: frequency.trim() || undefined,
       });
       onUpdate([...medications, med]);
       setName("");
@@ -541,7 +541,7 @@ function StrategiesSection({
       const s = await createStrategy({
         tenantId,
         name: name.trim(),
-        category: category.trim() || null,
+        category: category.trim() || undefined,
       });
       onUpdate([...strategies, s]);
       setName("");

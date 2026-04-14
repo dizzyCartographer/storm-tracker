@@ -88,7 +88,8 @@ export default function Reference() {
         // Build lookup maps
         const criterionMap = new Map(criteria.map((c) => [c.id, c]));
         const poleMap = new Map(poles.map((p) => [p.id, p]));
-        const defMap = new Map(defs.map((d) => [d.id, d]));
+        // defMap available if needed for future lookups
+        void defs;
 
         // Group criteria by pole
         const polesWithCriteria = poles.map((p) => ({

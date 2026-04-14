@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useProject } from "../lib/project-context";
 import { apiFetch, saveEntry } from "../lib/api";
+import { API_BASE_URL } from "../lib/config";
 
 const moodLabels: Record<string, string> = {
   MANIC: "Manic",
@@ -40,8 +41,16 @@ interface ParsedEntry {
 export default function JournalImport() {
   const navigate = useNavigate();
   const { selectedTenant } = useProject();
+  const [userId, setUserId] = useState<string | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [text, setText] = useState("");
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/auth/get-session`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => { if (data?.user?.id) setUserId(data.user.id); })
+      .catch(() => {});
+  }, []);
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState("");
   const [parsed, setParsed] = useState<ParsedEntry | null>(null);
@@ -86,12 +95,13 @@ export default function JournalImport() {
   }
 
   async function handleSave() {
-    if (!selectedTenant) return;
+    if (!selectedTenant || !userId) return;
     setSaving(true);
 
     try {
       await saveEntry({
         tenantId: selectedTenant.id,
+        userId,
         date: editDate,
         mood: editMood,
         dayQuality: editDayQuality,

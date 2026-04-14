@@ -49,20 +49,20 @@ export default function ProjectCreate() {
 
       const tenantId = await createTenant({
         name: trimmedName,
-        description: profileData.description ?? null,
+        description: profileData.description ?? undefined,
         purpose: profileData.purpose ?? "ONGOING_TRACKING",
-        teenFullName: profileData.teenFullName ?? null,
-        teenNickname: profileData.teenNickname ?? null,
-        teenBirthday: profileData.teenBirthday ?? null,
-        teenFavoriteColor: profileData.teenFavoriteColor ?? null,
-        teenInterests: profileData.teenInterests ?? null,
-        teenSchool: profileData.teenSchool ?? null,
-        teenFavoriteSubject: profileData.teenFavoriteSubject ?? null,
+        teenFullName: profileData.teenFullName ?? undefined,
+        teenNickname: profileData.teenNickname ?? undefined,
+        teenBirthday: profileData.teenBirthday ?? undefined,
+        teenFavoriteColor: profileData.teenFavoriteColor ?? undefined,
+        teenInterests: profileData.teenInterests ?? undefined,
+        teenSchool: profileData.teenSchool ?? undefined,
+        teenFavoriteSubject: profileData.teenFavoriteSubject ?? undefined,
         teenHasIep: profileData.teenHasIep ?? false,
-        teenDiagnosis: profileData.teenDiagnosis ?? null,
-        teenOtherHealth: profileData.teenOtherHealth ?? null,
-        onsetDate: profileData.onsetDate ?? null,
-        familyHistory: profileData.familyHistory ?? null,
+        teenDiagnosis: profileData.teenDiagnosis ?? undefined,
+        teenOtherHealth: profileData.teenOtherHealth ?? undefined,
+        onsetDate: profileData.onsetDate ?? undefined,
+        familyHistory: profileData.familyHistory ?? undefined,
       });
 
       await refresh();

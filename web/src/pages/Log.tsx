@@ -167,8 +167,8 @@ export default function Log() {
   // Check for existing entry when date changes
   const populateFrom = useCallback((data: {
     id: string; mood: string; dayQuality: string; behaviorKeys: string[];
-    customItemIds: string[]; strategyIds: string[]; missedMedIds: string[];
-    impairments: Record<string, string>; notes: string | null; menstrualSeverity: string | null;
+    customItemIds?: string[]; strategyIds?: string[]; missedMedIds: string[];
+    impairments: Record<string, string>; notes: string | null; menstrualSeverity?: string | null;
   }) => {
     setMood(data.mood);
     setDayQuality(data.dayQuality);
@@ -182,7 +182,7 @@ export default function Log() {
       ...(data.impairments ?? {}),
     });
     setNotes(data.notes ?? "");
-    setMenstrual(data.menstrualSeverity);
+    setMenstrual(data.menstrualSeverity ?? null);
     setIsExisting(true);
     setExistingId(data.id);
   }, []);

@@ -627,7 +627,7 @@ export async function deleteCustomItem(id: string): Promise<void> {
 export async function createInvite(data: {
   tenantId: string;
   role: string;
-}): Promise<{ id: string; token: string; expiresAt: string }> {
+}): Promise<InviteRow> {
   const now = new Date();
   const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const token = crypto.randomUUID();

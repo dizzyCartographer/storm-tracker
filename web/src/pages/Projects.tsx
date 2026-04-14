@@ -4,7 +4,7 @@ import { useProject } from "../lib/project-context";
 import { getCurrentUserInfo, setDefaultTenant } from "../lib/api";
 
 export default function Projects() {
-  const { tenants, selectedTenant, loading, refresh } = useProject();
+  const { tenants, loading } = useProject();
   const [defaultTenantId, setDefaultTenantId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
