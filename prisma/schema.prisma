@@ -1,0 +1,511 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ──────────────────────────────────────────────
+// Identity & Multi-Tenancy
+// ──────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  defaultTenantId     String?
+  defaultTenant       Tenant?   @relation("defaultTenant", fields: [defaultTenantId], references: [id], onDelete: SetNull)
+
+  disclaimerAcceptedAt DateTime?
+
+  memberships TenantMember[]
+  entries     Entry[]
+  sessions    Session[]
+  accounts    Account[]
+
+  @@map("users")
+}
+
+// ──────────────────────────────────────────────
+// Better Auth tables
+// ──────────────────────────────────────────────
+
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String    @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("verifications")
+}
+
+model Jwks {
+  id         String    @id @default(uuid())
+  publicKey  String
+  privateKey String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+
+  @@map("jwks")
+}
+
+enum ProjectPurpose {
+  ONGOING_TRACKING
+  DIAGNOSTIC_COLLECTION
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String // e.g. the teen's first name or nickname
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Project profile fields
+  description    String?         @db.Text
+  purpose        ProjectPurpose?
+
+  // Teen info
+  teenFullName       String?
+  teenNickname       String?
+  teenBirthday       DateTime?   @db.Date
+  teenFavoriteColor  String?     // hex color e.g. "#7c3aed"
+  teenInterests      String?     @db.Text
+  teenSchool         String?
+  teenFavoriteSubject String?
+  teenHasIep         Boolean?
+  teenDiagnosis      String?     @db.Text
+  teenOtherHealth    String?     @db.Text
+  teenPhotoUrl       String?
+
+  // Background
+  onsetDate          DateTime?   @db.Date
+  familyHistory      String?     @db.Text
+
+  members      TenantMember[]
+  entries      Entry[]
+  customItems  CustomChecklistItem[]
+  invites      Invite[]
+  frameworks   TenantFramework[]
+  attachments  Attachment[]
+  medications  Medication[]
+  strategies   Strategy[]
+  defaultFor   User[]           @relation("defaultTenant")
+
+  @@map("tenants")
+}
+
+enum TenantRole {
+  OWNER
+  CAREGIVER
+  TEEN_SELF
+}
+
+model TenantMember {
+  id       String     @id @default(uuid())
+  role     TenantRole
+  joinedAt DateTime   @default(now())
+
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@map("tenant_members")
+}
+
+model Invite {
+  id        String     @id @default(uuid())
+  token     String     @unique @default(uuid())
+  role      TenantRole @default(CAREGIVER)
+  used      Boolean    @default(false)
+  expiresAt DateTime
+  createdAt DateTime   @default(now())
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("invites")
+}
+
+// ──────────────────────────────────────────────
+// Daily Entry (one per user per tenant per date)
+// ──────────────────────────────────────────────
+
+enum MoodDescriptor {
+  MANIC
+  DEPRESSIVE
+  NEUTRAL
+  MIXED
+}
+
+enum DayQuality {
+  GOOD
+  NEUTRAL
+  BAD
+  MIXED
+}
+
+model Entry {
+  id   String   @id @default(uuid())
+  date DateTime @db.Date // calendar date, no time component
+
+  // Quick Log (always required)
+  mood       MoodDescriptor
+  dayQuality DayQuality
+
+  // Freeform Notes
+  notes String? @db.Text
+
+  // Flattened sub-entry data (JSONB)
+  behaviorKeys      Json?   @default("[]")    // string[] of checked behavior item keys
+  customItemIds     Json?   @default("[]")    // string[] of checked custom checklist item IDs
+  strategyIds       Json?   @default("[]")    // string[] of strategy IDs used that day
+  missedMedIds      Json?   @default("[]")    // string[] of medication IDs missed that day
+  impairments       Json?   @default("{}")    // Record<string, string> e.g. {"SCHOOL_WORK": "PRESENT"}
+  menstrualSeverity String?                   // "LIGHT" | "MEDIUM" | "HEAVY" | null
+
+  // Computed fields (persisted at write time)
+  computedMood  String?  // algorithmic classification: "MANIC", "DEPRESSIVE", "MIXED", "NEUTRAL"
+  computedScore Float?   // wave graph score
+
+  // Timestamps & attribution
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Relations (kept)
+  attachments     Attachment[]
+
+  @@unique([userId, tenantId, date])
+  @@map("entries")
+}
+
+// ──────────────────────────────────────────────
+// Custom Checklist Items (user-defined per tenant)
+// ──────────────────────────────────────────────
+
+model CustomChecklistItem {
+  id    String @id @default(uuid())
+  label String
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("custom_checklist_items")
+}
+
+// ──────────────────────────────────────────────
+// Document Attachments
+// ──────────────────────────────────────────────
+
+model Attachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  fileType  String   // MIME type e.g. "application/pdf", "image/jpeg"
+  fileSize  Int      // bytes
+  url       String   // Vercel Blob URL
+  createdAt DateTime @default(now())
+
+  entryId  String
+  entry    Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+// ──────────────────────────────────────────────
+// Medication Tracking
+// ──────────────────────────────────────────────
+
+model Medication {
+  id              String    @id @default(uuid())
+  name            String
+  dosage          String?                  // e.g. "50mg"
+  frequency       String?                  // e.g. "twice daily"
+  instructions    String?   @db.Text       // special instructions
+  startDate       DateTime? @db.Date
+  endDate         DateTime? @db.Date       // null = currently active
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("medications")
+}
+
+// ──────────────────────────────────────────────
+// Strategy Tracking
+// ──────────────────────────────────────────────
+
+model Strategy {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+  category    String?                      // e.g. "Sleep", "Communication", "De-escalation"
+  isDefault   Boolean  @default(false)     // pre-seeded strategies
+  createdAt   DateTime @default(now())
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("strategies")
+}
+
+// ──────────────────────────────────────────────
+// Diagnostic Frameworks (database-driven)
+// ──────────────────────────────────────────────
+
+model DiagnosticFramework {
+  id          String   @id @default(uuid())
+  slug        String   @unique          // "dsm5-bipolar", "dsm5-adhd"
+  name        String                    // "DSM-5 Bipolar Disorder"
+  version     String   @default("1.0")
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  poles               CriterionPole[]
+  behaviorCategories  FrameworkBehaviorCategory[]
+  classificationRules ClassificationRule[]
+  episodeThresholds   EpisodeThreshold[]
+  signalRules         SignalRule[]
+  tenants             TenantFramework[]
+  moodDescriptorMappings MoodDescriptorMapping[]
+
+  @@map("diagnostic_frameworks")
+}
+
+model CriterionPole {
+  id        String @id @default(uuid())
+  slug      String                    // "manic", "depressive"
+  name      String                    // "Manic", "Depressive"
+  direction Int    @default(0)        // +1 for wave-positive, -1 for wave-negative
+  sortOrder Int    @default(0)
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  criteria               Criterion[]
+  classificationRules    ClassificationRule[]
+  episodeThresholds      EpisodeThreshold[]
+  moodDescriptorMappings MoodDescriptorMapping[]
+
+  @@unique([frameworkId, slug])
+  @@map("criterion_poles")
+}
+
+model Criterion {
+  id            String  @id @default(uuid())
+  number        Int                       // 1-7 for manic B, 1-9 for depressive
+  name          String                    // "Inflated self-esteem / grandiosity"
+  criterionType String  @default("STANDARD") // "GATE", "CORE", "STANDARD"
+  description   String? @db.Text
+
+  poleId String
+  pole   CriterionPole @relation(fields: [poleId], references: [id], onDelete: Cascade)
+
+  behaviorMappings       BehaviorCriterionMapping[]
+  moodDescriptorMappings MoodDescriptorMapping[]
+
+  @@unique([poleId, number])
+  @@map("criteria")
+}
+
+model FrameworkBehaviorCategory {
+  id        String @id @default(uuid())
+  slug      String                    // "sleep", "energy", "manic"
+  name      String                    // "Sleep", "Energy"
+  sortOrder Int    @default(0)
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  behaviors BehaviorDefinition[]
+
+  @@unique([frameworkId, slug])
+  @@map("framework_behavior_categories")
+}
+
+model BehaviorDefinition {
+  id              String  @id @default(uuid())
+  itemKey         String                    // "elevated-expansive-irritable-mood" — stable key
+  label           String                    // "Mood is abnormally elevated, expansive, or irritable"
+  description     String                    // Short clinical description
+  recognitionExamples String? @db.Text      // JSON array of "this might look like" examples
+  isSafetyConcern Boolean @default(false)
+  sortOrder       Int     @default(0)
+
+  categoryId String
+  category   FrameworkBehaviorCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  criterionMappings BehaviorCriterionMapping[]
+  signalBehaviors   SignalBehavior[]
+
+  @@unique([categoryId, itemKey])
+  @@map("behavior_definitions")
+}
+
+model BehaviorCriterionMapping {
+  id String @id @default(uuid())
+
+  behaviorId  String
+  behavior    BehaviorDefinition @relation(fields: [behaviorId], references: [id], onDelete: Cascade)
+  criterionId String
+  criterion   Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@unique([behaviorId, criterionId])
+  @@map("behavior_criterion_mappings")
+}
+
+model MoodDescriptorMapping {
+  id            String  @id @default(uuid())
+  moodValue     String                    // "MANIC", "DEPRESSIVE", "MIXED"
+  satisfiesGate Boolean @default(false)
+  addsCriterionId String?
+
+  poleId String?
+  pole   CriterionPole? @relation(fields: [poleId], references: [id], onDelete: Cascade)
+
+  addsCriterion Criterion? @relation(fields: [addsCriterionId], references: [id])
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  @@unique([frameworkId, moodValue, poleId])
+  @@map("mood_descriptor_mappings")
+}
+
+model ClassificationRule {
+  id                  String  @id @default(uuid())
+  classificationLabel String                    // "MANIC", "DEPRESSIVE"
+  ruleType            String                    // "DSM5_FULL", "SUBTHRESHOLD"
+  gateRequired        Boolean @default(true)
+  minStandardCriteria Int
+  coreRequired        Boolean @default(false)
+  gateOnlyAdjustment  Int     @default(0)       // +1 if irritable-only variant
+  minOppositeCriteria Int     @default(0)        // for mixed features
+  mixedLabel          String?                    // "MIXED"
+  priority            Int     @default(0)
+
+  poleId String
+  pole   CriterionPole @relation(fields: [poleId], references: [id], onDelete: Cascade)
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  @@map("classification_rules")
+}
+
+model EpisodeThreshold {
+  id                  String  @id @default(uuid())
+  episodeLabel        String                    // "MANIC", "HYPOMANIC", "DEPRESSIVE"
+  confidenceLevel     String                    // "DSM5_MET", "PRODROMAL_CONCERN"
+  minDays             Int
+  requiresDsmSymptoms Boolean @default(false)
+
+  poleId String
+  pole   CriterionPole @relation(fields: [poleId], references: [id], onDelete: Cascade)
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  @@map("episode_thresholds")
+}
+
+model SignalRule {
+  id                 String  @id @default(uuid())
+  signalId           String                    // "sleep-disruption"
+  title              String                    // "Sleep disruption pattern"
+  descriptionTemplate String @db.Text          // Template with {count}, {window} placeholders
+  level              String                    // "INFO", "WARNING", "ALERT"
+  windowDays         Int
+  minOccurrences     Int
+  trendCompare       Boolean @default(false)
+  trendMinLate       Int     @default(0)
+
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  behaviors SignalBehavior[]
+
+  @@map("signal_rules")
+}
+
+model SignalBehavior {
+  id String @id @default(uuid())
+
+  signalRuleId String
+  signalRule   SignalRule @relation(fields: [signalRuleId], references: [id], onDelete: Cascade)
+
+  behaviorId String
+  behavior   BehaviorDefinition @relation(fields: [behaviorId], references: [id], onDelete: Cascade)
+
+  @@unique([signalRuleId, behaviorId])
+  @@map("signal_behaviors")
+}
+
+model TenantFramework {
+  id          String   @id @default(uuid())
+  activatedAt DateTime @default(now())
+
+  tenantId    String
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  frameworkId String
+  framework   DiagnosticFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, frameworkId])
+  @@map("tenant_frameworks")
+}
