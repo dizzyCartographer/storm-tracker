@@ -69,11 +69,10 @@ export async function neonFetch(
   return res;
 }
 
-// ── Entry write via Neon Data API (triggers handle scoring + analysis) ──
+// ── Custom endpoint helpers (write-time computation) ──
 
 export async function saveEntry(data: {
   tenantId: string;
-  userId: string;
   mood: string;
   dayQuality: string;
   behaviorKeys?: string[];
@@ -84,42 +83,12 @@ export async function saveEntry(data: {
   notes?: string;
   menstrualSeverity?: string | null;
   date?: string;
-  id?: string;
 }) {
-  const now = new Date().toISOString();
-  const entry = {
-    id: data.id || crypto.randomUUID(),
-    date: data.date || new Date().toISOString().split("T")[0],
-    mood: data.mood,
-    dayQuality: data.dayQuality,
-    behaviorKeys: data.behaviorKeys ?? [],
-    customItemIds: data.customItemIds ?? [],
-    strategyIds: data.strategyIds ?? [],
-    missedMedIds: data.missedMedIds ?? [],
-    impairments: data.impairments ?? {},
-    notes: data.notes ?? null,
-    menstrualSeverity: data.menstrualSeverity ?? null,
-    userId: data.userId,
-    tenantId: data.tenantId,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  const res = await neonFetch("/entries", {
+  const res = await apiFetch("/api/mobile/entries", {
     method: "POST",
-    headers: {
-      Prefer: "return=representation, resolution=merge-duplicates",
-    },
-    body: JSON.stringify(entry),
+    body: JSON.stringify(data),
   });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => null);
-    throw new Error(err?.message ?? `Save failed: ${res.status}`);
-  }
-
-  const rows = await res.json();
-  return rows[0];
+  return res.json();
 }
 
 // ── Neon Data API read helpers ──
@@ -447,6 +416,22 @@ export async function setDefaultTenant(
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Failed to set default tenant: ${res.status} ${body}`);
+  }
+}
+
+/** Update a tenant's profile fields via Neon Data API. */
+export async function updateTenantProfile(
+  tenantId: string,
+  data: Partial<Omit<TenantDetail, "id">>
+): Promise<void> {
+  const res = await neonFetch(`/tenants?id=eq.${tenantId}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Failed to update project: ${res.status} ${body}`);
   }
 }
 

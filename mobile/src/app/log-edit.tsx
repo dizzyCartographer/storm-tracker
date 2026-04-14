@@ -26,7 +26,6 @@ import {
   StrategyRow,
 } from "@/lib/api";
 import { palette, moodColors, radius } from "@/lib/theme";
-import { useProject } from "@/lib/project-context";
 
 // ── Constants ──
 
@@ -95,7 +94,6 @@ export default function LogEditScreen() {
     tenantId: string;
   }>();
   const router = useRouter();
-  const { userId } = useProject();
 
   // Form state
   const [date, setDate] = useState("");
@@ -212,12 +210,11 @@ export default function LogEditScreen() {
   }
 
   const handleSave = useCallback(async () => {
-    if (!tenantId || !userId) return;
+    if (!tenantId) return;
     setSaving(true);
     try {
       await saveEntry({
         tenantId,
-        userId,
         mood,
         dayQuality,
         behaviorKeys: Array.from(checkedBehaviors),

@@ -95,7 +95,7 @@ function formatDateDisplay(dateStr: string): string {
 
 export default function JournalImportScreen() {
   const router = useRouter();
-  const { selectedTenant, userId, loading: projectLoading } = useProject();
+  const { selectedTenant, loading: projectLoading } = useProject();
 
   // Step: 1=input, 2=review, 3=saved
   const [step, setStep] = useState(1);
@@ -197,14 +197,13 @@ export default function JournalImportScreen() {
   // ── Step 2: Save ──
 
   const handleSave = useCallback(async () => {
-    if (!selectedTenant || !userId) return;
+    if (!selectedTenant) return;
     setSaving(true);
     setError(null);
 
     try {
       await saveEntry({
         tenantId: selectedTenant.id,
-        userId,
         mood,
         dayQuality,
         behaviorKeys: Array.from(checkedBehaviors),
