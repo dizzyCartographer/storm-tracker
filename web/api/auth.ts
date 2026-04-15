@@ -57,7 +57,7 @@ const auth = betterAuth({
   ],
 });
 
-function withOriginalPath(request: Request): Request {
+async function withOriginalPath(request: Request): Promise<Request> {
   const url = new URL(request.url);
   const authPath = url.searchParams.get("authPath");
   if (!authPath) return request;
@@ -68,18 +68,20 @@ function withOriginalPath(request: Request): Request {
   }
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  // Read body as text first — passing request.body (ReadableStream) to new Request
+  // fails silently in Vercel's serverless runtime
+  const bodyText = hasBody ? await request.text() : undefined;
+
   return new Request(originalUrl.toString(), {
     method: request.method,
     headers: request.headers,
-    body: hasBody ? request.body : undefined,
-    // @ts-expect-error duplex is required for streaming request bodies in Node.js fetch
-    duplex: hasBody ? "half" : undefined,
+    body: bodyText,
   });
 }
 
 async function handle(request: Request): Promise<Response> {
   try {
-    const patched = withOriginalPath(request);
+    const patched = await withOriginalPath(request);
     const response = await auth.handler(patched);
     if (response.status >= 400) {
       const body = await response.clone().text();
