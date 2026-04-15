@@ -1084,3 +1084,87 @@ Two-conversation session (context compaction mid-session). Built Phases 0–7 of
 4. **Sync staging with main** after cutover is stable.
 
 ***
+
+## Session: 2026-04-15 — Vite Cutover Completed + Auth Fix
+
+### What Happened
+
+Continuation of the April 14 cutover session. The Vite web app was live on production but auth sign-in returned 500 with empty body. Spent the session diagnosing the root cause through systematic debugging, then synced branches and re-applied mobile entry writes.
+
+### Root Causes Found
+
+**Two separate issues were blocking auth:**
+
+1. **Vercel catch-all `[...path]` doesn't work for non-Next.js frameworks.** Confirmed by testing (GET `/api/auth/get-session` works, GET `/api/auth/foo/bar` returns 404) and by the [vite-plugin-vercel-api](https://github.com/qodesmith/vite-plugin-vercel-api) docs which explicitly state "Vercel does not support `[...catchAll]` routes" outside Next.js. The catch-all is a Next.js routing feature, not a generic Vercel feature. **Fix:** Rewrite in `vercel.json` routes `/api/auth/:rest*` → `/api/auth`, and Hono handles internal routing within the single function.
+
+2. **Better Auth table name mismatch.** The old Next.js config used `prismaAdapter()` which knows the Prisma-created table names. The new serverless function used a raw `Pool`, causing Better Auth to query its default table names (lowercase singular: `user`, `session`, `account`). Our Prisma tables use `@@map` to lowercase plural (`users`, `sessions`, `accounts`). Better Auth silently returned 500 with empty body for every write operation. **Fix:** Added `modelName` mappings: `user: { modelName: "users" }`, etc.
+
+### Red Herrings Investigated
+
+Before finding the table name root cause, several theories were pursued:
+- `new Request()` body stream corruption — not the issue (Hono passes `c.req.raw` directly)
+- `duplex: 'half'` for streaming bodies — not needed once Hono was added
+- Vercel's rewrite injecting `?path=` query param conflicting with Better Auth — renamed to `?rest=` but wasn't the cause
+- [Better Auth issue #8404](https://github.com/better-auth/better-auth/issues/8404) about `new Request()` cloning — related but not our specific bug
+
+### Key Decisions Made
+
+1. **Hono as routing layer.** Added Hono as a thin router in `web/api/auth.ts`. The Vercel rewrite sends all `/api/auth/*` requests to this function, Hono matches `/api/auth/*` and passes `c.req.raw` directly to `auth.handler()`. No URL reconstruction, no Request cloning. This is the [documented Better Auth + Hono pattern](https://better-auth.com/docs/integrations/hono).
+
+2. **Vercel rewrite capture group naming matters.** Vercel injects named capture groups as query params. Using `:path*` added `?path=sign-in/email` to every request. Renamed to `:rest*` to avoid potential conflicts with any library that uses `path` internally.
+
+3. **Mobile entry writes re-applied.** Cherry-picked commit `002da59` (mobile saveEntry via Neon Data API) onto staging after syncing branches. Mobile app needs a new TestFlight build to use these changes.
+
+### Work Completed
+
+- **`web/api/auth.ts`** — Rewrote as Hono app with Better Auth handler. Includes `modelName` mappings for Prisma table names. Temporary debug error handler (returns error details on 500).
+
+- **`web/vercel.json`** — Auth rewrite: `/api/auth/:rest*` → `/api/auth`. SPA fallback unchanged.
+
+- **`web/package.json`** — Added `hono` dependency.
+
+- **Branch sync.** Fast-forwarded staging to main, cherry-picked mobile entry writes (`002da59`), cleaned up ~120 ContextStore duplicate junk files from repo root (`issues/`, `archive/`, `branding/` directories + `* 2.md` / `* 3.md` duplicates). Both branches now at `3042d11`, 0 commits apart.
+
+- **Mobile entry writes restored on main.** `saveEntry` now upserts via Neon Data API (PostgREST) instead of `POST /api/mobile/entries`. Postgres triggers handle scoring and analysis. Mobile app on phone is still old binary — needs rebuild.
+
+### Vercel Platform Findings (documented for future reference)
+
+- **Catch-all `[...path]` is Next.js only.** Does not work in the generic `api/` directory for Vite or other frameworks. Single-segment dynamic routes work, multi-segment don't.
+- **Rewrites inject named captures as query params.** A rewrite with `:path*` adds `?path=value` to the destination URL. Use non-conflicting names.
+- **Rewrites preserve the original Request URL.** The function file is resolved from the destination, but `request.url` retains the original path. This is why Hono sees `/api/auth/sign-in/email` even though the destination is `/api/auth`.
+- **`export default { fetch }` works in `api/` directory.** The Hono-style fetch export pattern works for serverless functions, not just at the project root.
+- **Better Auth returns empty 500 for database errors.** No error message, no stack trace. Makes diagnosis extremely difficult. Always add error wrapping when debugging.
+
+### Process Feedback from User
+
+- **Don't implement during strategy discussion.** When we're still dialoguing about an approach, don't start coding. Wait for explicit agreement.
+- **Slow down and research before iterating.** Multiple rapid deploy-test cycles wasted time. Should have researched docs (Better Auth + Hono, Vercel catch-all limitations) before coding.
+- **Question assumptions.** The "platform limitation" was accepted without verification for too long. User pushed back: "where have you confirmed that?"
+
+### Current State
+
+| Component | Status |
+|-----------|--------|
+| Vite web app | ✅ Live on production, auth works |
+| Web sign-in | ✅ Working (200, returns session token) |
+| Web dashboard | ✅ Loads (graph issues noted — scoring display may need attention) |
+| Mobile app (on phone) | Old binary — needs rebuild for Neon Data API entry writes |
+| Mobile source code | Updated — saveEntry via Neon Data API |
+| Branches | main and staging in sync at `3042d11` |
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `main` | Current, pushed (3042d11) |
+| `staging` | In sync with main (3042d11) |
+| No worktrees | Clean |
+
+### What's Next
+
+1. **Build new TestFlight binary** — mobile needs rebuild for Neon Data API entry writes.
+2. **Investigate web graph issues** — user noted scoring display problems on the wave graph.
+3. **Remove debug error handler** from `web/api/auth.ts` once stable.
+4. **Update `web/api/_auth-config.ts`** — still exists but unused (Hono handler has inlined config). Clean up or remove.
+
+***
