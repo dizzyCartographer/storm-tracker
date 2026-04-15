@@ -64,7 +64,21 @@ const auth = betterAuth({
 });
 
 const app = new Hono();
-app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+app.on(["POST", "GET"], "/api/auth/*", async (c) => {
+  try {
+    const response = await auth.handler(c.req.raw);
+    if (response.status >= 500) {
+      const body = await response.clone().text();
+      console.error("AUTH_ERROR:", response.status, body);
+      return c.json({ error: body || "empty", status: response.status, url: c.req.url }, 500);
+    }
+    return response;
+  } catch (err) {
+    const msg = err instanceof Error ? err.stack : String(err);
+    console.error("AUTH_THROW:", msg);
+    return c.json({ error: msg }, 500);
+  }
+});
 
 // Debug: shows what URL Hono actually sees from the rewrite
 app.all("*", (c) =>
