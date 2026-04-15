@@ -63,8 +63,12 @@ async function withOriginalPath(request: Request): Promise<Request> {
   if (!authPath) return request;
 
   const originalUrl = new URL(`/api/auth/${authPath}`, url.origin);
+  // Only forward params that aren't from the Vercel rewrite itself.
+  // Vercel adds both "authPath" (our explicit param) and "path" (from the
+  // :path capture group). Better Auth uses "path" internally, so passing
+  // Vercel's "path" param breaks its routing.
   for (const [key, value] of url.searchParams) {
-    if (key !== "authPath") originalUrl.searchParams.set(key, value);
+    if (key !== "authPath" && key !== "path") originalUrl.searchParams.set(key, value);
   }
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
