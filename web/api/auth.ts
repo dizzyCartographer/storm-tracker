@@ -1,8 +1,7 @@
-// Better Auth catch-all handler for /api/auth/*
-// Handles sign-in, sign-up, sign-out, sessions, JWKS, token exchange
-//
-// Inlined config — Vercel bundles each serverless function independently,
-// so cross-directory imports don't resolve at runtime.
+// Better Auth handler for /api/auth/*
+// Vercel catch-all [...path] doesn't match multi-segment paths with Vite.
+// A rewrite in vercel.json routes /api/auth/sign-in/email → /api/auth?authPath=sign-in/email
+// We reconstruct the original URL so Better Auth can route internally.
 
 import { betterAuth } from "better-auth";
 import { Pool } from "@neondatabase/serverless";
@@ -58,5 +57,27 @@ const auth = betterAuth({
   ],
 });
 
-export const GET = (request: Request) => auth.handler(request);
-export const POST = (request: Request) => auth.handler(request);
+function withOriginalPath(request: Request): Request {
+  const url = new URL(request.url);
+  const authPath = url.searchParams.get("authPath");
+  if (!authPath) return request;
+
+  const originalUrl = new URL(`/api/auth/${authPath}`, url.origin);
+  for (const [key, value] of url.searchParams) {
+    if (key !== "authPath") originalUrl.searchParams.set(key, value);
+  }
+
+  const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  return new Request(originalUrl.toString(), {
+    method: request.method,
+    headers: request.headers,
+    body: hasBody ? request.body : undefined,
+    // @ts-expect-error duplex is required for streaming request bodies in Node.js fetch
+    duplex: hasBody ? "half" : undefined,
+  });
+}
+
+export const GET = (request: Request) =>
+  auth.handler(withOriginalPath(request));
+export const POST = (request: Request) =>
+  auth.handler(withOriginalPath(request));
