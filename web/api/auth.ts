@@ -80,10 +80,20 @@ function withOriginalPath(request: Request): Request {
 async function handle(request: Request): Promise<Response> {
   try {
     const patched = withOriginalPath(request);
-    return await auth.handler(patched);
+    const response = await auth.handler(patched);
+    if (response.status >= 400) {
+      const body = await response.clone().text();
+      console.error("AUTH_RESPONSE_ERROR:", response.status, body);
+      // Return the error body so we can see it in curl
+      return new Response(
+        JSON.stringify({ status: response.status, body, url: patched.url }),
+        { status: response.status, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    return response;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.stack || err.message : String(err);
-    console.error("AUTH_HANDLER_ERROR:", message);
+    console.error("AUTH_THROW_ERROR:", message);
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
