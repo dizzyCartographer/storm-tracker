@@ -92,7 +92,7 @@ function formatDateDisplay(dateStr: string): string {
 // ── Main Component ──
 
 export default function AIJournalScreen() {
-  const { selectedTenant, loading: projectLoading } = useProject();
+  const { selectedTenant, userId, loading: projectLoading } = useProject();
 
   // Step: 1=input, 2=review, 3=saved
   const [step, setStep] = useState(1);
@@ -194,13 +194,14 @@ export default function AIJournalScreen() {
   // ── Step 2: Save ──
 
   const handleSave = useCallback(async () => {
-    if (!selectedTenant) return;
+    if (!selectedTenant || !userId) return;
     setSaving(true);
     setError(null);
 
     try {
       await saveEntry({
         tenantId: selectedTenant.id,
+        userId,
         mood,
         dayQuality,
         behaviorKeys: Array.from(checkedBehaviors),

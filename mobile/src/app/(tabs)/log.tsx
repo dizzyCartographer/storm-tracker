@@ -101,7 +101,7 @@ function parseExamples(raw: string | null): string[] {
 // ── Main Component ──
 
 export default function LogScreen() {
-  const { selectedTenant: activeTenant, loading: projectLoading } = useProject();
+  const { selectedTenant: activeTenant, userId, loading: projectLoading } = useProject();
 
   // Form state
   const [date, setDate] = useState(todayStr());
@@ -255,11 +255,12 @@ export default function LogScreen() {
   }
 
   const handleSave = useCallback(async () => {
-    if (!activeTenant) return;
+    if (!activeTenant || !userId) return;
     setSaving(true);
     try {
       await saveEntry({
         tenantId: activeTenant.id,
+        userId,
         mood,
         dayQuality,
         behaviorKeys: Array.from(checkedBehaviors),
