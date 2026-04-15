@@ -20,6 +20,12 @@ const pool = new Pool({
 
 const auth = betterAuth({
   database: pool,
+  // Table names: Prisma created these with @@map to lowercase plural.
+  // Better Auth's raw Pool adapter defaults to lowercase singular.
+  user: { modelName: "users" },
+  session: { modelName: "sessions" },
+  account: { modelName: "accounts" },
+  verification: { modelName: "verifications" },
   emailAndPassword: { enabled: true },
   secret: process.env.STRM_TRKR_BETTER_AUTH_SECRET,
   baseURL:
