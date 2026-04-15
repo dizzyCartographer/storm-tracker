@@ -77,7 +77,19 @@ function withOriginalPath(request: Request): Request {
   });
 }
 
-export const GET = (request: Request) =>
-  auth.handler(withOriginalPath(request));
-export const POST = (request: Request) =>
-  auth.handler(withOriginalPath(request));
+async function handle(request: Request): Promise<Response> {
+  try {
+    const patched = withOriginalPath(request);
+    return await auth.handler(patched);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.stack || err.message : String(err);
+    console.error("AUTH_HANDLER_ERROR:", message);
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+export const GET = (request: Request) => handle(request);
+export const POST = (request: Request) => handle(request);
