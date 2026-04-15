@@ -17,6 +17,7 @@
     "@vercel/blob": "^2.3.3",
     "ai": "^6.0.159",
     "better-auth": "^1.6.3",
+    "hono": "^4.12.14",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router": "^7.14.1",

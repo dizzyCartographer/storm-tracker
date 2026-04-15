@@ -1,6 +1,14 @@
-// Better Auth catch-all handler for /api/auth/*
-// Web API format (named GET/POST exports) for Vercel + Vite
+// Better Auth handler for /api/auth/*
+//
+// Vercel doesn't support catch-all [...path] for non-Next.js frameworks.
+// A rewrite in vercel.json routes all /api/auth/* requests to this function.
+// Hono handles internal routing and passes the raw Request to Better Auth
+// — no URL reconstruction or new Request() cloning needed.
+//
+// See: https://better-auth.com/docs/integrations/hono
+// See: https://github.com/better-auth/better-auth/issues/8404
 
+import { Hono } from "hono";
 import { betterAuth } from "better-auth";
 import { Pool } from "@neondatabase/serverless";
 import { jwt } from "better-auth/plugins";
@@ -55,6 +63,14 @@ const auth = betterAuth({
   ],
 });
 
-// Pass request directly to Better Auth — no URL reconstruction needed
-export const GET = (request: Request) => auth.handler(request);
-export const POST = (request: Request) => auth.handler(request);
+const app = new Hono();
+app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
+// Debug: shows what URL Hono actually sees from the rewrite
+app.all("*", (c) =>
+  c.json({ debug: "no route matched", url: c.req.url, method: c.req.method }),
+);
+
+export default {
+  fetch: app.fetch,
+};
