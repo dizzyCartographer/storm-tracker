@@ -27,8 +27,7 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 
 | ID | Title | Type | Priority | Urgency | Components |
 |----|-------|------|----------|---------|------------|
-
-_(none)_
+| ST-068 | Wave graph chart on Vite reports page displays no data | bug | high | now | web, reports, scoring |
 
 ## Open — Soon
 
@@ -115,4 +114,4 @@ _(none)_
 
 ---
 
-**Total: 67 issues** (1 in progress, 8 on stage, 13 open-soon, 34 open-low, 4 deferred, 3 superseded, 1 done, 3 missing files: ST-050 has no issue file)
+**Total: 68 issues** (1 in progress, 8 on stage, 1 open-now, 13 open-soon, 34 open-low, 4 deferred, 3 superseded, 1 done, 3 missing files: ST-050 has no issue file)
