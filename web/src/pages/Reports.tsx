@@ -19,6 +19,9 @@ import {
   getTenantById,
   getFullMedications,
   getFullStrategies,
+  getFrameworkId,
+  getBehaviorCategories,
+  getBehaviorDefinitions,
   type EntryRow,
   type EpisodeRow,
   type SignalRow,
@@ -37,6 +40,7 @@ interface ReportData {
   medications: FullMedicationRow[];
   strategies: FullStrategyRow[];
   dateRange: { from: string; to: string };
+  behaviorPoleMap: Map<string, string>;
 }
 
 interface ChartPoint {
@@ -100,15 +104,23 @@ function defaultRange() {
   };
 }
 
-function extractScore(entry: EntryRow) {
+function extractScore(entry: EntryRow, behaviorPoleMap: Map<string, string>) {
   // computedMood is a plain string ("MANIC", "DEPRESSIVE", "MIXED", "NEUTRAL")
   // computedScore is a plain number (wave score float)
+  const keys = (entry.behaviorKeys as string[] | null) ?? [];
+  let manic = 0;
+  let depressive = 0;
+  for (const key of keys) {
+    const pole = behaviorPoleMap.get(key);
+    if (pole === "manic") manic++;
+    else if (pole === "depressive") depressive++;
+  }
   return {
     classification: (entry.computedMood as string) ?? "NEUTRAL",
     waveScore: (entry.computedScore as number) ?? 0,
     severity: "NONE",
-    manicCriteriaCount: 0,
-    depressiveCriteriaCount: 0,
+    manicCriteriaCount: manic,
+    depressiveCriteriaCount: depressive,
   };
 }
 
@@ -127,14 +139,26 @@ export default function Reports() {
     if (!selectedTenant) return;
     setLoading(true);
     try {
-      const [entries, episodes, signals, tenant, medications, strategies] = await Promise.all([
+      const [entries, episodes, signals, tenant, medications, strategies, frameworkId] = await Promise.all([
         getEntriesByRange(selectedTenant.id, fromDate, toDate),
         getEpisodes(selectedTenant.id),
         getSignals(selectedTenant.id),
         getTenantById(selectedTenant.id),
         getFullMedications(selectedTenant.id),
         getFullStrategies(selectedTenant.id),
+        getFrameworkId(selectedTenant.id),
       ]);
+      // Build behavior key → pole mapping for criteria counts
+      const behaviorPoleMap = new Map<string, string>();
+      if (frameworkId) {
+        const categories = await getBehaviorCategories(frameworkId);
+        const definitions = await getBehaviorDefinitions(categories.map((c) => c.id));
+        const catSlugMap = new Map(categories.map((c) => [c.id, c.slug]));
+        for (const def of definitions) {
+          const slug = catSlugMap.get(def.categoryId);
+          if (slug) behaviorPoleMap.set(def.itemKey, slug);
+        }
+      }
       setData({
         entries,
         episodes: episodes.filter((ep) => ep.startDate >= fromDate && ep.startDate <= toDate),
@@ -143,6 +167,7 @@ export default function Reports() {
         medications,
         strategies,
         dateRange: { from: fromDate, to: toDate },
+        behaviorPoleMap,
       });
     } catch (err) {
       console.error("Report generation failed:", err);
@@ -225,7 +250,7 @@ export default function Reports() {
 
 function ReportContent({ data, tenantName }: { data: ReportData; tenantName: string }) {
   const uniqueDates = new Set(data.entries.map((e) => e.date));
-  const scores = data.entries.map((e) => ({ ...e, score: extractScore(e) }));
+  const scores = data.entries.map((e) => ({ ...e, score: extractScore(e, data.behaviorPoleMap) }));
 
   const manicDays = scores.filter((d) => d.score.classification.startsWith("MANIC")).length;
   const depressiveDays = scores.filter((d) => d.score.classification.startsWith("DEPRESSIVE")).length;
