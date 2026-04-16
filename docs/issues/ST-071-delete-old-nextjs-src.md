@@ -25,3 +25,11 @@ This is the final step of ST-060 Phase 8 (cutover). Blocked until the Vite web a
 5. Delete `prisma/` directory (schema + migrations stay in git history)
 6. Update `CLAUDE.md` project structure
 7. Update `docs/context/system-architecture.md` to remove Next.js/Prisma references
+
+## Notes
+
+**2026-04-16 — First attempt rolled back.** ST-071 was completed and pushed to staging, but the staging preview had never actually worked with the Vite app (cross-origin auth to production failed because Hono didn't handle OPTIONS preflight). Rolled staging back to pre-ST-071 baseline (`d125a5c`) to debug from a known state.
+
+The staging issue was resolved by setting up proper environment isolation (same-origin auth, separate JWKS keys, staging Neon Data API endpoint) rather than fixing cross-origin. ST-071 cleanup can be re-executed now that staging is verified working.
+
+**CORS/OPTIONS discovery:** The Hono route in `web/api/auth.ts` only handles `["POST", "GET"]` — no `OPTIONS`. This caused CORS preflight failures when staging tried cross-origin auth to production. Not a problem now (same-origin), but should be added if cross-origin auth is ever needed (e.g., mobile web view).

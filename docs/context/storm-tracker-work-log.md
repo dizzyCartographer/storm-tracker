@@ -1265,3 +1265,74 @@ The save error handler showed "Could not save entry. Please try again." with no 
 8. **ST-004** — Database grants in migration — still open.
 
 ***
+
+## Session: 2026-04-16 — Staging Environment Isolation (ST-071 rollback + proper staging setup)
+
+### What Happened
+
+Started session attempting to debug staging preview cross-origin issues that had persisted for 2+ hours in the prior session. After confirming staging preview had **never worked** with the Vite app (even pre-ST-071), pivoted to setting up proper staging isolation instead of fighting cross-origin auth.
+
+### Key Decisions Made
+
+1. **Staging gets full environment isolation.** Instead of staging previews testing frontend against the production backend (cross-origin), staging now has its own auth, its own JWKS keys, and its own Neon Data API endpoint. Same-origin auth eliminates all CORS issues.
+
+2. **Vercel Deployment Protection disabled for Preview.** Was blocking unauthenticated access to staging preview. Disabled so staging URLs are testable.
+
+3. **Separate JWKS keys per environment.** Production and staging each have their own RS256 key pairs (stored in separate `jwks` tables in separate Neon branches). A token from staging cannot authenticate against production and vice versa. Primary security boundary.
+
+4. **JWT audience claim deferred (ST-075).** Adding `aud` claim would provide defense-in-depth for HIPAA — preventing cross-environment token reuse even if keys were shared. Deferred until staging is stable. Depends on ST-004.
+
+5. **`API_BASE_URL = ""` in all environments.** Serverless functions are co-deployed with the SPA on Vercel, so same-origin works everywhere. No more conditional production URL.
+
+6. **`NEON_DATA_API_URL` configurable via env var.** `VITE_NEON_DATA_API_URL` set in Vercel Preview env to staging Neon endpoint. Falls back to production endpoint if not set (for production builds and local dev).
+
+### Work Completed
+
+- **Staging rollback.** Rolled staging back to `d125a5c` (pre-ST-071) to establish a known baseline, confirming that staging preview never worked even before the cleanup.
+
+- **`web/src/lib/config.ts`** — `API_BASE_URL` changed from conditional (production URL in non-dev) to always `""`. Added `VITE_NEON_DATA_API_URL` env var support for `NEON_DATA_API_URL`.
+
+- **Neon staging Data API configured:**
+  - JWKS provider URL set to staging's own `/api/auth/jwks`
+  - `public` schema exposed
+  - Database grants applied to `authenticated`, `anonymous`, `neon_auth` roles
+
+- **Vercel Preview env var:** `VITE_NEON_DATA_API_URL` = staging Neon endpoint (`ep-round-shape-amx2h82v`).
+
+- **ST-075 issue created** — JWT audience claim hardening for HIPAA defense-in-depth. Medium priority, soon urgency, depends on ST-004.
+
+- **Issue index updated** with ST-075 (74 total issues).
+
+### Staging Architecture (final)
+
+| Component | Production | Staging |
+|-----------|-----------|---------|
+| Git branch | `main` | `staging` |
+| Neon DB branch | `main` | `staging` |
+| Neon endpoint | `ep-shy-breeze-ami5dzoi` | `ep-round-shape-amx2h82v` |
+| Auth | Same-origin (`""`) | Same-origin (`""`) |
+| JWKS keys | Own RS256 key pair | Own RS256 key pair (separate DB) |
+| Neon Data API | Production endpoint (hardcoded fallback) | Staging endpoint (via `VITE_NEON_DATA_API_URL`) |
+| URL | `storm-tracker-murex.vercel.app` | `storm-tracker-git-staging-marias-projects-d63f6c00.vercel.app` |
+
+### Verified Working
+
+Staging preview loads, auth health endpoint returns `{"ok":true}`, user confirmed sign-in and full app functional.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed (`2fa169b`) — config.ts + ST-075 |
+| `main` | Behind staging |
+| `claude/sharp-hawking` worktree | Preserves debugging work from prior session |
+
+### What's Next
+
+1. **ST-071** — Re-execute old Next.js cleanup now that staging is verified working.
+2. **Merge staging → main** when ST-071 and staging are stable.
+3. **ST-068** — Remove debug error handler from web auth.
+4. **ST-075** — JWT audience hardening (after ST-004).
+5. **ST-004** — Database grants in migration.
+
+***
