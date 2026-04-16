@@ -2,7 +2,7 @@
 id: ST-007
 title: Menstrual cycle overlay on wave graph
 type: enhancement
-status: deferred
+status: open
 priority: medium
 urgency: low
 components:

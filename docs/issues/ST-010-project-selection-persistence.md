@@ -2,7 +2,7 @@
 id: ST-010
 title: Project selection should persist across pages
 type: enhancement
-status: deferred
+status: done
 priority: medium
 urgency: soon
 components:

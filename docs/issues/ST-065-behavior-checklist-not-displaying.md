@@ -2,7 +2,7 @@
 id: ST-065
 title: Behavior checklist not displaying on mobile log screen
 type: bug
-status: on-stage
+status: done
 priority: high
 urgency: blocking
 components:

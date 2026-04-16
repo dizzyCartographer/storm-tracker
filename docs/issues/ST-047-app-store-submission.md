@@ -3,7 +3,7 @@ id: ST-047
 title: App Store submission and review
 type: enhancement
 status: open
-priority: high
+priority: medium
 urgency: low
 components:
   - mobile
