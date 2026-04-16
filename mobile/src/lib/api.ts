@@ -1,6 +1,13 @@
 import { authClient, getJwt, signOut } from "./auth";
 import { API_BASE_URL, NEON_DATA_API_URL } from "./config";
 
+function generateUUID(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 // ── Authenticated fetch for custom API endpoints ──
 
 export async function apiFetch(
@@ -88,7 +95,7 @@ export async function saveEntry(data: {
 }) {
   const now = new Date().toISOString();
   const entry = {
-    id: data.id || crypto.randomUUID(),
+    id: data.id || generateUUID(),
     date: data.date || new Date().toISOString().split("T")[0],
     mood: data.mood,
     dayQuality: data.dayQuality,

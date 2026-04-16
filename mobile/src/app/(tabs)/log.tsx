@@ -279,7 +279,8 @@ export default function LogScreen() {
       const updated = await getEntryByDate(activeTenant.id, date);
       setExistingEntry(updated);
     } catch (e) {
-      Alert.alert("Save Failed", "Could not save the entry. Please try again.");
+      const msg = e instanceof Error ? e.message : String(e);
+      Alert.alert("Save Failed", msg);
       console.error("Save error:", e);
     } finally {
       setSaving(false);
