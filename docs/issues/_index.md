@@ -25,6 +25,7 @@ _(none)_
 
 | ID | Title | Type | Priority | Urgency | Components |
 |----|-------|------|----------|---------|------------|
+| ST-074 | Wave graph chart on Vite reports page displays no data | bug | high | now | web, reports, scoring |
 
 ## Open — Soon
 
@@ -119,4 +120,4 @@ _(none)_
 
 ---
 
-**Total: 74 issues** (0 in progress, 8 on stage, 0 open-now, 17 open-soon, 38 open-low, 4 deferred, 3 superseded, 4 done)
+**Total: 75 issues** (0 in progress, 8 on stage, 1 open-now, 17 open-soon, 38 open-low, 4 deferred, 3 superseded, 4 done)
