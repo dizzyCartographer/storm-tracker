@@ -101,14 +101,14 @@ function defaultRange() {
 }
 
 function extractScore(entry: EntryRow) {
-  const mood = entry.computedMood as Record<string, unknown> | null;
-  const score = entry.computedScore as Record<string, unknown> | null;
+  // computedMood is a plain string ("MANIC", "DEPRESSIVE", "MIXED", "NEUTRAL")
+  // computedScore is a plain number (wave score float)
   return {
-    classification: (mood?.classification as string) ?? "NEUTRAL",
-    waveScore: (mood?.waveScore as number) ?? 0,
-    severity: (mood?.severity as string) ?? "NONE",
-    manicCriteriaCount: (score?.manic as number) ?? (mood?.criteriaCounts as Record<string, number>)?.manic ?? 0,
-    depressiveCriteriaCount: (score?.depressive as number) ?? (mood?.criteriaCounts as Record<string, number>)?.depressive ?? 0,
+    classification: (entry.computedMood as string) ?? "NEUTRAL",
+    waveScore: (entry.computedScore as number) ?? 0,
+    severity: "NONE",
+    manicCriteriaCount: 0,
+    depressiveCriteriaCount: 0,
   };
 }
 
