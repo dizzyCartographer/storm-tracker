@@ -46,6 +46,7 @@ _(none)_
 | ST-066 | Mobile project edit form UX parity with web | enhancement | medium | soon | mobile, projects |
 | ST-068 | Remove debug error handler from web auth serverless function | tech-debt | medium | soon | web, auth |
 | ST-073 | Surface actual error messages in mobile save/load failures | enhancement | medium | soon | mobile |
+| ST-075 | Add JWT audience claim for environment isolation hardening | tech-debt | medium | soon | auth, infrastructure |
 
 ## Open — Low Urgency
 
@@ -118,4 +119,4 @@ _(none)_
 
 ---
 
-**Total: 73 issues** (0 in progress, 8 on stage, 0 open-now, 16 open-soon, 38 open-low, 4 deferred, 3 superseded, 4 done)
+**Total: 74 issues** (0 in progress, 8 on stage, 0 open-now, 17 open-soon, 38 open-low, 4 deferred, 3 superseded, 4 done)
