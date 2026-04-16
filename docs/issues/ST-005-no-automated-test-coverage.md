@@ -3,8 +3,8 @@ id: ST-005
 title: No automated test coverage
 type: tech-debt
 status: open
-priority: high
 urgency: low
+phase: D
 components:
   - scoring
   - infrastructure

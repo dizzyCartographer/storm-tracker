@@ -3,8 +3,8 @@ id: ST-057
 title: Diagnostic reference page on mobile
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: D
 components:
   - mobile
   - reference

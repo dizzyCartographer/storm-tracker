@@ -3,8 +3,8 @@ id: ST-020
 title: AI voice logging — talk to app, auto-tabulate observations
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: F
 components:
   - log
   - journal-import

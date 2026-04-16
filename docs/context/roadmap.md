@@ -1,6 +1,6 @@
 # Roadmap
 
-This document summarizes where Storm Tracker is, what's next, and what tech debt needs attention. For the detailed phase-by-phase development history, see `storm-tracker-development-plan.md`. For individual tracked issues, see `docs/issues/`.
+This document summarizes where Storm Tracker is, what's next, and how work is phased. For the detailed development history, see `storm-tracker-development-plan.md`. For individual tracked issues, see `docs/issues/`.
 
 ---
 
@@ -8,15 +8,13 @@ This document summarizes where Storm Tracker is, what's next, and what tech debt
 
 ### What's Built
 
-**Web app (Next.js)** — fully functional but on legacy architecture:
+**Web app (Vite + React SPA)** — rewritten from Next.js in April 2026:
 - Daily logging (quick log + full behavior checklist + impairments + notes + menstrual)
 - Calendar history with mood-colored dots
 - Dashboard with entry cards, signals, episodes, predictions, suggestions
 - PDF export for clinicians with patient info, wave graph, behavior frequency chart
-- Project management (CRUD, profiles, medications, strategies)
-- Document attachments (Vercel Blob)
-- Diagnostic reference page (public, no auth)
-- User profile management
+- All data access via Neon Data API with JWT/RLS (no ORM)
+- Serverless functions only for server-side secrets (Anthropic API, Vercel Blob)
 
 **Mobile app (Expo/React Native)** — primary development target:
 - Sign in / sign up
@@ -30,124 +28,83 @@ This document summarizes where Storm Tracker is, what's next, and what tech debt
 - Mint/teal theme with React Native Paper
 
 **Backend:**
-- Neon Postgres with RLS on all 24 tables
+- Neon Postgres with RLS on all tables
 - Postgres triggers for all scoring and analysis (write-time computation)
 - Better Auth with Expo + JWT + nextCookies plugins
-- Neon Data API for mobile reads
+- Neon Data API for all client reads and writes
 - Diagnostic framework system (database-driven, extensible)
 
 **Infrastructure:**
 - Production: Vercel + Neon main branch
 - Staging: Vercel preview + Neon staging branch
-- TestFlight pipeline via EAS Build (5 builds submitted)
-- Local Xcode build workflow available (ST-050)
+- Local Xcode build workflow (ST-050, done)
+- TestFlight pipeline via local archive + Xcode Organizer
 
 ---
 
-## What's Next
+## How Issues Are Categorized
 
-### Immediate (blocking or soon)
+**Urgency** — is something broken or degraded right now?
+- **high**: core function doesn't work — can't log, can't view data, can't sign in
+- **medium**: something works but wrong — bad display, missing feedback, confusing UX
+- **low**: everything works, this is about improvement
 
-| Issue | What | Why |
-|-------|------|-----|
-| ST-050 | Local Xcode build workflow | Eliminate EAS queue times and build ceilings |
-| ST-040 | Full projects CRUD on mobile | Can't manage projects from mobile yet |
-| ST-039 | Reports + wave graph on mobile | Core feature missing from mobile |
-| ST-017 | Minimal design polish | App needs to feel more polished for beta |
-| ST-016 | Dismissable dashboard items | Dashboard clutter from non-actionable signals |
-| ST-048 | Finalize UI library decision | React Native Paper may not be the long-term choice |
+**Phase** — when does this belong in the product's lifecycle?
 
-### Before App Store Submission
-
-| Issue | What | Why |
-|-------|------|-----|
-| ST-035 | Apple Sign In | Required by Apple for apps with third-party sign-in |
-| ST-036 | Push notifications | Core engagement feature for daily logging reminders |
-| ST-045 | App icons, splash, screenshots | Required for App Store listing |
-| ST-046 | Privacy policy | Required for health-adjacent data |
-| ST-047 | App Store submission | The goal |
-| ST-005 | Automated test coverage | Can't ship health app without tests |
-| ST-006 | Clinical validation of scoring | Liability concern — DSM-5 mappings need clinician review |
-
-### High-Value Enhancements
-
-| Issue | What | Why |
-|-------|------|-----|
-| ST-013 | Track positive behavior | Clinicians need baseline, not just crisis data |
-| ST-015 | Novelty notifications for ND parents | Retention strategy for target user |
-| ST-019 | AI qualitative summary in reports | Structured data + narrative = better clinical communication |
-| ST-020 | AI voice logging | Lowest-friction entry method for exhausted caregivers |
-| ST-041 | Medications/strategies on mobile | Treatment tracking only available on web |
-| ST-043 | Offline queue | Mobile must work without connectivity |
+Phases are ordered by what makes the creator's daily experience better first, then what fulfills the broader mission, then what gets to market. This is not a startup — quality over speed.
 
 ---
 
-## Tech Debt Priorities
+## Phases
 
-These are architectural issues that increase risk or block features. Ordered by impact.
+### Phase A: Core Stability
+*The app works reliably for one caregiver.*
 
-### Critical (before public release)
+Infrastructure cleanup, bug fixes, and merge of already-built features. Unblocks all future development.
 
-| Issue | What | Impact |
-|-------|------|--------|
-| ST-005 | No automated tests | Regressions in scoring/RLS go undetected |
-| ST-006 | Unvalidated scoring algorithm | Liability — DSM-5 mappings may be incorrect |
-| ST-001 | Web bypasses RLS | Any server action bug could leak tenant data |
+**Key issues:** ST-071 (Next.js cleanup), ST-074 (dbmate migrations), ST-004 (DB grants), ST-064 (loading states), ST-073 (error messages), plus 8 on-stage items awaiting merge.
 
-### Important (before scaling)
+### Phase B: Feature Complete (Solo Caregiver)
+*One caregiver can do everything the app promises: log, analyze, report, manage — without wifi anxiety.*
 
-| Issue | What | Impact |
-|-------|------|--------|
-| ST-002 | Web recomputes on read | Inconsistency between web and mobile display |
-| ST-004 | DB grants not in migration | New environments get 403 errors from Neon Data API |
-| ST-003 | Custom GET endpoints | Maintenance burden, bypasses RLS |
-| ST-048 | UI library not finalized | May need to rewrite UI components |
+Full feature set for daily use. Reports for clinician appointments, project management, medication tracking, offline logging. This phase is what makes the app reliable enough to depend on.
 
-### Low Urgency
+**Key issues:** ST-039 (reports on mobile), ST-040 (projects CRUD), ST-041 (meds/strategies), ST-043 (offline mode), ST-059 (PDF export), ST-013 (positive behavior), ST-016 (dismissable dashboard items), ST-017 (design polish).
 
-| Issue | What | Impact |
-|-------|------|--------|
-| ST-010 | Project selection not persistent | UX friction — selection resets on navigation |
-| ST-049 | Color/typography not formalized | Inconsistency risk as app grows |
+### Phase C: Multi-User & Privacy
+*Multiple caregivers and the teen can participate safely.*
 
----
+Core to the mission — the app bridges qualitative caregiver observations and clinical diagnostic categories. Multiple observers providing structured, DSM-5-mapped data to a clinician is the differentiator. Co-caregiver invites, teen self-tracking, observer discrepancies, and privacy controls. Privacy is non-optional given eventual HIPAA requirements.
 
-## Feature Categories
+**Key issues:** ST-008 (privacy controls), ST-009 (onboarding), ST-061 (invite acceptance), ST-062 (email invites), ST-011 (read-only view), ST-027 (private notes).
 
-### Logging & Entry
-ST-013, ST-020, ST-025, ST-026, ST-037, ST-044
+### Phase D: Clinical Review & Validation
+*The scoring, episode detection, and framework logic are reviewed and tested before public release.*
 
-### Analysis & Reporting
-ST-007, ST-019, ST-039
+The creator reviews all diagnostic logic personally — scoring, suggestions, episode generation, framework management. The app legitimizes diagnostic conversations by mapping observations to DSM-5 criteria. That bridge only works if the mapping is accurate.
 
-### Project Management
-ST-008, ST-009, ST-011, ST-012, ST-021, ST-022, ST-028, ST-032, ST-033, ST-040
+**Key issues:** ST-005 (automated tests), ST-006 (clinical validation), ST-029 (cite sources), ST-057 (reference page on mobile), ST-012 (project info in PDF).
 
-### Mobile Native Features
-ST-035, ST-036, ST-038, ST-043
+### Phase E: App Store Submission
+*Everything required to pass Apple review and be publicly available. No rush — quality over speed.*
 
-### Design & Theming
-ST-014, ST-017, ST-045, ST-048, ST-049
+**Key issues:** ST-035 (Apple Sign In), ST-036 (push notifications), ST-045 (app assets), ST-046 (privacy policy), ST-047 (submission), ST-038 (biometric auth), ST-063 (iPad layout).
 
-### Infrastructure
-ST-001, ST-002, ST-003, ST-004, ST-005, ST-006, ST-046, ST-050
+### Phase F: Growth & Enhancement
+*Post-launch features that deepen the product and serve the broader community.*
+
+AI-powered logging for exhausted caregivers, faith-based resources, advanced theming, native integrations. These serve the broader mission of comforting others with the comfort the creator has received.
+
+**20 issues** — see `docs/issues/_index.md` for the full list.
 
 ---
 
-## Milestones
+## Dependency Chain (Current Blockers)
 
-### M1: Beta-Ready (TestFlight)
-Mobile v1 screens complete, basic polish, local build workflow.
-**Key issues:** ST-050, ST-040, ST-039, ST-017
-
-### M2: App Store Submission
-Apple Sign In, push notifications, app assets, privacy policy, test coverage, clinical review.
-**Key issues:** ST-035, ST-036, ST-045, ST-046, ST-047, ST-005, ST-006
-
-### M3: Post-Launch Enhancements
-AI features, native integrations, offline support, advanced theming.
-**Key issues:** ST-019, ST-020, ST-043, ST-014, ST-015
-
-### M4: Multi-User & Collaboration
-Privacy controls, onboarding, co-caregiver workflows, teen self-tracking polish.
-**Key issues:** ST-008, ST-009, ST-011, ST-022
+```
+ST-071 (remove old Next.js/Prisma — in progress)
+  → ST-074 (switch to dbmate)
+    → ST-004 (GRANTs as first dbmate migration)
+      → ephemeral Neon feature branches work
+        → faster development velocity for all phases
+```

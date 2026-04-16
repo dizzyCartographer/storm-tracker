@@ -3,8 +3,8 @@ id: ST-071
 title: Delete old Next.js source code and Prisma dependencies
 type: tech-debt
 status: open
-priority: high
-urgency: soon
+urgency: high
+phase: A
 components:
   - web
   - infrastructure

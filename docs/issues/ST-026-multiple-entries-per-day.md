@@ -3,8 +3,8 @@ id: ST-026
 title: Multiple entries per day feeding into daily entry
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - log
 source: future

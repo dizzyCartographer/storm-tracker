@@ -3,8 +3,6 @@ id: ST-003
 title: Custom GET endpoints should use Neon Data API
 type: tech-debt
 status: superseded
-priority: medium
-urgency: low
 components:
   - mobile
   - infrastructure

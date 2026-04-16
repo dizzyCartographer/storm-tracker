@@ -3,8 +3,8 @@ id: ST-031
 title: About page with creator worldview
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - navigation
 source: future

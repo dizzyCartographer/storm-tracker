@@ -3,8 +3,8 @@ id: ST-027
 title: Private caregiver notes not shared with other caregivers
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: C
 components:
   - log
   - auth

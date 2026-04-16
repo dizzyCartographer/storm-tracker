@@ -3,8 +3,8 @@ id: ST-063
 title: iPad layout adaptation
 type: enhancement
 status: open
-priority: medium
-urgency: soon
+urgency: low
+phase: E
 components:
   - mobile
   - theming

@@ -3,8 +3,8 @@ id: ST-037
 title: Camera for photo/document attachments
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: F
 components:
   - mobile
   - documents

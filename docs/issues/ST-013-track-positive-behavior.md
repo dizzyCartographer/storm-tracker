@@ -3,8 +3,8 @@ id: ST-013
 title: Track normal/positive behavior and encourage good days
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: B
 components:
   - log
   - dashboard

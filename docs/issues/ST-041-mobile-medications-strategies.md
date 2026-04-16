@@ -3,8 +3,8 @@ id: ST-041
 title: Medications and strategies management on mobile
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: B
 components:
   - mobile
   - medications

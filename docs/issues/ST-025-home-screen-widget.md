@@ -3,8 +3,8 @@ id: ST-025
 title: Home screen widget for quick entry
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: F
 components:
   - mobile
   - log

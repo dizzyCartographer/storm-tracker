@@ -3,8 +3,8 @@ id: ST-064
 title: Fix premature "no data" messages during loading
 type: bug
 status: open
-priority: high
-urgency: soon
+urgency: medium
+phase: A
 components:
   - mobile
   - dashboard

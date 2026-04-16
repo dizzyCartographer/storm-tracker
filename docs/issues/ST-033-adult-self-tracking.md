@@ -3,8 +3,8 @@ id: ST-033
 title: Adult self-tracking project option
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - projects
 source: future

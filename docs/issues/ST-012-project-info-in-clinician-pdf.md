@@ -3,8 +3,8 @@ id: ST-012
 title: Project info in clinician PDF export
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: D
 components:
   - reports
   - projects
