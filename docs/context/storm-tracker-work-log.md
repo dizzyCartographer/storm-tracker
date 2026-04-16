@@ -1231,14 +1231,37 @@ The save error handler showed "Could not save entry. Please try again." with no 
 | `main` | Behind staging by 2 commits |
 | `claude/competent-rubin` worktree | Active (user's documentation work, not stale) |
 
+### Additional Work (same session)
+
+- **ST-072 — Entry upsert fix.** The unique constraint on `(userId, tenantId, date)` already existed — the issue was PostgREST defaulting to the primary key for `merge-duplicates` conflict resolution. Fixed by adding `?on_conflict=userId,tenantId,date` to the POST URL in both mobile and web `saveEntry` functions. Verified: save creates new entry, save same date again updates it, form pre-populates from existing entries.
+
+- **ST-070 — Synced main with staging.** Fast-forwarded main to match staging. Both branches at `e3990cd`.
+
+- **ST-060 closed.** Production mobile build 3 (`com.stormtracker.app`) uploaded to App Store Connect. The full Vite rewrite is complete: web app live on production, mobile app rebuilt with matching Neon Data API data layer, both platforms verified working. Old Next.js code remains in repo (ST-071 tracks cleanup).
+
+- **6 new issues created** (ST-068 through ST-073) for cleanup work discovered during the session.
+
+- **TestFlight build 13** (staging, `com.stormtracker.dev`) with all fixes verified and uploaded.
+
+### Current State
+
+| Component | Status |
+|-----------|--------|
+| Vite web app | ✅ Live on production |
+| Mobile app (staging) | ✅ Build 13 on TestFlight, entries working |
+| Mobile app (production) | ✅ Build 3 uploaded to App Store Connect |
+| Branches | main and staging in sync at `e3990cd` |
+| ST-060 | ✅ Done — Vite rewrite complete |
+
 ### What's Next
 
-1. **Merge staging → main** when user approves.
-2. **Commit build number bump** (app.json still has uncommitted change to build 12).
-3. **ST-064** — Fix premature "no data" messages.
-4. **ST-040** — Full projects CRUD on mobile.
-5. **ST-039** — Reports and wave graph on mobile.
-6. **ST-004** — Database grants in migration — still open.
-7. **Remove debug error handler** from `web/api/auth.ts`.
+1. **ST-071** — Delete old Next.js source code and Prisma dependencies.
+2. **ST-068** — Remove debug error handler from web auth.
+3. **ST-069** — Remove unused `_auth-config.ts`.
+4. **ST-073** — Surface actual error messages in mobile failures.
+5. **ST-064** — Fix premature "no data" messages.
+6. **ST-040** — Full projects CRUD on mobile.
+7. **ST-039** — Reports and wave graph on mobile.
+8. **ST-004** — Database grants in migration — still open.
 
 ***

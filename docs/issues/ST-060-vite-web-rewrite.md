@@ -2,7 +2,8 @@
 id: ST-060
 title: Rewrite web app from Next.js to Vite SPA
 type: tech-debt
-status: in-progress
+status: done
+completed: 2026-04-15
 priority: high
 urgency: now
 components:
@@ -213,7 +214,16 @@ The web app is built on Next.js with Prisma, server actions, and SSR — none of
 7. Delete `src/`, root Next.js config files, Prisma dependencies — see ST-071
 8. Update `CLAUDE.md` project structure — blocked on ST-071
 
-**Status:** Vite web app is live in production. Auth works. Dashboard loads. Old Next.js code still in repo (ST-071). Monitoring period before final cleanup.
+**Status:** Complete. Vite web app live in production. Mobile app rebuilt with matching data layer (Neon Data API for all reads and writes). Both platforms verified working on production backend. Old Next.js code still in repo (ST-071 tracks deletion).
+
+**Final notes (2026-04-15):**
+- Production mobile build 3 (`com.stormtracker.app`) uploaded to App Store Connect
+- Staging mobile build 13 (`com.stormtracker.dev`) on TestFlight
+- Entry saves via PostgREST with `on_conflict=userId,tenantId,date` for upsert
+- Postgres triggers fire correctly via PostgREST — `computedMood`/`computedScore` populated on every write
+- `crypto.randomUUID()` not available in React Native — polyfilled with `generateUUID()`
+- Both web and mobile share the same data path: JWT → Neon Data API → RLS → Postgres triggers
+- No more custom API endpoints for data access (only auth, journal parsing, and attachments use serverless functions)
 
 ---
 

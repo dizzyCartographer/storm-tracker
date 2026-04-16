@@ -6,9 +6,7 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 
 ## In Progress
 
-| ID | Title | Type | Priority | Components |
-|----|-------|------|----------|------------|
-| ST-060 | Rewrite web app from Next.js to Vite SPA | tech-debt | high | web, infrastructure |
+_(none)_
 
 ## On Stage (built, awaiting merge/verification)
 
@@ -114,9 +112,10 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 | ID | Title | Type | Components |
 |----|-------|------|------------|
 | ST-050 | Local Xcode build workflow | enhancement | mobile, infrastructure |
+| ST-060 | Rewrite web app from Next.js to Vite SPA | tech-debt | web, infrastructure |
 | ST-070 | Sync main with staging after mobile rebuild fixes | chore | infrastructure |
 | ST-072 | Fix entry upsert via PostgREST on_conflict parameter | bug | infrastructure, mobile, web |
 
 ---
 
-**Total: 73 issues** (1 in progress, 8 on stage, 0 open-now, 16 open-soon, 38 open-low, 4 deferred, 3 superseded, 3 done)
+**Total: 73 issues** (0 in progress, 8 on stage, 0 open-now, 16 open-soon, 38 open-low, 4 deferred, 3 superseded, 4 done)
