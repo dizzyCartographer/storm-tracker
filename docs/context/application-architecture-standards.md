@@ -49,14 +49,27 @@ Do not silently install packages. Present the dependency, the justification, and
 
 ### One-way-door decisions require options and tradeoffs.
 
-A one-way-door decision is any choice that constrains future choices and is expensive to reverse. Examples: framework selection, ORM choice, auth provider, database engine, schema design patterns, hosting platform.
+A one-way-door decision is a choice that is genuinely expensive to reverse — meaning reversal requires significant rework, data migration, or downtime. Not every decision is one-way-door. Most aren't.
 
-These decisions must **never** be made unilaterally. Present:
+**A decision qualifies as one-way-door only if ALL of these are true:**
+- **Data or users are affected.** Reverting would require migrating data, breaking user sessions, or losing state — not just changing code.
+- **Multiple systems depend on it.** The choice is load-bearing across components (e.g., both web and mobile depend on the auth provider).
+- **Switching cost is measured in days, not hours.** If you could swap it out in an afternoon, it's not one-way-door.
+
+**Examples that ARE one-way-door:** Database engine, auth provider, hosting platform (when data/config is entangled), ID strategy (UUIDs vs auto-increment after data exists).
+
+**Examples that are NOT one-way-door:** Migration runner, CSS framework, charting library, file structure conventions, build tool. These can be switched with bounded effort and no data impact.
+
+**Do not inflate.** If a decision doesn't meet the criteria above, don't present it as high-stakes. State the actual switching cost honestly. Framing routine choices as architectural decisions wastes time and creates artificial dependency on the person presenting the options (see [[gender-bias-management]], Pattern 5).
+
+**Do not classify decisions without evidence.** Always present all three criteria — what data/users are affected, which systems depend on it, and the realistic switching cost. You may state your belief that a decision is one-way-door, but the evidence must come first. The user decides.
+
+For genuine one-way-door decisions, present:
 - At least two viable options
 - The tradeoffs of each (what you gain, what you lose, what it constrains)
 - A recommendation with explicit reasoning
 
-The user picks. If you're unsure whether a decision is one-way-door, treat it as one.
+The user picks.
 
 ### No change deploys to production without preview verification.
 
