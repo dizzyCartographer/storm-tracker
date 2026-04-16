@@ -1084,3 +1084,184 @@ Two-conversation session (context compaction mid-session). Built Phases 0–7 of
 4. **Sync staging with main** after cutover is stable.
 
 ***
+
+## Session: 2026-04-15 — Vite Cutover Completed + Auth Fix
+
+### What Happened
+
+Continuation of the April 14 cutover session. The Vite web app was live on production but auth sign-in returned 500 with empty body. Spent the session diagnosing the root cause through systematic debugging, then synced branches and re-applied mobile entry writes.
+
+### Root Causes Found
+
+**Two separate issues were blocking auth:**
+
+1. **Vercel catch-all `[...path]` doesn't work for non-Next.js frameworks.** Confirmed by testing (GET `/api/auth/get-session` works, GET `/api/auth/foo/bar` returns 404) and by the [vite-plugin-vercel-api](https://github.com/qodesmith/vite-plugin-vercel-api) docs which explicitly state "Vercel does not support `[...catchAll]` routes" outside Next.js. The catch-all is a Next.js routing feature, not a generic Vercel feature. **Fix:** Rewrite in `vercel.json` routes `/api/auth/:rest*` → `/api/auth`, and Hono handles internal routing within the single function.
+
+2. **Better Auth table name mismatch.** The old Next.js config used `prismaAdapter()` which knows the Prisma-created table names. The new serverless function used a raw `Pool`, causing Better Auth to query its default table names (lowercase singular: `user`, `session`, `account`). Our Prisma tables use `@@map` to lowercase plural (`users`, `sessions`, `accounts`). Better Auth silently returned 500 with empty body for every write operation. **Fix:** Added `modelName` mappings: `user: { modelName: "users" }`, etc.
+
+### Red Herrings Investigated
+
+Before finding the table name root cause, several theories were pursued:
+- `new Request()` body stream corruption — not the issue (Hono passes `c.req.raw` directly)
+- `duplex: 'half'` for streaming bodies — not needed once Hono was added
+- Vercel's rewrite injecting `?path=` query param conflicting with Better Auth — renamed to `?rest=` but wasn't the cause
+- [Better Auth issue #8404](https://github.com/better-auth/better-auth/issues/8404) about `new Request()` cloning — related but not our specific bug
+
+### Key Decisions Made
+
+1. **Hono as routing layer.** Added Hono as a thin router in `web/api/auth.ts`. The Vercel rewrite sends all `/api/auth/*` requests to this function, Hono matches `/api/auth/*` and passes `c.req.raw` directly to `auth.handler()`. No URL reconstruction, no Request cloning. This is the [documented Better Auth + Hono pattern](https://better-auth.com/docs/integrations/hono).
+
+2. **Vercel rewrite capture group naming matters.** Vercel injects named capture groups as query params. Using `:path*` added `?path=sign-in/email` to every request. Renamed to `:rest*` to avoid potential conflicts with any library that uses `path` internally.
+
+3. **Mobile entry writes re-applied.** Cherry-picked commit `002da59` (mobile saveEntry via Neon Data API) onto staging after syncing branches. Mobile app needs a new TestFlight build to use these changes.
+
+### Work Completed
+
+- **`web/api/auth.ts`** — Rewrote as Hono app with Better Auth handler. Includes `modelName` mappings for Prisma table names. Temporary debug error handler (returns error details on 500).
+
+- **`web/vercel.json`** — Auth rewrite: `/api/auth/:rest*` → `/api/auth`. SPA fallback unchanged.
+
+- **`web/package.json`** — Added `hono` dependency.
+
+- **Branch sync.** Fast-forwarded staging to main, cherry-picked mobile entry writes (`002da59`), cleaned up ~120 ContextStore duplicate junk files from repo root (`issues/`, `archive/`, `branding/` directories + `* 2.md` / `* 3.md` duplicates). Both branches now at `3042d11`, 0 commits apart.
+
+- **Mobile entry writes restored on main.** `saveEntry` now upserts via Neon Data API (PostgREST) instead of `POST /api/mobile/entries`. Postgres triggers handle scoring and analysis. Mobile app on phone is still old binary — needs rebuild.
+
+### Vercel Platform Findings (documented for future reference)
+
+- **Catch-all `[...path]` is Next.js only.** Does not work in the generic `api/` directory for Vite or other frameworks. Single-segment dynamic routes work, multi-segment don't.
+- **Rewrites inject named captures as query params.** A rewrite with `:path*` adds `?path=value` to the destination URL. Use non-conflicting names.
+- **Rewrites preserve the original Request URL.** The function file is resolved from the destination, but `request.url` retains the original path. This is why Hono sees `/api/auth/sign-in/email` even though the destination is `/api/auth`.
+- **`export default { fetch }` works in `api/` directory.** The Hono-style fetch export pattern works for serverless functions, not just at the project root.
+- **Better Auth returns empty 500 for database errors.** No error message, no stack trace. Makes diagnosis extremely difficult. Always add error wrapping when debugging.
+
+### Process Feedback from User
+
+- **Don't implement during strategy discussion.** When we're still dialoguing about an approach, don't start coding. Wait for explicit agreement.
+- **Slow down and research before iterating.** Multiple rapid deploy-test cycles wasted time. Should have researched docs (Better Auth + Hono, Vercel catch-all limitations) before coding.
+- **Question assumptions.** The "platform limitation" was accepted without verification for too long. User pushed back: "where have you confirmed that?"
+
+### Current State
+
+| Component | Status |
+|-----------|--------|
+| Vite web app | ✅ Live on production, auth works |
+| Web sign-in | ✅ Working (200, returns session token) |
+| Web dashboard | ✅ Loads (graph issues noted — scoring display may need attention) |
+| Mobile app (on phone) | Old binary — needs rebuild for Neon Data API entry writes |
+| Mobile source code | Updated — saveEntry via Neon Data API |
+| Branches | main and staging in sync at `3042d11` |
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `main` | Current, pushed (3042d11) |
+| `staging` | In sync with main (3042d11) |
+| No worktrees | Clean |
+
+### What's Next
+
+1. **Build new TestFlight binary** — mobile needs rebuild for Neon Data API entry writes.
+2. **Investigate web graph issues** — user noted scoring display problems on the wave graph.
+3. **Remove debug error handler** from `web/api/auth.ts` once stable.
+4. **Update `web/api/_auth-config.ts`** — still exists but unused (Hono handler has inlined config). Clean up or remove.
+
+***
+
+## Session: 2026-04-15 — Mobile Rebuild, Revert Damage Recovery, Entry Save Fix
+
+### What Happened
+
+User requested a TestFlight rebuild. What should have been a 10-minute build turned into a multi-hour session recovering from cascading damage caused by the unauthorized April 14 merge and its partial revert. Three separate issues had to be diagnosed and fixed before a working build could be produced.
+
+### Problems Found & Fixed
+
+**1. Mobile source code was in a broken state (from April 14 revert).**
+
+The revert on April 14 only partially rolled back mobile code. The result was a frankenstein state across `mobile/src/`:
+- **3 files completely missing:** `theme.ts`, `project-selector.tsx`, `project-edit.tsx`
+- **`_layout.tsx`:** Had a `</ProjectProvider>` closing tag but no opening tag; referenced `palette` and `PaperProvider` but didn't import them
+- **`sign-in.tsx`:** Had duplicate conflicting imports — both `Text` from `react-native` and `Text` from `react-native-paper`
+- **All themed screens:** Paper component wrapping, palette colors, native shadows — all stripped back to unstyled defaults
+
+**Fix:** Restored entire `mobile/src/` from `ecd0aa9` (last known-good commit from April 11 polish sprint), then applied the Neon Data API entry-write changes from `3042d11` on top via `git diff | git apply --3way`. Six patches applied cleanly.
+
+**2. `crypto.randomUUID()` doesn't exist in React Native.**
+
+The `saveEntry` function (written for the Neon Data API migration) used `crypto.randomUUID()` to generate entry IDs. This is a Web API that exists in browsers and Node.js but not in React Native's JavaScriptCore/Hermes runtime. Every entry save threw `ReferenceError: Property 'crypto' doesn't exist`.
+
+**Fix:** Added a simple UUID v4 generator function using `Math.random()`. Not cryptographically secure, but entry IDs don't need to be — they just need to be unique.
+
+**3. Generic error messages hid the real problem.**
+
+The save error handler showed "Could not save entry. Please try again." with no detail. Had to temporarily change it to surface `e.message` to see the actual `crypto` error. This should have been the default behavior — generic error messages waste debugging time.
+
+### Lessons Learned — What Could Have Been Avoided
+
+**The unauthorized April 14 merge is the root cause of this entire session.** Every problem traced back to it. The merge mixed web and mobile changes, the revert was partial, and the resulting broken state sat undetected on both `main` and `staging` because nobody rebuilt the mobile app until today. If the merge hadn't happened, today's session would have been: bump build number → archive → upload. Instead it was 2+ hours of archaeology.
+
+**Platform-specific API availability must be checked before using them.** `crypto.randomUUID()` works in browsers (web app) and Node.js (serverless functions) but not in React Native. This is a known gap — any code shared between web and mobile, or written for mobile specifically, needs to use React Native-compatible APIs. A quick check of "does this API exist in Hermes/JSC?" before writing the code would have caught this instantly.
+
+**Error messages must include the actual error.** Showing `e.message` instead of a generic string costs nothing and saves significant debugging time. Generic error messages are a form of information hiding that only hurts the developer.
+
+**Partial reverts are dangerous.** `git revert` on a merge commit doesn't cleanly undo everything — it creates a new commit that applies the inverse diff, but merge conflicts, file additions, and multi-file dependencies can leave the codebase in an inconsistent state. The April 14 revert left 3 files missing and multiple files with half-applied changes. A better approach would have been `git checkout <good-commit> -- mobile/src/` to restore the entire directory atomically.
+
+**Build number must be verified before every archive.** Added to conventions: always confirm the build number in `app.json` is incremented beyond the last uploaded build before archiving. Archive paths must include the build number (`StormTrackRxDev-build12.xcarchive`) so previous archives aren't overwritten.
+
+**`expo prebuild` without `--clean` fails when the app name differs between build profiles.** Staging generates `StormTrackRxDev.xcworkspace`, production generates `StormTrackRx.xcworkspace`. A non-clean prebuild can't switch between them — the existing `ios/` directory has the wrong project name. When switching between staging and production builds, `--clean` is required.
+
+### Conventions Added
+
+- **iOS build number check:** Confirm build number before archiving.
+- **Archive naming:** Include build number in archive path. Never reuse a fixed path.
+
+### Work Completed
+
+- **`mobile/src/`** — Full restoration from `ecd0aa9` + Neon Data API entry writes patched on top. 13 files changed, 1532 insertions, 1098 deletions.
+- **`mobile/src/lib/api.ts`** — Added `generateUUID()` polyfill replacing `crypto.randomUUID()`. Surfaced actual error messages in save failure alert.
+- **`docs/context/conventions.md`** — Added iOS build section (pre-build checklist, archive naming).
+- **TestFlight build 12** — Archived and uploaded. Entry saves confirmed working.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed (8e8a52e) |
+| `main` | Behind staging by 2 commits |
+| `claude/competent-rubin` worktree | Active (user's documentation work, not stale) |
+
+### Additional Work (same session)
+
+- **ST-072 — Entry upsert fix.** The unique constraint on `(userId, tenantId, date)` already existed — the issue was PostgREST defaulting to the primary key for `merge-duplicates` conflict resolution. Fixed by adding `?on_conflict=userId,tenantId,date` to the POST URL in both mobile and web `saveEntry` functions. Verified: save creates new entry, save same date again updates it, form pre-populates from existing entries.
+
+- **ST-070 — Synced main with staging.** Fast-forwarded main to match staging. Both branches at `e3990cd`.
+
+- **ST-060 closed.** Production mobile build 3 (`com.stormtracker.app`) uploaded to App Store Connect. The full Vite rewrite is complete: web app live on production, mobile app rebuilt with matching Neon Data API data layer, both platforms verified working. Old Next.js code remains in repo (ST-071 tracks cleanup).
+
+- **6 new issues created** (ST-068 through ST-073) for cleanup work discovered during the session.
+
+- **TestFlight build 13** (staging, `com.stormtracker.dev`) with all fixes verified and uploaded.
+
+### Current State
+
+| Component | Status |
+|-----------|--------|
+| Vite web app | ✅ Live on production |
+| Mobile app (staging) | ✅ Build 13 on TestFlight, entries working |
+| Mobile app (production) | ✅ Build 3 uploaded to App Store Connect |
+| Branches | main and staging in sync at `e3990cd` |
+| ST-060 | ✅ Done — Vite rewrite complete |
+
+### What's Next
+
+1. **ST-071** — Delete old Next.js source code and Prisma dependencies.
+2. **ST-068** — Remove debug error handler from web auth.
+3. **ST-069** — Remove unused `_auth-config.ts`.
+4. **ST-073** — Surface actual error messages in mobile failures.
+5. **ST-064** — Fix premature "no data" messages.
+6. **ST-040** — Full projects CRUD on mobile.
+7. **ST-039** — Reports and wave graph on mobile.
+8. **ST-004** — Database grants in migration — still open.
+
+***

@@ -1,6 +1,13 @@
 import { authClient, getJwt, signOut } from "./auth";
 import { API_BASE_URL, NEON_DATA_API_URL } from "./config";
 
+function generateUUID(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 // ── Authenticated fetch for custom API endpoints ──
 
 export async function apiFetch(
@@ -69,10 +76,11 @@ export async function neonFetch(
   return res;
 }
 
-// ── Custom endpoint helpers (write-time computation) ──
+// ── Entry write via Neon Data API (triggers handle scoring + analysis) ──
 
 export async function saveEntry(data: {
   tenantId: string;
+  userId: string;
   mood: string;
   dayQuality: string;
   behaviorKeys?: string[];
@@ -83,12 +91,42 @@ export async function saveEntry(data: {
   notes?: string;
   menstrualSeverity?: string | null;
   date?: string;
+  id?: string;
 }) {
-  const res = await apiFetch("/api/mobile/entries", {
+  const now = new Date().toISOString();
+  const entry: Record<string, unknown> = {
+    id: data.id || generateUUID(),
+    date: data.date || new Date().toISOString().split("T")[0],
+    mood: data.mood,
+    dayQuality: data.dayQuality,
+    behaviorKeys: data.behaviorKeys ?? [],
+    customItemIds: data.customItemIds ?? [],
+    strategyIds: data.strategyIds ?? [],
+    missedMedIds: data.missedMedIds ?? [],
+    impairments: data.impairments ?? {},
+    notes: data.notes ?? null,
+    menstrualSeverity: data.menstrualSeverity ?? null,
+    userId: data.userId,
+    tenantId: data.tenantId,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const res = await neonFetch("/entries?on_conflict=userId,tenantId,date", {
     method: "POST",
-    body: JSON.stringify(data),
+    headers: {
+      Prefer: "return=representation, resolution=merge-duplicates",
+    },
+    body: JSON.stringify(entry),
   });
-  return res.json();
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message ?? `Save failed: ${res.status}`);
+  }
+
+  const rows = await res.json();
+  return rows[0];
 }
 
 // ── Neon Data API read helpers ──

@@ -6,9 +6,7 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 
 ## In Progress
 
-| ID | Title | Type | Priority | Components |
-|----|-------|------|----------|------------|
-| ST-060 | Rewrite web app from Next.js to Vite SPA | tech-debt | high | web, infrastructure |
+_(none)_
 
 ## On Stage (built, awaiting merge/verification)
 
@@ -27,7 +25,7 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 
 | ID | Title | Type | Priority | Urgency | Components |
 |----|-------|------|----------|---------|------------|
-| ST-068 | Wave graph chart on Vite reports page displays no data | bug | high | now | web, reports, scoring |
+| ST-074 | Wave graph chart on Vite reports page displays no data | bug | high | now | web, reports, scoring |
 
 ## Open — Soon
 
@@ -39,6 +37,7 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 | ST-061 | Invite link acceptance on mobile | enhancement | high | soon | mobile, projects, auth |
 | ST-062 | Email-based invites with member name resolution | enhancement | high | soon | projects, auth, mobile, web |
 | ST-064 | Fix premature "no data" messages during loading | bug | high | soon | mobile, dashboard |
+| ST-071 | Delete old Next.js source code and Prisma dependencies | tech-debt | high | soon | web, infrastructure |
 | ST-004 | Database grants for Neon Data API not in a Prisma migration | tech-debt | medium | soon | infrastructure |
 | ST-016 | Dismiss signals, episodes, predictions, and suggestions on dashboard | enhancement | medium | soon | dashboard |
 | ST-017 | Minimal design polish | enhancement | medium | soon | theming, mobile |
@@ -46,6 +45,8 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 | ST-059 | PDF report generation on mobile | enhancement | medium | soon | mobile, reports |
 | ST-063 | iPad layout adaptation | enhancement | medium | soon | mobile, theming |
 | ST-066 | Mobile project edit form UX parity with web | enhancement | medium | soon | mobile, projects |
+| ST-068 | Remove debug error handler from web auth serverless function | tech-debt | medium | soon | web, auth |
+| ST-073 | Surface actual error messages in mobile save/load failures | enhancement | medium | soon | mobile |
 
 ## Open — Low Urgency
 
@@ -75,6 +76,7 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 | ST-049 | Define color palette and typography system | enhancement | medium | low | theming |
 | ST-057 | Diagnostic reference page on mobile | enhancement | medium | low | mobile, reference |
 | ST-058 | Document attachments on mobile entries | enhancement | medium | low | mobile, documents |
+| ST-069 | Remove unused _auth-config.ts from web serverless functions | tech-debt | low | low | web, auth |
 | ST-014 | Christian theme toggle with theology of mental illness framework | enhancement | low | low | theming |
 | ST-018 | Customizable report content and format | enhancement | low | low | reports |
 | ST-022 | Add descriptions of people connected to the teen | enhancement | low | low | projects |
@@ -111,7 +113,10 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 | ID | Title | Type | Components |
 |----|-------|------|------------|
 | ST-050 | Local Xcode build workflow | enhancement | mobile, infrastructure |
+| ST-060 | Rewrite web app from Next.js to Vite SPA | tech-debt | web, infrastructure |
+| ST-070 | Sync main with staging after mobile rebuild fixes | chore | infrastructure |
+| ST-072 | Fix entry upsert via PostgREST on_conflict parameter | bug | infrastructure, mobile, web |
 
 ---
 
-**Total: 68 issues** (1 in progress, 8 on stage, 1 open-now, 13 open-soon, 34 open-low, 4 deferred, 3 superseded, 1 done, 3 missing files: ST-050 has no issue file)
+**Total: 74 issues** (0 in progress, 8 on stage, 1 open-now, 16 open-soon, 38 open-low, 4 deferred, 3 superseded, 4 done)

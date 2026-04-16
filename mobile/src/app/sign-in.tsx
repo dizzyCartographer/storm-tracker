@@ -1,17 +1,14 @@
 import React, { useState } from "react";
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from "react-native";
 import { Text, Button, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/auth-context";
+import { palette, radius } from "@/lib/theme";
 
 export default function SignInScreen() {
   const { signIn, signUp } = useAuth();
@@ -153,6 +150,11 @@ export default function SignInScreen() {
               mode="contained"
               onPress={handleSubmit}
               disabled={loading || !email.trim() || !password}
+              loading={loading}
+              style={styles.button}
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.buttonLabel}
+              buttonColor={palette.primary}
             >
               {isSignUp ? "Create Account" : "Log In"}
             </Button>
@@ -178,7 +180,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: palette.background,
   },
   keyboardView: {
     flex: 1,
@@ -189,61 +191,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   logo: {
-    fontSize: 48,
     textAlign: "center",
     marginBottom: 12,
   },
   title: {
-    fontSize: 28,
     fontWeight: "700",
-    color: "#111827",
+    color: palette.primary,
     textAlign: "center",
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: "#6B7280",
+    color: palette.textSecondary,
     textAlign: "center",
     marginBottom: 32,
   },
   form: {
     gap: 16,
   },
-  inputGroup: {
-    gap: 6,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#374151",
-  },
   input: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#111827",
-    backgroundColor: "#ffffff",
+    backgroundColor: palette.surfaceAlt,
   },
   error: {
-    fontSize: 14,
-    color: "#DC2626",
+    color: palette.error,
     textAlign: "center",
   },
   button: {
-    backgroundColor: "#111827",
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: "center",
+    borderRadius: radius.md,
     marginTop: 8,
   },
-  buttonDisabled: {
-    opacity: 0.5,
+  buttonContent: {
+    paddingVertical: 6,
   },
-  buttonText: {
-    color: "#ffffff",
+  buttonLabel: {
     fontSize: 16,
     fontWeight: "600",
   },

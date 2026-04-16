@@ -1,11 +1,16 @@
 import React from "react";
 import { Stack } from "expo-router";
+import { PaperProvider } from "react-native-paper";
 import { AuthProvider } from "@/lib/auth-context";
+import { ProjectProvider } from "@/lib/project-context";
+import { appTheme, palette } from "@/lib/theme";
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
+    <PaperProvider theme={appTheme}>
+      <AuthProvider>
+        <ProjectProvider>
+        <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="entry/[id]"
@@ -13,8 +18,8 @@ export default function RootLayout() {
             headerShown: true,
             headerTitle: "Entry Detail",
             headerBackTitle: "Back",
-            headerTintColor: "#374151",
-            headerStyle: { backgroundColor: "#ffffff" },
+            headerTintColor: palette.primary,
+            headerStyle: { backgroundColor: palette.background },
           }}
         />
         <Stack.Screen
@@ -23,8 +28,8 @@ export default function RootLayout() {
             headerShown: true,
             headerTitle: "Project",
             headerBackTitle: "Projects",
-            headerTintColor: "#374151",
-            headerStyle: { backgroundColor: "#ffffff" },
+            headerTintColor: palette.primary,
+            headerStyle: { backgroundColor: palette.background },
           }}
         />
         <Stack.Screen

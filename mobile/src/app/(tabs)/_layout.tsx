@@ -1,12 +1,21 @@
 import React, { useEffect } from "react";
+import { View, StyleSheet } from "react-native";
 import { Tabs, useRouter } from "expo-router";
 import { Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Text, Divider } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/auth-context";
+import { useProject } from "@/lib/project-context";
+import { ProjectSelector } from "@/components/project-selector";
+import { HeaderMenu } from "@/components/header-menu";
+import { palette } from "@/lib/theme";
 
 const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 64;
 
-export default function TabLayout() {
+function TabLayoutInner() {
   const { isSignedIn } = useAuth();
+  const { tenants, selectedTenant, setSelectedTenantId } = useProject();
   const router = useRouter();
 
   useEffect(() => {
@@ -14,6 +23,7 @@ export default function TabLayout() {
       router.replace("/");
     }
   }, [isSignedIn]);
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* Header — app title + hamburger */}
@@ -117,7 +127,21 @@ export default function TabLayout() {
   );
 }
 
-function TabIcon({ label, color }: { label: string; color: string }) {
-  const { Text } = require("react-native");
-  return <Text style={{ fontSize: 20, color }}>{label}</Text>;
+export default function TabLayout() {
+  return <TabLayoutInner />;
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: palette.background },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 2,
+    paddingBottom: 0,
+  },
+  headerTitle: { fontWeight: "700", color: palette.primary },
+  accentBar: { height: 3, marginTop: 8 },
+  content: { flex: 1 },
+});

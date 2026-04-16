@@ -2,7 +2,8 @@
 id: ST-060
 title: Rewrite web app from Next.js to Vite SPA
 type: tech-debt
-status: in-progress
+status: done
+completed: 2026-04-15
 priority: high
 urgency: now
 components:
@@ -34,7 +35,7 @@ The web app is built on Next.js with Prisma, server actions, and SSR — none of
 
 ---
 
-## Phase 0: Scaffold + Deploy Proof
+## Phase 0: Scaffold + Deploy Proof ✅
 
 **Goal:** Vite app in `web/` deploys to Vercel with a hello-world page and a test serverless function.
 
@@ -48,14 +49,19 @@ The web app is built on Next.js with Prisma, server actions, and SSR — none of
 
 ---
 
-## Phase 1: Auth Layer
+## Phase 1: Auth Layer ✅
 
 **Goal:** Sign in, sign up, sign out, JWT acquisition, protected routes.
 
-1. **`web/api/auth/[...all].ts`** — Better Auth serverless handler
-   - Replace `prismaAdapter` with `pg` adapter (direct Postgres, no Prisma)
-   - Replace `nextCookies()` with generic handler
-   - Keep `expo()`, `jwt()` plugins (mobile must keep working)
+**Implementation notes (2026-04-14/15):**
+- Vercel catch-all `[...path]` is Next.js only — does not work for Vite. Used Hono as routing layer with a Vercel rewrite (`/api/auth/:rest*` → `/api/auth`).
+- Better Auth requires `modelName` mappings when not using Prisma adapter — default table names are singular (`user`, `session`) but Prisma created plural (`users`, `sessions`).
+- Better Auth returns empty 500 for database errors with no stack trace. Always add error wrapping when debugging.
+
+1. **`web/api/auth.ts`** — Hono app with Better Auth handler (NOT catch-all)
+   - Uses `pg` adapter (direct Postgres Pool, no Prisma)
+   - `modelName` mappings: `user: "users"`, `session: "sessions"`, `account: "accounts"`, `verification: "verifications"`
+   - Keeps `expo()`, `jwt()` plugins (mobile must keep working)
    - Same DB, same auth tables, same JWKS
 2. **`web/src/lib/config.ts`** — `API_BASE_URL`, `NEON_DATA_API_URL`
 3. **`web/src/lib/auth.ts`** — Better Auth client (`createAuthClient` with `jwtClient()`, no Expo plugin)
@@ -71,9 +77,11 @@ The web app is built on Next.js with Prisma, server actions, and SSR — none of
 
 **Verify:** Sign in with existing account. Sign out. Sign up new account. Unauthenticated `/dashboard` redirects to `/sign-in`. Mobile app still works (same auth endpoints).
 
+**Cleanup:** ST-068 (remove debug error handler), ST-069 (delete unused `_auth-config.ts`)
+
 ---
 
-## Phase 2: Data Layer + Project Context
+## Phase 2: Data Layer + Project Context ✅
 
 **Goal:** Fetch and display projects. Project selection works.
 
@@ -88,9 +96,15 @@ The web app is built on Next.js with Prisma, server actions, and SSR — none of
 
 ---
 
-## Phase 3: Entry Writes + Trigger Verification
+## Phase 3: Entry Writes + Trigger Verification ✅
 
 **Goal:** Confirm Postgres triggers fire via PostgREST. Build the log form.
+
+**Findings (2026-04-15):**
+- Postgres BEFORE triggers DO fire via PostgREST upsert — `computedMood` and `computedScore` are populated correctly.
+- Mobile entry writes migrated to neonFetch (no more `/api/mobile/entries` endpoint).
+- `crypto.randomUUID()` does not exist in React Native — replaced with polyfill.
+- Missing unique constraint on `(date, userId, tenantId)` means upsert doesn't work correctly — see ST-072.
 
 ### Step 1: Trigger test (do first, before building UI)
 - POST an entry to Neon Data API `/entries` with JWT auth on staging
@@ -114,7 +128,7 @@ The web app is built on Next.js with Prisma, server actions, and SSR — none of
 
 ---
 
-## Phase 4: Dashboard Analysis + History + Reports
+## Phase 4: Dashboard Analysis + History + Reports ✅
 
 **Goal:** All read-heavy pages work, reading from persisted tables (no recomputation).
 
@@ -130,7 +144,7 @@ The web app is built on Next.js with Prisma, server actions, and SSR — none of
 
 ---
 
-## Phase 5: RLS Migration + CRUD Pages
+## Phase 5: RLS Migration + CRUD Pages ✅
 
 **Goal:** Project management, medications, strategies, frameworks, invites.
 
@@ -158,7 +172,7 @@ The web app is built on Next.js with Prisma, server actions, and SSR — none of
 
 ---
 
-## Phase 6: Serverless Functions — Journal Import + Attachments
+## Phase 6: Serverless Functions — Journal Import + Attachments ✅
 
 **Goal:** The two features requiring server-side secrets work.
 
@@ -171,7 +185,7 @@ The web app is built on Next.js with Prisma, server actions, and SSR — none of
 
 ---
 
-## Phase 7: Remaining Pages + Polish
+## Phase 7: Remaining Pages + Polish ✅
 
 **Goal:** Feature parity with old web app.
 
@@ -187,18 +201,29 @@ The web app is built on Next.js with Prisma, server actions, and SSR — none of
 
 ---
 
-## Phase 8: Cutover
+## Phase 8: Cutover 🔧
 
 **Goal:** New web app replaces old one in production.
 
-1. Run both side-by-side on staging — test every flow
-2. Verify mobile still works (shares auth endpoint)
-3. **Critical:** `/api/auth/[...all]` must stay at same path for mobile
-4. **Critical:** If mobile still uses `/api/mobile/entries`, preserve it as a serverless function during transition
-5. Update Vercel project to deploy from `web/`
-6. Deploy to production, monitor 24-48 hours
-7. Delete `src/`, root Next.js config files, Prisma dependencies
-8. Update `CLAUDE.md` project structure
+1. ~~Run both side-by-side on staging — test every flow~~ ✅
+2. ~~Verify mobile still works (shares auth endpoint)~~ ✅
+3. ~~`/api/auth/[...all]` stays at same path for mobile~~ ✅ (handled via Hono + rewrite)
+4. ~~Mobile migrated to neonFetch for entries~~ ✅ (no longer needs `/api/mobile/entries`)
+5. ~~Update Vercel project to deploy from `web/`~~ ✅ (user changed settings: Framework=Vite, Root=`web`)
+6. ~~Deploy to production~~ ✅ (live at `storm-tracker-murex.vercel.app`)
+7. Delete `src/`, root Next.js config files, Prisma dependencies — see ST-071
+8. Update `CLAUDE.md` project structure — blocked on ST-071
+
+**Status:** Complete. Vite web app live in production. Mobile app rebuilt with matching data layer (Neon Data API for all reads and writes). Both platforms verified working on production backend. Old Next.js code still in repo (ST-071 tracks deletion).
+
+**Final notes (2026-04-15):**
+- Production mobile build 3 (`com.stormtracker.app`) uploaded to App Store Connect
+- Staging mobile build 13 (`com.stormtracker.dev`) on TestFlight
+- Entry saves via PostgREST with `on_conflict=userId,tenantId,date` for upsert
+- Postgres triggers fire correctly via PostgREST — `computedMood`/`computedScore` populated on every write
+- `crypto.randomUUID()` not available in React Native — polyfilled with `generateUUID()`
+- Both web and mobile share the same data path: JWT → Neon Data API → RLS → Postgres triggers
+- No more custom API endpoints for data access (only auth, journal parsing, and attachments use serverless functions)
 
 ---
 

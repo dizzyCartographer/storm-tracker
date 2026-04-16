@@ -82,6 +82,15 @@ Rules:
 - Never force-push to `main`.
 - Do not commit `.env`, credentials, or secrets. Check `.env.example` is up to date instead.
 
+## iOS Builds
+
+### Pre-build checklist
+- Confirm the build number in `mobile/app.json` is incremented beyond the last uploaded build before archiving.
+
+### Archive naming
+- Include the build number in the archive path: `StormTrackRxDev-build12.xcarchive` (staging) or `StormTrackRx-build12.xcarchive` (production).
+- Never reuse a fixed archive path — each build must have its own archive so previous builds are preserved.
+
 ## Environment Variables
 
 Document all required env vars in `.env.example`. Never commit `.env`.

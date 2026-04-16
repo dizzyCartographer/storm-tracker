@@ -1,15 +1,21 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
   Alert,
 } from "react-native";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import {
+  Text,
+  Card,
+  Chip,
+  Button,
+  ActivityIndicator,
+  Divider,
+  Surface,
+} from "react-native-paper";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
   getTenantById,
   getTenantMembers,
@@ -27,6 +33,7 @@ import {
   FullStrategyRow,
   CurrentUser,
 } from "@/lib/api";
+import { palette, radius } from "@/lib/theme";
 
 // ── Helpers ──
 
@@ -56,6 +63,7 @@ const PURPOSE_LABELS: Record<string, string> = {
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
+  const router = useRouter();
 
   const [tenant, setTenant] = useState<TenantDetail | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
@@ -74,7 +82,6 @@ export default function ProjectDetailScreen() {
     if (id) load();
   }, [id]);
 
-  // Update header title once tenant name is loaded
   useEffect(() => {
     if (tenant?.name) {
       navigation.setOptions({ headerTitle: tenant.name });
@@ -100,7 +107,6 @@ export default function ProjectDetailScreen() {
       setStrategies(strats);
       setCurrentUser(user);
 
-      // Try to fetch display names for members
       if (mems.length > 0) {
         const ids = mems.map((m) => m.userId);
         const users = await getUsersByIds(ids);
@@ -138,7 +144,7 @@ export default function ProjectDetailScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#374151" />
+        <ActivityIndicator size="large" color={palette.primary} />
       </View>
     );
   }
@@ -146,15 +152,19 @@ export default function ProjectDetailScreen() {
   if (error || !tenant) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>{error ?? "Project not found"}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={load}>
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
+        <Text variant="bodyMedium" style={styles.errorText}>
+          {error ?? "Project not found"}
+        </Text>
+        <Button mode="outlined" onPress={load} style={{ marginTop: 12 }}>
+          Retry
+        </Button>
       </View>
     );
   }
 
   const isDefault = currentUser?.defaultTenantId === id;
+  const userMembership = members.find((m) => m.userId === currentUser?.id);
+  const isOwner = userMembership?.role === "OWNER";
 
   return (
     <ScrollView
@@ -164,23 +174,25 @@ export default function ProjectDetailScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {/* Accent bar */}
       {tenant.teenFavoriteColor && (
         <View
           style={[styles.accentBar, { backgroundColor: tenant.teenFavoriteColor }]}
         />
       )}
 
-      {/* Default badge */}
       {isDefault && (
         <View style={styles.defaultRow}>
-          <View style={styles.defaultBadge}>
-            <Text style={styles.defaultBadgeText}>Default Project</Text>
-          </View>
+          <Chip
+            mode="flat"
+            compact
+            style={styles.defaultBadge}
+            textStyle={styles.defaultBadgeText}
+          >
+            Default Project
+          </Chip>
         </View>
       )}
 
-      {/* Description */}
       {(tenant.description || tenant.purpose) && (
         <Section title="About">
           {tenant.purpose && (
@@ -190,21 +202,24 @@ export default function ProjectDetailScreen() {
             />
           )}
           {tenant.description && (
-            <View style={styles.notesCard}>
-              <Text style={styles.notesText}>{tenant.description}</Text>
-            </View>
+            <Surface style={styles.notesCard} elevation={2}>
+              <Text variant="bodyMedium" style={styles.notesText}>
+                {tenant.description}
+              </Text>
+            </Surface>
           )}
         </Section>
       )}
 
-      {/* Teen Info */}
       <Section title="Teen Info">
         <InfoRow label="Name" value={tenant.teenFullName} />
         <InfoRow label="Nickname" value={tenant.teenNickname} />
         <InfoRow label="Birthday" value={formatDate(tenant.teenBirthday)} />
         {tenant.teenFavoriteColor && (
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Favorite Color</Text>
+            <Text variant="bodyMedium" style={styles.infoLabel}>
+              Favorite Color
+            </Text>
             <View style={styles.colorRow}>
               <View
                 style={[
@@ -212,7 +227,9 @@ export default function ProjectDetailScreen() {
                   { backgroundColor: tenant.teenFavoriteColor },
                 ]}
               />
-              <Text style={styles.infoValue}>{tenant.teenFavoriteColor}</Text>
+              <Text variant="bodyMedium" style={styles.infoValue}>
+                {tenant.teenFavoriteColor}
+              </Text>
             </View>
           </View>
         )}
@@ -225,85 +242,111 @@ export default function ProjectDetailScreen() {
         <InfoRow label="Other Health" value={tenant.teenOtherHealth} />
         {tenant.teenInterests && (
           <View style={styles.infoBlock}>
-            <Text style={styles.infoLabel}>Interests</Text>
-            <Text style={styles.infoBlockText}>{tenant.teenInterests}</Text>
+            <Text variant="bodyMedium" style={styles.infoLabel}>
+              Interests
+            </Text>
+            <Text variant="bodyMedium" style={styles.infoBlockText}>
+              {tenant.teenInterests}
+            </Text>
           </View>
         )}
       </Section>
 
-      {/* Background */}
       {(tenant.onsetDate || tenant.familyHistory) && (
         <Section title="Background">
           <InfoRow label="Onset / First Suspected" value={formatDate(tenant.onsetDate)} />
           {tenant.familyHistory && (
             <View style={styles.infoBlock}>
-              <Text style={styles.infoLabel}>Family History</Text>
-              <Text style={styles.infoBlockText}>{tenant.familyHistory}</Text>
+              <Text variant="bodyMedium" style={styles.infoLabel}>
+                Family History
+              </Text>
+              <Text variant="bodyMedium" style={styles.infoBlockText}>
+                {tenant.familyHistory}
+              </Text>
             </View>
           )}
         </Section>
       )}
 
-      {/* Medications */}
       <Section title={`Medications (${medications.length})`}>
         {medications.length === 0 ? (
-          <Text style={styles.emptyItem}>No medications logged.</Text>
+          <Text variant="bodyMedium" style={styles.emptyItem}>
+            No medications logged.
+          </Text>
         ) : (
           medications.map((med) => (
-            <View key={med.id} style={styles.listCard}>
-              <Text style={styles.listCardTitle}>{med.name}</Text>
+            <Surface key={med.id} style={styles.listCard} elevation={2}>
+              <Text variant="titleSmall" style={styles.listCardTitle}>
+                {med.name}
+              </Text>
               {med.dosage && (
-                <Text style={styles.listCardSub}>{med.dosage}</Text>
+                <Text variant="bodySmall" style={styles.listCardSub}>
+                  {med.dosage}
+                </Text>
               )}
               {med.frequency && (
-                <Text style={styles.listCardMeta}>{med.frequency}</Text>
+                <Text variant="bodySmall" style={styles.listCardMeta}>
+                  {med.frequency}
+                </Text>
               )}
               {med.instructions && (
-                <Text style={styles.listCardMeta}>{med.instructions}</Text>
+                <Text variant="bodySmall" style={styles.listCardMeta}>
+                  {med.instructions}
+                </Text>
               )}
-            </View>
+            </Surface>
           ))
         )}
       </Section>
 
-      {/* Strategies */}
       <Section title={`Strategies (${strategies.length})`}>
         {strategies.length === 0 ? (
-          <Text style={styles.emptyItem}>No strategies logged.</Text>
+          <Text variant="bodyMedium" style={styles.emptyItem}>
+            No strategies logged.
+          </Text>
         ) : (
           strategies.map((s) => (
-            <View key={s.id} style={styles.listCard}>
+            <Surface key={s.id} style={styles.listCard} elevation={2}>
               <View style={styles.listCardHeader}>
-                <Text style={styles.listCardTitle}>{s.name}</Text>
+                <Text variant="titleSmall" style={styles.listCardTitle}>
+                  {s.name}
+                </Text>
                 {s.category && (
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryBadgeText}>
-                      {s.category.replace(/_/g, " ")}
-                    </Text>
-                  </View>
+                  <Chip
+                    mode="flat"
+                    compact
+                    style={styles.categoryBadge}
+                    textStyle={styles.categoryBadgeText}
+                  >
+                    {s.category.replace(/_/g, " ")}
+                  </Chip>
                 )}
               </View>
               {s.description && (
-                <Text style={styles.listCardMeta}>{s.description}</Text>
+                <Text variant="bodySmall" style={styles.listCardMeta}>
+                  {s.description}
+                </Text>
               )}
-            </View>
+            </Surface>
           ))
         )}
       </Section>
 
-      {/* Frameworks */}
       {frameworks.length > 0 && (
         <Section title="Diagnostic Frameworks">
           {frameworks.map((fw) => (
-            <View key={fw.id} style={styles.listCard}>
-              <Text style={styles.listCardTitle}>{fw.name}</Text>
-              <Text style={styles.listCardMeta}>{fw.slug}</Text>
-            </View>
+            <Surface key={fw.id} style={styles.listCard} elevation={2}>
+              <Text variant="titleSmall" style={styles.listCardTitle}>
+                {fw.name}
+              </Text>
+              <Text variant="bodySmall" style={styles.listCardMeta}>
+                {fw.slug}
+              </Text>
+            </Surface>
           ))}
         </Section>
       )}
 
-      {/* Members */}
       <Section title={`Members (${members.length})`}>
         {members.map((member) => {
           const user = userMap.get(member.userId);
@@ -312,44 +355,64 @@ export default function ProjectDetailScreen() {
           return (
             <View key={member.id} style={styles.memberRow}>
               <View style={styles.memberAvatar}>
-                <Text style={styles.memberAvatarText}>
+                <Text variant="titleSmall" style={styles.memberAvatarText}>
                   {displayName.charAt(0).toUpperCase()}
                 </Text>
               </View>
               <View style={styles.memberInfo}>
-                <Text style={styles.memberName}>{displayName}</Text>
+                <Text variant="bodyMedium" style={styles.memberName}>
+                  {displayName}
+                </Text>
                 {user?.email && user.name && (
-                  <Text style={styles.memberEmail}>{user.email}</Text>
+                  <Text variant="bodySmall" style={styles.memberEmail}>
+                    {user.email}
+                  </Text>
                 )}
               </View>
-              <View style={styles.roleBadge}>
-                <Text style={styles.roleBadgeText}>{role}</Text>
-              </View>
+              <Chip
+                mode="flat"
+                compact
+                style={styles.roleBadge}
+                textStyle={styles.roleBadgeText}
+              >
+                {role}
+              </Chip>
             </View>
           );
         })}
       </Section>
 
-      {/* Actions */}
       <Section title="Actions">
-        {isDefault ? (
-          <View style={styles.defaultActiveRow}>
-            <Text style={styles.defaultActiveText}>
-              ✓ This is your default project
-            </Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={[styles.actionButton, settingDefault && styles.actionButtonDisabled]}
-            onPress={handleSetDefault}
-            disabled={settingDefault}
+        {isOwner && (
+          <Button
+            mode="contained"
+            onPress={() => router.push({ pathname: "/project-edit", params: { projectId: id } })}
+            buttonColor={palette.primary}
+            textColor="#ffffff"
+            style={styles.actionButton}
+            icon="pencil"
           >
-            {settingDefault ? (
-              <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <Text style={styles.actionButtonText}>Set as Default Project</Text>
-            )}
-          </TouchableOpacity>
+            Edit Project
+          </Button>
+        )}
+        {isDefault ? (
+          <Surface style={styles.defaultActiveRow} elevation={2}>
+            <Text variant="bodyMedium" style={styles.defaultActiveText}>
+              This is your default project
+            </Text>
+          </Surface>
+        ) : (
+          <Button
+            mode="contained"
+            onPress={handleSetDefault}
+            loading={settingDefault}
+            disabled={settingDefault}
+            buttonColor={palette.primary}
+            textColor="#ffffff"
+            style={styles.actionButton}
+          >
+            Set as Default Project
+          </Button>
         )}
       </Section>
 
@@ -369,7 +432,9 @@ function Section({
 }) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text variant="labelSmall" style={styles.sectionTitle}>
+        {title}
+      </Text>
       {children}
     </View>
   );
@@ -385,8 +450,8 @@ function InfoRow({
   if (!value) return null;
   return (
     <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+      <Text variant="bodyMedium" style={styles.infoLabel}>{label}</Text>
+      <Text variant="bodyMedium" style={styles.infoValue}>{value}</Text>
     </View>
   );
 }
@@ -394,50 +459,38 @@ function InfoRow({
 // ── Styles ──
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffffff" },
+  container: { flex: 1, backgroundColor: palette.background },
   content: { paddingBottom: 32 },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: palette.background,
     padding: 24,
   },
   errorText: {
-    fontSize: 14,
-    color: "#DC2626",
+    color: palette.error,
     textAlign: "center",
     marginBottom: 12,
   },
-  retryButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-  },
-  retryText: { fontSize: 14, color: "#374151", fontWeight: "500" },
 
   accentBar: { height: 4 },
 
   defaultRow: { paddingHorizontal: 16, paddingTop: 12 },
   defaultBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#ECFDF5",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+    backgroundColor: palette.successBg,
+    borderRadius: radius.sm,
   },
-  defaultBadgeText: { fontSize: 13, fontWeight: "600", color: "#065F46" },
+  defaultBadgeText: { fontSize: 13, fontWeight: "600", color: palette.success },
 
   section: {
     paddingHorizontal: 16,
     paddingTop: 24,
   },
   sectionTitle: {
-    fontSize: 13,
     fontWeight: "700",
-    color: "#9CA3AF",
+    color: palette.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.6,
     marginBottom: 12,
@@ -450,12 +503,11 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#F9FAFB",
+    borderBottomColor: palette.borderLight,
   },
-  infoLabel: { fontSize: 14, color: "#6B7280", flex: 1 },
+  infoLabel: { color: palette.textSecondary, flex: 1 },
   infoValue: {
-    fontSize: 14,
-    color: "#111827",
+    color: palette.textPrimary,
     fontWeight: "500",
     flex: 2,
     textAlign: "right",
@@ -464,31 +516,27 @@ const styles = StyleSheet.create({
   colorSwatch: {
     width: 16,
     height: 16,
-    borderRadius: 4,
+    borderRadius: radius.xs,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: palette.border,
   },
   infoBlock: { paddingVertical: 10 },
-  infoBlockText: { fontSize: 14, color: "#374151", marginTop: 4, lineHeight: 20 },
+  infoBlockText: { color: palette.textSecondary, marginTop: 4, lineHeight: 20 },
 
   notesCard: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 10,
+    backgroundColor: palette.card,
+    borderRadius: radius.md,
     padding: 12,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
     marginTop: 4,
   },
-  notesText: { fontSize: 14, color: "#374151", lineHeight: 20 },
+  notesText: { color: palette.textSecondary, lineHeight: 20 },
 
   // List cards (meds, strategies, frameworks)
   listCard: {
-    backgroundColor: "#FAFAFA",
-    borderRadius: 10,
+    backgroundColor: palette.card,
+    borderRadius: radius.md,
     padding: 12,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
   },
   listCardHeader: {
     flexDirection: "row",
@@ -497,23 +545,19 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   listCardTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#111827",
+    color: palette.textPrimary,
     flex: 1,
     marginRight: 8,
   },
-  listCardSub: { fontSize: 13, color: "#374151", marginBottom: 2 },
-  listCardMeta: { fontSize: 13, color: "#6B7280" },
+  listCardSub: { color: palette.textSecondary, marginBottom: 2 },
+  listCardMeta: { color: palette.textSecondary },
   categoryBadge: {
     backgroundColor: "#EEF2FF",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     flexShrink: 0,
   },
   categoryBadgeText: { fontSize: 11, fontWeight: "600", color: "#4338CA" },
-  emptyItem: { fontSize: 14, color: "#9CA3AF", fontStyle: "italic" },
+  emptyItem: { color: palette.textMuted, fontStyle: "italic" },
 
   // Members
   memberRow: {
@@ -521,42 +565,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#F9FAFB",
+    borderBottomColor: palette.borderLight,
     gap: 12,
   },
   memberAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: palette.primaryFaint,
     justifyContent: "center",
     alignItems: "center",
   },
-  memberAvatarText: { fontSize: 14, fontWeight: "700", color: "#374151" },
+  memberAvatarText: { fontWeight: "700", color: palette.primary },
   memberInfo: { flex: 1 },
-  memberName: { fontSize: 14, fontWeight: "600", color: "#111827" },
-  memberEmail: { fontSize: 12, color: "#6B7280" },
+  memberName: { fontWeight: "600", color: palette.textPrimary },
+  memberEmail: { color: palette.textSecondary },
   roleBadge: {
-    backgroundColor: "#F3F4F6",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    backgroundColor: palette.borderLight,
+    borderRadius: radius.sm,
   },
-  roleBadgeText: { fontSize: 12, fontWeight: "500", color: "#6B7280" },
+  roleBadgeText: { fontSize: 12, fontWeight: "500", color: palette.textSecondary },
 
   // Actions
   defaultActiveRow: {
-    backgroundColor: "#ECFDF5",
-    borderRadius: 10,
+    backgroundColor: palette.successBg,
+    borderRadius: radius.md,
     padding: 14,
   },
-  defaultActiveText: { fontSize: 14, fontWeight: "600", color: "#065F46" },
+  defaultActiveText: { fontWeight: "600", color: palette.success },
   actionButton: {
-    backgroundColor: "#374151",
-    borderRadius: 10,
-    padding: 14,
-    alignItems: "center",
+    borderRadius: radius.md,
+    marginBottom: 10,
   },
-  actionButtonDisabled: { opacity: 0.6 },
-  actionButtonText: { fontSize: 15, fontWeight: "600", color: "#ffffff" },
 });

@@ -97,7 +97,7 @@ export async function saveEntry(data: {
   id?: string;
 }) {
   const now = new Date().toISOString();
-  const entry = {
+  const entry: Record<string, unknown> = {
     id: data.id || crypto.randomUUID(),
     date: data.date,
     mood: data.mood,
@@ -115,7 +115,7 @@ export async function saveEntry(data: {
     updatedAt: now,
   };
 
-  const res = await neonFetch("/entries", {
+  const res = await neonFetch("/entries?on_conflict=userId,tenantId,date", {
     method: "POST",
     headers: {
       Prefer: "return=representation, resolution=merge-duplicates",
