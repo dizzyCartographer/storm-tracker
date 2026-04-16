@@ -2,7 +2,8 @@
 id: ST-072
 title: Add unique constraint on entries (date, userId, tenantId)
 type: bug
-status: open
+status: done
+completed: 2026-04-15
 priority: high
 urgency: soon
 components:
@@ -13,7 +14,9 @@ source: work-log-2026-04-15
 created: 2026-04-15
 ---
 
-The `entries` table has no unique constraint on `(date, userId, tenantId)`. The only unique constraint is the primary key on `id`. This means:
+**Resolution:** The unique constraint already existed (`entries_userId_tenantId_date_key`). The actual issue was PostgREST defaulting to the primary key for `merge-duplicates` conflict resolution. Fixed by adding `?on_conflict=userId,tenantId,date` to the POST URL in both mobile and web `saveEntry` functions.
+
+~~The `entries` table has no unique constraint on `(date, userId, tenantId)`.~~ The only unique constraint is the primary key on `id`. This means:
 
 1. **PostgREST `merge-duplicates` doesn't work correctly.** The `Prefer: resolution=merge-duplicates` header resolves conflicts using the primary key. Since `saveEntry` generates a new UUID for every save, every request is an INSERT — never an upsert. Saving the same date twice creates duplicate entries instead of updating the existing one.
 

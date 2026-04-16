@@ -28,7 +28,6 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 | ID | Title | Type | Priority | Urgency | Components |
 |----|-------|------|----------|---------|------------|
 | ST-070 | Sync main with staging after mobile rebuild fixes | chore | high | now | infrastructure |
-| ST-072 | Add unique constraint on entries (date, userId, tenantId) | bug | high | now | infrastructure, mobile, web |
 
 ## Open — Soon
 
@@ -116,7 +115,8 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 | ID | Title | Type | Components |
 |----|-------|------|------------|
 | ST-050 | Local Xcode build workflow | enhancement | mobile, infrastructure |
+| ST-072 | Fix entry upsert via PostgREST on_conflict parameter | bug | infrastructure, mobile, web |
 
 ---
 
-**Total: 73 issues** (1 in progress, 8 on stage, 2 open-now, 16 open-soon, 38 open-low, 4 deferred, 3 superseded, 1 done)
+**Total: 73 issues** (1 in progress, 8 on stage, 1 open-now, 16 open-soon, 38 open-low, 4 deferred, 3 superseded, 2 done)
