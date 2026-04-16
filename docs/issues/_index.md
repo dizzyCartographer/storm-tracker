@@ -40,7 +40,6 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 | ST-062 | Email-based invites with member name resolution | enhancement | high | soon | projects, auth, mobile, web |
 | ST-064 | Fix premature "no data" messages during loading | bug | high | soon | mobile, dashboard |
 | ST-071 | Delete old Next.js source code and Prisma dependencies | tech-debt | high | soon | web, infrastructure |
-| ST-072 | Fix entry upsert — pass existing ID on update | bug | high | soon | infrastructure, mobile, web |
 | ST-004 | Database grants for Neon Data API not in a Prisma migration | tech-debt | medium | soon | infrastructure |
 | ST-016 | Dismiss signals, episodes, predictions, and suggestions on dashboard | enhancement | medium | soon | dashboard |
 | ST-017 | Minimal design polish | enhancement | medium | soon | theming, mobile |
@@ -116,7 +115,8 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 | ID | Title | Type | Components |
 |----|-------|------|------------|
 | ST-050 | Local Xcode build workflow | enhancement | mobile, infrastructure |
+| ST-072 | Fix entry upsert via PostgREST on_conflict parameter | bug | infrastructure, mobile, web |
 
 ---
 
-**Total: 73 issues** (1 in progress, 8 on stage, 1 open-now, 17 open-soon, 38 open-low, 4 deferred, 3 superseded, 1 done)
+**Total: 73 issues** (1 in progress, 8 on stage, 1 open-now, 16 open-soon, 38 open-low, 4 deferred, 3 superseded, 2 done)
