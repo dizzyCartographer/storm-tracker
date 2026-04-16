@@ -2,8 +2,8 @@
 id: ST-072
 title: Add unique constraint on entries (date, userId, tenantId)
 type: bug
-status: done
-completed: 2026-04-15
+status: open
+urgency: soon
 priority: high
 urgency: soon
 components:
