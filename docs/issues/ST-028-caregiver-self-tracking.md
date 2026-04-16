@@ -3,8 +3,8 @@ id: ST-028
 title: Caregiver self mental health tracking
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: F
 components:
   - projects
   - log

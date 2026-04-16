@@ -3,8 +3,8 @@ id: ST-035
 title: Apple Sign In
 type: enhancement
 status: open
-priority: high
 urgency: low
+phase: E
 components:
   - mobile
   - auth

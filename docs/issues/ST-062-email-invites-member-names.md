@@ -3,8 +3,8 @@ id: ST-062
 title: Email-based invites with member name resolution
 type: enhancement
 status: open
-priority: high
-urgency: soon
+urgency: low
+phase: C
 components:
   - projects
   - auth

@@ -3,8 +3,8 @@ id: ST-036
 title: Push notifications for logging reminders
 type: enhancement
 status: open
-priority: high
 urgency: low
+phase: E
 components:
   - mobile
 source: ios-plan

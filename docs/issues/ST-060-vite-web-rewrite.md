@@ -4,8 +4,6 @@ title: Rewrite web app from Next.js to Vite SPA
 type: tech-debt
 status: done
 completed: 2026-04-15
-priority: high
-urgency: now
 components:
   - web
   - infrastructure

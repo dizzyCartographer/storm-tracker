@@ -4,8 +4,6 @@ title: Sync main with staging after mobile rebuild fixes
 type: chore
 status: done
 completed: 2026-04-15
-priority: high
-urgency: now
 components:
   - infrastructure
 source: work-log-2026-04-15

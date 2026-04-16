@@ -3,8 +3,8 @@ id: ST-054
 title: Remove "Import Journal" from hamburger menu
 type: enhancement
 status: on-stage
-priority: medium
-urgency: soon
+urgency: low
+phase: A
 components:
   - mobile
   - navigation

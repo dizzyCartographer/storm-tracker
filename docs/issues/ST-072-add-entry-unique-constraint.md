@@ -4,8 +4,6 @@ title: Add unique constraint on entries (date, userId, tenantId)
 type: bug
 status: done
 completed: 2026-04-15
-priority: high
-urgency: soon
 components:
   - infrastructure
   - mobile

@@ -3,8 +3,8 @@ id: ST-049
 title: Define color palette and typography system
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: B
 components:
   - theming
 source: session

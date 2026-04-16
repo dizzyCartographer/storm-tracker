@@ -3,8 +3,8 @@ id: ST-006
 title: Scoring algorithm not clinically validated
 type: tech-debt
 status: open
-priority: high
 urgency: low
+phase: D
 components:
   - scoring
 source: session

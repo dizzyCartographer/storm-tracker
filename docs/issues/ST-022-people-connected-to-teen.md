@@ -3,8 +3,8 @@ id: ST-022
 title: Add descriptions of people connected to the teen
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: C
 components:
   - projects
 source: future

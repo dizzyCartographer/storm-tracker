@@ -3,8 +3,8 @@ id: ST-030
 title: Research-based resources page for caregivers
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - reference
 source: future

@@ -3,8 +3,8 @@ id: ST-059
 title: PDF report generation on mobile
 type: enhancement
 status: open
-priority: medium
-urgency: soon
+urgency: low
+phase: B
 components:
   - mobile
   - reports

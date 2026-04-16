@@ -3,8 +3,8 @@ id: ST-048
 title: Finalize mobile design system / component library decision
 type: tech-debt
 status: open
-priority: medium
-urgency: soon
+urgency: low
+phase: B
 components:
   - mobile
   - theming

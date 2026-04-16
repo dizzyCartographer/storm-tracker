@@ -64,13 +64,27 @@ A psychiatrist, psychologist, or therapist who receives the caregiver's report. 
 
 An older teen who joins their own project to log self-observations alongside caregiver logs. Their data is tagged as self-reported. Discrepancies between caregiver and teen observations are clinically valuable.
 
+## Why This Exists
+
+Storm Tracker serves three purposes for its creator, and none of them compete:
+
+**1. Personal need.** The creator is a caregiver walking the diagnostic road with her own teen. She needs this tool — not theoretically, not someday, but now. The app's first user is its builder, and the first measure of success is whether it makes her next clinician appointment better.
+
+**2. Professional development.** Built during a career transition, Storm Tracker is a portfolio-grade engineering project demonstrating AI-assisted development, full-stack architecture, and product thinking. The professional standards applied here — architecture documentation, clinical accuracy, privacy considerations — serve both the product and the portfolio.
+
+**3. Service.** The creator's faith informs a conviction that skills and suffering both have purpose. Having walked the diagnostic road and having the ability to build, she wants to offer the same structured support to other caregivers navigating the same chaos. *"Comfort those in trouble with the comfort we ourselves receive from God."* (2 Corinthians 1:3-4)
+
+**What this means for priorities:** This is not a startup. There are no investors, no burn rate, no sprint to market. The app needs to work for its creator's family first. Expanding to serve others follows naturally — driven by quality, not urgency. Features are prioritized by what makes the daily experience better, not by what would attract users or generate revenue.
+
 ## Positioning
 
 **What it is:** A parent-friendly, DSM-aligned, longitudinal behavioral observation tool.
 
 **What it isn't:** A diagnostic tool, a treatment recommender, a replacement for clinical care.
 
-**Competitive frame:** There is no direct competitor doing this. Mood tracking apps (Daylio, eMoods) track the user's own mood. Storm Tracker tracks *someone else's* observable behavior and maps it to clinical criteria. It's built for the observer, not the patient.
+**Competitive frame:** There is no direct competitor doing this. Mood tracking apps (Daylio, eMoods) track the user's own mood with subjective ratings. Storm Tracker maps observable behavior to DSM-5 diagnostic criteria — structured clinical data, not journal entries. It's built for the observer, who may or may not be the patient.
+
+**The bridge problem:** Many diagnostic conversations today start with a TikTok video or a Google search — a parent sees something that resonates and walks into an appointment saying "I think my kid has ADHD" or "this looks like bipolar." That's qualitative and experiential. The clinician needs quantitative and categorical. Storm Tracker bridges that gap — it takes what a caregiver observes in daily life and maps it to the clinical framework a clinician needs to evaluate a diagnosis. It legitimizes and clarifies the conversation without replacing either side of it.
 
 ## Disclaimers
 

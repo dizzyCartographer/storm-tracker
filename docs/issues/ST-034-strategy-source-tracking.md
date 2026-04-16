@@ -3,8 +3,8 @@ id: ST-034
 title: Track source of strategy (child, parent, teacher, etc.)
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - strategies
 source: future

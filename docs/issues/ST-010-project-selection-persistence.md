@@ -3,8 +3,8 @@ id: ST-010
 title: Project selection should persist across pages
 type: enhancement
 status: deferred
-priority: medium
-urgency: soon
+urgency: low
+phase: deferred
 components:
   - dashboard
   - history

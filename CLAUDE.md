@@ -35,6 +35,7 @@ storm-tracker/
 │   │   ├── storm-tracker-ios-conversion-plan.md # iOS conversion roadmap
 │   │   ├── storm-tracker-work-log.md      # Running log of sessions, decisions, and work context
 │   │   ├── tooling.md                     # Development tools (ContextStore config, symlinks)
+│   │   ├── gender-bias-management.md      # AI interaction bias corrections (auto-loaded)
 │   │   └── feedback/                      # Corrections and process rules (auto-loaded)
 │   ├── issues/       # File-based issue tracker (ST-001 through ST-050+)
 │   │   └── _index.md # Auto-generated issue index (loaded every session)
@@ -76,6 +77,7 @@ When adding a new context file, add an `@` import below **and** update the tree 
 @docs/context/app-purpose-and-liability-constraints.md
 @docs/context/storm-tracker-work-log.md
 @docs/context/tooling.md
+@docs/context/gender-bias-management.md
 @docs/context/feedback/\*.md
 @docs/issues/_index.md
 

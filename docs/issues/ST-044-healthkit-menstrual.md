@@ -3,8 +3,8 @@ id: ST-044
 title: HealthKit integration for menstrual data
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - mobile
   - log

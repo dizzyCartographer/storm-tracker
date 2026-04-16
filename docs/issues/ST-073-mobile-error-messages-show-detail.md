@@ -3,8 +3,8 @@ id: ST-073
 title: Surface actual error messages in mobile save/load failures
 type: enhancement
 status: open
-priority: medium
-urgency: soon
+urgency: medium
+phase: A
 components:
   - mobile
 source: work-log-2026-04-15

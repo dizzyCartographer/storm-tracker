@@ -3,8 +3,8 @@ id: ST-055
 title: Make AI Journal a proper tab screen with persistent tab bar
 type: bug
 status: on-stage
-priority: high
-urgency: soon
+urgency: low
+phase: A
 components:
   - mobile
   - navigation

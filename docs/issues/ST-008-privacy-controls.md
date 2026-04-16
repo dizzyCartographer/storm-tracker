@@ -2,9 +2,9 @@
 id: ST-008
 title: Privacy controls — teen vs caregiver data separation
 type: enhancement
-status: deferred
-priority: medium
+status: open
 urgency: low
+phase: C
 components:
   - auth
   - projects
