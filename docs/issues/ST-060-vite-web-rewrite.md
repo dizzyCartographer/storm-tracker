@@ -11,7 +11,6 @@ components:
   - infrastructure
 source: architecture-standards
 created: 2026-04-11
-completed:
 supersedes: ST-001, ST-002, ST-003
 ---
 
