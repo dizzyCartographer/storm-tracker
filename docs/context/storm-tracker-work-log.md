@@ -1168,3 +1168,77 @@ Before finding the table name root cause, several theories were pursued:
 4. **Update `web/api/_auth-config.ts`** — still exists but unused (Hono handler has inlined config). Clean up or remove.
 
 ***
+
+## Session: 2026-04-15 — Mobile Rebuild, Revert Damage Recovery, Entry Save Fix
+
+### What Happened
+
+User requested a TestFlight rebuild. What should have been a 10-minute build turned into a multi-hour session recovering from cascading damage caused by the unauthorized April 14 merge and its partial revert. Three separate issues had to be diagnosed and fixed before a working build could be produced.
+
+### Problems Found & Fixed
+
+**1. Mobile source code was in a broken state (from April 14 revert).**
+
+The revert on April 14 only partially rolled back mobile code. The result was a frankenstein state across `mobile/src/`:
+- **3 files completely missing:** `theme.ts`, `project-selector.tsx`, `project-edit.tsx`
+- **`_layout.tsx`:** Had a `</ProjectProvider>` closing tag but no opening tag; referenced `palette` and `PaperProvider` but didn't import them
+- **`sign-in.tsx`:** Had duplicate conflicting imports — both `Text` from `react-native` and `Text` from `react-native-paper`
+- **All themed screens:** Paper component wrapping, palette colors, native shadows — all stripped back to unstyled defaults
+
+**Fix:** Restored entire `mobile/src/` from `ecd0aa9` (last known-good commit from April 11 polish sprint), then applied the Neon Data API entry-write changes from `3042d11` on top via `git diff | git apply --3way`. Six patches applied cleanly.
+
+**2. `crypto.randomUUID()` doesn't exist in React Native.**
+
+The `saveEntry` function (written for the Neon Data API migration) used `crypto.randomUUID()` to generate entry IDs. This is a Web API that exists in browsers and Node.js but not in React Native's JavaScriptCore/Hermes runtime. Every entry save threw `ReferenceError: Property 'crypto' doesn't exist`.
+
+**Fix:** Added a simple UUID v4 generator function using `Math.random()`. Not cryptographically secure, but entry IDs don't need to be — they just need to be unique.
+
+**3. Generic error messages hid the real problem.**
+
+The save error handler showed "Could not save entry. Please try again." with no detail. Had to temporarily change it to surface `e.message` to see the actual `crypto` error. This should have been the default behavior — generic error messages waste debugging time.
+
+### Lessons Learned — What Could Have Been Avoided
+
+**The unauthorized April 14 merge is the root cause of this entire session.** Every problem traced back to it. The merge mixed web and mobile changes, the revert was partial, and the resulting broken state sat undetected on both `main` and `staging` because nobody rebuilt the mobile app until today. If the merge hadn't happened, today's session would have been: bump build number → archive → upload. Instead it was 2+ hours of archaeology.
+
+**Platform-specific API availability must be checked before using them.** `crypto.randomUUID()` works in browsers (web app) and Node.js (serverless functions) but not in React Native. This is a known gap — any code shared between web and mobile, or written for mobile specifically, needs to use React Native-compatible APIs. A quick check of "does this API exist in Hermes/JSC?" before writing the code would have caught this instantly.
+
+**Error messages must include the actual error.** Showing `e.message` instead of a generic string costs nothing and saves significant debugging time. Generic error messages are a form of information hiding that only hurts the developer.
+
+**Partial reverts are dangerous.** `git revert` on a merge commit doesn't cleanly undo everything — it creates a new commit that applies the inverse diff, but merge conflicts, file additions, and multi-file dependencies can leave the codebase in an inconsistent state. The April 14 revert left 3 files missing and multiple files with half-applied changes. A better approach would have been `git checkout <good-commit> -- mobile/src/` to restore the entire directory atomically.
+
+**Build number must be verified before every archive.** Added to conventions: always confirm the build number in `app.json` is incremented beyond the last uploaded build before archiving. Archive paths must include the build number (`StormTrackRxDev-build12.xcarchive`) so previous archives aren't overwritten.
+
+**`expo prebuild` without `--clean` fails when the app name differs between build profiles.** Staging generates `StormTrackRxDev.xcworkspace`, production generates `StormTrackRx.xcworkspace`. A non-clean prebuild can't switch between them — the existing `ios/` directory has the wrong project name. When switching between staging and production builds, `--clean` is required.
+
+### Conventions Added
+
+- **iOS build number check:** Confirm build number before archiving.
+- **Archive naming:** Include build number in archive path. Never reuse a fixed path.
+
+### Work Completed
+
+- **`mobile/src/`** — Full restoration from `ecd0aa9` + Neon Data API entry writes patched on top. 13 files changed, 1532 insertions, 1098 deletions.
+- **`mobile/src/lib/api.ts`** — Added `generateUUID()` polyfill replacing `crypto.randomUUID()`. Surfaced actual error messages in save failure alert.
+- **`docs/context/conventions.md`** — Added iOS build section (pre-build checklist, archive naming).
+- **TestFlight build 12** — Archived and uploaded. Entry saves confirmed working.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed (8e8a52e) |
+| `main` | Behind staging by 2 commits |
+| `claude/competent-rubin` worktree | Active (user's documentation work, not stale) |
+
+### What's Next
+
+1. **Merge staging → main** when user approves.
+2. **Commit build number bump** (app.json still has uncommitted change to build 12).
+3. **ST-064** — Fix premature "no data" messages.
+4. **ST-040** — Full projects CRUD on mobile.
+5. **ST-039** — Reports and wave graph on mobile.
+6. **ST-004** — Database grants in migration — still open.
+7. **Remove debug error handler** from `web/api/auth.ts`.
+
+***
