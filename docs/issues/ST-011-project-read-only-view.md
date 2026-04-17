@@ -3,8 +3,8 @@ id: ST-011
 title: Project read-only view
 type: enhancement
 status: open
-priority: high
 urgency: low
+phase: C
 components:
   - projects
 source: iterative

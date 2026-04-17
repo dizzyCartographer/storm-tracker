@@ -3,8 +3,8 @@ id: ST-047
 title: App Store submission and review
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: E
 components:
   - mobile
 source: ios-plan

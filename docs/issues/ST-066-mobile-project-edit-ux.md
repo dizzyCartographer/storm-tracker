@@ -3,8 +3,8 @@ id: ST-066
 title: Mobile project edit form UX parity with web
 type: enhancement
 status: open
-priority: medium
-urgency: soon
+urgency: low
+phase: B
 components:
   - mobile
   - projects

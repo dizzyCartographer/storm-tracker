@@ -2,9 +2,9 @@
 id: ST-051
 title: Set app icon from brand SVG
 type: enhancement
-status: done
-priority: high
-urgency: soon
+status: on-stage
+urgency: low
+phase: A
 components:
   - mobile
   - theming

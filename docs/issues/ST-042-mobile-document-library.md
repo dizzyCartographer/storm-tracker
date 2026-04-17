@@ -3,8 +3,8 @@ id: ST-042
 title: Document library on mobile
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - mobile
   - documents

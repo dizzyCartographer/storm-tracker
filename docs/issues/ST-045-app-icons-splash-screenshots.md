@@ -3,8 +3,8 @@ id: ST-045
 title: App icons, splash screen, and App Store screenshots
 type: enhancement
 status: open
-priority: high
 urgency: low
+phase: E
 components:
   - mobile
   - theming

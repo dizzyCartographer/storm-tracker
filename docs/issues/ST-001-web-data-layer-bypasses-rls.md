@@ -3,8 +3,6 @@ id: ST-001
 title: Web data layer bypasses RLS (server actions + Prisma)
 type: tech-debt
 status: superseded
-priority: high
-urgency: low
 components:
   - web
   - infrastructure

@@ -3,8 +3,8 @@ id: ST-038
 title: Face ID / Touch ID biometric auth
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: E
 components:
   - mobile
   - auth

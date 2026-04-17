@@ -3,8 +3,8 @@ id: ST-061
 title: Invite link acceptance on mobile
 type: enhancement
 status: open
-priority: high
-urgency: soon
+urgency: low
+phase: C
 components:
   - mobile
   - projects

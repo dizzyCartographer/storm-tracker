@@ -3,8 +3,8 @@ id: ST-068
 title: Remove debug error handler from web auth serverless function
 type: tech-debt
 status: open
-priority: high
-urgency: soon
+urgency: low
+phase: A
 components:
   - web
   - auth

@@ -3,8 +3,8 @@ id: ST-019
 title: AI qualitative summary in clinician reports
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: F
 components:
   - reports
 source: future

@@ -3,8 +3,6 @@ id: ST-002
 title: Remove recomputation from web read paths
 type: tech-debt
 status: superseded
-priority: high
-urgency: low
 components:
   - web
   - dashboard

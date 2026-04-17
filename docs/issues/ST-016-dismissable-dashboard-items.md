@@ -3,8 +3,8 @@ id: ST-016
 title: Dismiss signals, episodes, predictions, and suggestions on dashboard
 type: enhancement
 status: open
-priority: medium
-urgency: soon
+urgency: low
+phase: B
 components:
   - dashboard
 source: future

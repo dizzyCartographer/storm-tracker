@@ -3,8 +3,8 @@ id: ST-017
 title: Minimal design polish
 type: enhancement
 status: open
-priority: medium
-urgency: soon
+urgency: low
+phase: B
 components:
   - theming
   - mobile

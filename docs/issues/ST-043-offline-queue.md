@@ -3,8 +3,8 @@ id: ST-043
 title: Offline mode with read cache and write queue
 type: enhancement
 status: open
-priority: high
-urgency: soon
+urgency: low
+phase: B
 components:
   - mobile
 source: ios-plan

@@ -3,8 +3,8 @@ id: ST-018
 title: Customizable report content and format
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - reports
 source: future

@@ -3,8 +3,8 @@ id: ST-021
 title: Parental goals and positive behavior tracking
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: F
 components:
   - projects
   - log

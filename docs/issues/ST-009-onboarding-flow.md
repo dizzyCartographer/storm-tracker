@@ -3,8 +3,8 @@ id: ST-009
 title: Onboarding flow for new accounts and projects
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: C
 components:
   - projects
   - auth

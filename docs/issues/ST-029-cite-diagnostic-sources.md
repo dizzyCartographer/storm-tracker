@@ -3,8 +3,8 @@ id: ST-029
 title: Cite sources on diagnostic criteria
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: D
 components:
   - reference
   - scoring

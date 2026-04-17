@@ -2,13 +2,10 @@
 id: ST-067
 title: Dynamic app icon per build profile (dev vs production)
 type: enhancement
-status: done
-priority: high
-urgency: soon
-components:
-  - mobile
-  - infrastructure
-  - theming
+status: on-stage
+urgency: low
+phase: A
+components: [mobile, infrastructure, theming]
 created: 2026-04-13
 ---
 
