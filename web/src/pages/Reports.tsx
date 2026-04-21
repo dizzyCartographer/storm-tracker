@@ -101,14 +101,16 @@ function defaultRange() {
 }
 
 function extractScore(entry: EntryRow) {
-  const mood = entry.computedMood as Record<string, unknown> | null;
-  const score = entry.computedScore as Record<string, unknown> | null;
+  // All values are computed and persisted by the Postgres scoring trigger.
+  // computedMood = classification string, computedScore = wave score number,
+  // computedCriteriaCounts = { pole_slug: count } JSONB.
+  const counts = entry.computedCriteriaCounts ?? {};
   return {
-    classification: (mood?.classification as string) ?? "NEUTRAL",
-    waveScore: (mood?.waveScore as number) ?? 0,
-    severity: (mood?.severity as string) ?? "NONE",
-    manicCriteriaCount: (score?.manic as number) ?? (mood?.criteriaCounts as Record<string, number>)?.manic ?? 0,
-    depressiveCriteriaCount: (score?.depressive as number) ?? (mood?.criteriaCounts as Record<string, number>)?.depressive ?? 0,
+    classification: entry.computedMood ?? "NEUTRAL",
+    waveScore: entry.computedScore ?? 0,
+    severity: "NONE",
+    manicCriteriaCount: counts.manic ?? 0,
+    depressiveCriteriaCount: counts.depressive ?? 0,
   };
 }
 

@@ -3,8 +3,8 @@ id: ST-056
 title: Fix AI Journal page title and redundant header
 type: bug
 status: on-stage
-priority: medium
-urgency: soon
+urgency: low
+phase: A
 components:
   - mobile
   - navigation

@@ -3,8 +3,8 @@ id: ST-058
 title: Document attachments on mobile entries
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: F
 components:
   - mobile
   - documents

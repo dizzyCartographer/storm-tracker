@@ -3,8 +3,8 @@ id: ST-014
 title: Christian theme toggle with theology of mental illness framework
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - theming
 source: future

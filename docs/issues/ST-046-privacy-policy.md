@@ -3,8 +3,8 @@ id: ST-046
 title: Privacy policy for health-adjacent data
 type: enhancement
 status: open
-priority: high
 urgency: low
+phase: E
 components:
   - infrastructure
 source: ios-plan

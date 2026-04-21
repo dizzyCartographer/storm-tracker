@@ -3,8 +3,8 @@ id: ST-015
 title: Variable novelty notification system for ND parent retention
 type: enhancement
 status: open
-priority: medium
 urgency: low
+phase: F
 components:
   - mobile
 source: future

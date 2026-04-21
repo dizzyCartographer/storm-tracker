@@ -1336,3 +1336,100 @@ Staging preview loads, auth health endpoint returns `{"ok":true}`, user confirme
 5. **ST-004** — Database grants in migration.
 
 ***
+
+## Session: 2026-04-16 — ST-074 Scoring Fix (Partial), Branch Divergence, Doc Cleanup
+
+### What Happened
+
+Session continued ST-074 scoring investigation from the previous conversation. Partial fix merged to staging via PR #10. Criteria counts still broken on staging preview — root cause not found despite verifying all data and code paths. User put debugging on hold, asked for documentation cleanup and a repo status. This entry closes out the session per that request.
+
+### ST-074 Scoring Fix — Partial
+
+**What was fixed (merged to staging as PR #10, `15410f9`):**
+- `extractScore()` in `web/src/pages/Reports.tsx` rewritten to read `computedMood` as TEXT and `computedScore` as DOUBLE PRECISION scalars. Prior code treated them as JSONB objects and fell through to 0/NEUTRAL defaults.
+- `generate()` rewritten to fetch framework data in parallel (`getFrameworkId`, `getBehaviorCategories`, `getBehaviorDefinitions`) and build a `behaviorPoleMap` (itemKey → pole slug) for client-side criteria derivation.
+- Wave graph now renders correct classification colors + wave score curve on staging.
+
+**What is still broken:**
+- Per-entry `manicCriteriaCount` / `depressiveCriteriaCount` remain 0 on the staging preview.
+- Behavior frequency chart and tooltip counts are empty.
+- `behaviorPoleMap` appears empty at runtime, but all DB data and code paths check out.
+
+**Verified correct in the database (production and staging):**
+- `tenant_frameworks` has records for test tenants
+- `framework_behavior_categories` has rows with slugs `manic` and `depressive`
+- `behavior_definitions` has 17 rows with `itemKey`s that match entry `behaviorKeys`
+- RLS policies on framework tables use `auth.user_id() IS NOT NULL` (any authenticated user reads)
+- Entries have non-empty `behaviorKeys` arrays (March 12–27 confirmed)
+
+**Verified correct in code:**
+- `getEntriesByRange()` in `web/src/lib/api.ts` selects `"behaviorKeys"`
+- Framework fetches use the double-quoted UUID IN-clause pattern that works in mobile
+- `neonFetch()` retries up to 3 times on transient JWKS errors
+- Vercel env: Preview `VITE_NEON_DATA_API_URL` → staging Neon (`ep-round-shape-amx2h82v`); Production → `ep-shy-breeze-ami5dzoi`
+
+**Leading hypothesis (unverified):** Transient JWKS cache miss on one of the framework-data fetches fails silently — the `try/catch` in `generate()` swallows errors and leaves `behaviorPoleMap` empty. Debug `console.log` statements were added to `web/src/pages/Reports.tsx` in the `sharp-hawking` worktree but were never committed.
+
+### User Decision: Pause
+
+User had a doctor's appointment and said enough data had been gathered regardless of chart state: *"I think I have enough info... it'll be fine... but we have GOT to stabalize these key features... put this on hold."*
+
+Requested: close out docs, update tickets, write repo status, commit everything to staging directly (no PRs).
+
+### Branch Divergence and Merge
+
+Local `staging` had diverged from `origin/staging`.
+
+**Local-only commits:**
+- `dc2134c` — chore: trigger production redeploy
+- `7343100` — docs: Obsidian issue triage (17 files, status/priority frontmatter changes)
+
+**Remote-only commits:**
+- `75062c5` — PR #9 — phase-based roadmap docs restructure
+- `15410f9` — PR #10 — ST-074 scoring fix
+
+Both sides touched `docs/issues/`. `git merge origin/staging` produced 17 conflicts, all in YAML frontmatter of issue files — Obsidian triage changed `status` / `priority` fields while PR #9 restructured the entire schema (removed `priority`, added `phase`, rewrote `_index.md`).
+
+**User decision:** Take `origin/staging` for all conflicts. PR #9's phase-based structure is the source of truth going forward. Obsidian triage status changes discarded — user will re-triage via Obsidian kanban (a separate tool), not by hand-editing issue files.
+
+Resolution: `git checkout --theirs docs/issues/ && git add docs/issues/ && git commit --no-edit` — merge commit `b2b14c3`. Local staging now has everything from remote plus the two local-only chores.
+
+### Cleanup
+
+- `docs/issues/issue-index.md` — stale duplicate (untracked). Deleted.
+- `.claude/settings.local.json` — local-only, left unstaged.
+
+### Known Stale State (not fixed this session)
+
+- **`claude/competent-rubin` branch (`bdc411c`)** — has "renumber ST-068 → ST-074 to avoid ID collision". Not merged. There were two issues using ID ST-074: `ST-074-switch-to-dbmate-migrations.md` (from PR #9) and `ST-074-vite-reports-chart-no-data.md` (the scoring fix). **Resolved same session:** the dbmate issue was renamed to ST-076, all inbound references updated (ST-004, roadmap, `_index.md`). The `competent-rubin` branch's collision fix is now redundant.
+- **`claude/relaxed-kapitsa` branch (`0d4ce30`)** — older version of phase-based docs work superseded by PR #9.
+- **`claude/sharp-hawking` worktree** — uncommitted debug `console.log`s in `web/src/pages/Reports.tsx` plus a `CLEANUP.md` file.
+- **`scoring-fix` worktree (`fix/st-074-scoring` branch, `a3e8d43`)** — source of PR #10, already merged.
+
+### Repo Status
+
+A separate `docs/context/repo-status.md` document was written this session per user request. It captures branches, worktrees, deployed versions, open issues, known stale artifacts.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed — merge of remote + local chores + docs updates |
+| `main` | Behind staging — missing ST-074 partial fix + PR #9 docs restructure |
+| `claude/sharp-hawking` | Behind staging, uncommitted debug logs (not pushed) |
+| `claude/competent-rubin` | Has ID collision fix, never merged |
+| `claude/relaxed-kapitsa` | Superseded by PR #9 |
+| `fix/st-074-scoring` | Already merged via PR #10 |
+| 4 worktrees | Still exist — cleanup candidates |
+
+### What's Next (when work resumes)
+
+1. **ST-074** — reproduce on staging preview with devtools open, check Network tab for failed framework fetches, surface the swallowed error
+2. **Merge staging → main** — decide whether to ship partial fix (wave graph works, criteria counts still 0) or wait for full fix
+3. **Delete stale worktrees and branches** — `scoring-fix`, `relaxed-kapitsa`, `sharp-hawking` (after committing or discarding debug logs), `competent-rubin` once ID collision is resolved
+4. **ST-068** — Remove debug error handler from web auth
+5. **ST-071** — Delete old Next.js source
+6. **ST-004** — Database grants in migration
+7. **ST-075** — JWT audience hardening
+
+***

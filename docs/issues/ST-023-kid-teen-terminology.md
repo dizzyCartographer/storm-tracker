@@ -3,8 +3,8 @@ id: ST-023
 title: Flexible kid/teen terminology throughout app
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - navigation
   - projects

@@ -210,8 +210,9 @@ model Entry {
   menstrualSeverity String?                   // "LIGHT" | "MEDIUM" | "HEAVY" | null
 
   // Computed fields (persisted at write time)
-  computedMood  String?  // algorithmic classification: "MANIC", "DEPRESSIVE", "MIXED", "NEUTRAL"
-  computedScore Float?   // wave graph score
+  computedMood           String?  // algorithmic classification: "MANIC", "DEPRESSIVE", "MIXED", "NEUTRAL"
+  computedScore          Float?   // wave graph score
+  computedCriteriaCounts Json?    // { pole_slug: count } per-pole criteria counts
 
   // Timestamps & attribution
   createdAt DateTime @default(now())

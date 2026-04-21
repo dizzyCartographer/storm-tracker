@@ -3,8 +3,8 @@ id: ST-032
 title: Group projects to see cross-impact between family members
 type: enhancement
 status: open
-priority: low
 urgency: low
+phase: F
 components:
   - projects
   - reports

@@ -3,8 +3,8 @@ id: ST-039
 title: Reports and wave graph on mobile
 type: enhancement
 status: open
-priority: high
-urgency: soon
+urgency: low
+phase: B
 components:
   - mobile
   - reports

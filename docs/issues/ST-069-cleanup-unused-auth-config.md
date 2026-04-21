@@ -3,8 +3,8 @@ id: ST-069
 title: Remove unused _auth-config.ts from web serverless functions
 type: tech-debt
 status: open
-priority: low
 urgency: low
+phase: A
 components:
   - web
   - auth

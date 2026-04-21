@@ -3,8 +3,8 @@ id: ST-040
 title: Full projects CRUD on mobile
 type: enhancement
 status: open
-priority: high
-urgency: soon
+urgency: low
+phase: B
 components:
   - mobile
   - projects

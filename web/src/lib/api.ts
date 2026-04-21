@@ -297,7 +297,7 @@ export async function getEntriesByRange(
     `/entries?"tenantId"=eq.${tenantId}` +
       `&date=gte.${startDate}&date=lte.${endDate}` +
       `&order=date.desc` +
-      `&select=id,date,mood,"dayQuality",notes,"behaviorKeys","customItemIds","strategyIds","missedMedIds",impairments,"menstrualSeverity","computedMood","computedScore","userId"`
+      `&select=id,date,mood,"dayQuality",notes,"behaviorKeys","customItemIds","strategyIds","missedMedIds",impairments,"menstrualSeverity","computedMood","computedScore","computedCriteriaCounts","userId"`
   );
   if (!res.ok) throw new Error("Failed to fetch entries");
   return res.json();
@@ -773,6 +773,7 @@ export interface EntryRow {
   menstrualSeverity?: string | null;
   computedMood: string | null;
   computedScore: number | null;
+  computedCriteriaCounts?: Record<string, number> | null;
   userId: string;
 }
 
