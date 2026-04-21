@@ -6,9 +6,7 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 
 ## In Progress
 
-| ID | Title | Type | Urgency | Phase | Components |
-|----|-------|------|---------|-------|------------|
-| ST-074 | Wave graph chart on Vite reports page displays no data | bug | now | A | web, reports, scoring |
+_None._
 
 ## On Stage (built, awaiting merge/verification)
 
@@ -150,7 +148,8 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 | ST-060 | Rewrite web app from Next.js to Vite SPA | tech-debt | web, infrastructure |
 | ST-070 | Sync main with staging after mobile rebuild fixes | chore | infrastructure |
 | ST-072 | Fix entry upsert via PostgREST on_conflict parameter | bug | infrastructure, mobile, web |
+| ST-074 | Wave graph chart on Vite reports page displays no data | bug | web, reports, scoring |
 
 ---
 
-**Total: 74 issues** (0 in progress, 8 on stage, 7 Phase A, 11 Phase B, 7 Phase C, 5 Phase D, 7 Phase E, 20 Phase F, 1 deferred, 1 needs verification, 3 superseded, 4 done)
+**Total: 74 issues** (0 in progress, 8 on stage, 7 Phase A, 11 Phase B, 7 Phase C, 5 Phase D, 7 Phase E, 20 Phase F, 1 deferred, 1 needs verification, 3 superseded, 5 done)

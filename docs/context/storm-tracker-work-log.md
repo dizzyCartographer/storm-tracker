@@ -1433,3 +1433,59 @@ A separate `docs/context/repo-status.md` document was written this session per u
 7. **ST-075** — JWT audience hardening
 
 ***
+
+## Session: 2026-04-21 — ST-074 Full Fix (Done)
+
+### What Happened
+
+Closed out ST-074 by persisting per-pole criteria counts at write time instead of reconstructing them client-side. Shipped end-to-end: staging DB migrated and backfilled, staging preview verified by user, production DB migrated and backfilled, `main` fast-forwarded past the merge commit.
+
+### Root cause (final)
+
+Per-pole criteria counts (`manic`, `depressive`) were never persisted — the Postgres scoring trigger built `_criteria_sets` / `_pole_data` internally to compute the aggregate wave score, then threw the per-pole breakdown away. Reports.tsx rebuilt a `behaviorKey → pole` map client-side every time `generate()` ran, which was both compute-on-read (violates conventions) and silently failed when any of the three extra framework fetches missed the JWKS cache — leaving the map empty and the tooltip showing `0/7 · 0/9`.
+
+### What Changed
+
+- **New migration `20260421_persist_criteria_counts`:**
+  - Adds nullable `computedCriteriaCounts` JSONB column to `entries`.
+  - Replaces `compute_daily_score()` to persist `{ pole_slug: count }` including zero-count poles. Early-return branches (no behaviors, no framework) set the column to `NULL` to match the existing `computedMood` / `computedScore` pattern.
+
+- **`prisma/schema.prisma`** — added `computedCriteriaCounts Json?` to `Entry`.
+
+- **`web/src/lib/api.ts`** — added `computedCriteriaCounts?: Record<string, number> | null` to `EntryRow`; `getEntriesByRange()` now selects the column.
+
+- **`web/src/pages/Reports.tsx`** — `extractScore()` reads the stored JSONB; removed the `behaviorPoleMap` rebuild and three framework fetches (`getFrameworkId` / `getBehaviorCategories` / `getBehaviorDefinitions`) from `generate()`. Report data path shrank from 7 parallel fetches + 2 sequential fetches down to 6 parallel fetches.
+
+### Deployment
+
+Staging first, verified by user, then production:
+
+| Env | DB migration | Backfill |
+|-----|--------------|----------|
+| Staging (`ep-round-shape-amx2h82v`) | ✅ | 36/44 entries (8 are quick-log-only, `NULL` by design) |
+| Production (`ep-shy-breeze-ami5dzoi`) | ✅ | 48/59 entries (11 are quick-log-only, `NULL` by design) |
+
+Backfill pattern: `ALTER TABLE entries DISABLE TRIGGER trg_run_tenant_analysis` → `UPDATE entries SET "updatedAt" = now() WHERE "computedCriteriaCounts" IS NULL AND "behaviorKeys"::text != '[]'` → re-enable trigger. Disabling the analysis trigger during backfill avoided 48× redundant episode/signal/prediction/suggestion recomputation per tenant.
+
+Math spot-check: entries with `MANIC, score=1` had `{"manic": 2, "depressive": 1}` (2 − 1 = 1). Entries with `MIXED, score=0` had `{"manic": 3, "depressive": 3}` (3 − 3 = 0). Entries with `MANIC, score=3` had `{"manic": 3, "depressive": 0}` (3 − 0 = 3). ✅
+
+### Ordering Constraint Noted
+
+The new `select=…,"computedCriteriaCounts",…` would 400 on any environment where the column doesn't exist. **Production DB must be migrated before the code merges to main.** Followed that order: staging DB → staging code → staging verify → prod DB → merge to main → prod deploy.
+
+### Commits
+
+- `a03dcd4` — `fix(ST-074): persist per-pole criteria counts at write time` (on staging)
+- `f5c755c` — `merge: bring staging into main — ST-074 full fix, docs restructure, ID collision fix` (on main, brought PR #9, PR #10, Obsidian triage, ID collision fix, and the ST-074 full fix all into production in one merge).
+
+Both branches now at `f5c755c`.
+
+### What's Next
+
+1. **Delete stale worktrees and branches** — `scoring-fix`, `relaxed-kapitsa`, `sharp-hawking` (debug logs can be discarded now), `competent-rubin` (ID collision resolved).
+2. **ST-068** — Remove debug error handler from web auth.
+3. **ST-071** — Delete old Next.js source (in progress per index).
+4. **ST-004** — Database grants in migration.
+5. **ST-073** — Surface actual error messages in mobile save/load failures.
+
+***

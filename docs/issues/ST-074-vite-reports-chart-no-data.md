@@ -2,7 +2,7 @@
 id: ST-074
 title: Wave graph chart on Vite reports page displays no data
 type: bug
-status: in-progress
+status: done
 priority: high
 urgency: now
 components:
@@ -11,8 +11,20 @@ components:
   - scoring
 source: testing-feedback
 created: 2026-04-15
-completed:
+completed: 2026-04-21
 ---
+
+## Resolution (2026-04-21)
+
+Fixed via migration `20260421_persist_criteria_counts` and commit `a03dcd4`.
+
+- Added `computedCriteriaCounts` JSONB column to `entries`.
+- Updated `compute_daily_score()` trigger to persist `{ pole_slug: count }` at write time (including zero-count poles).
+- Simplified `Reports.tsx` to read stored counts; removed client-side `behaviorPoleMap` rebuild and three framework fetches from the report path.
+- Staging DB: 36/44 entries backfilled (the other 8 are quick-log-only, no behaviors).
+- Production DB: 48/59 entries backfilled.
+- Verified on staging preview (tooltip shows real counts); shipped to production via merge `f5c755c`.
+
 
 > **ID collision resolved (2026-04-16):** The dbmate issue that previously also used ID ST-074 has been renamed to [[ST-076-switch-to-dbmate-migrations|ST-076]]. This file keeps the original ST-074 ID.
 
