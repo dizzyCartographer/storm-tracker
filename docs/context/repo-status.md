@@ -59,14 +59,16 @@ For full details see `docs/issues/` and `docs/issues/_index.md`. The index is cu
 - **ST-073** — Surface actual error messages in mobile save/load failures
 - **ST-064** — Fix premature "no data" messages during loading
 
-### Known ID Collision
+### ID Collision — Resolved 2026-04-16
 
-Two issue files both claim ID **ST-074**:
+Previously two issue files both claimed ID ST-074. The dbmate issue was renamed to **ST-076**:
 
-- `ST-074-vite-reports-chart-no-data.md` — the scoring fix (in-progress)
-- `ST-074-switch-to-dbmate-migrations.md` — introduced by PR #9
+- `ST-074-vite-reports-chart-no-data.md` → keeps ST-074 (scoring fix, in-progress)
+- `ST-074-switch-to-dbmate-migrations.md` → renamed to `ST-076-switch-to-dbmate-migrations.md`
 
-The `claude/competent-rubin` branch renumbers one of them but was never merged. User has said they'll handle this via Obsidian kanban rather than hand-editing issue files.
+Inbound references updated: ST-004 (depends_on + body), `roadmap.md`, `_index.md`.
+
+The unmerged `claude/competent-rubin` branch's collision fix is now redundant and can be deleted.
 
 ---
 
@@ -102,7 +104,7 @@ Things that should be cleaned up at some point but aren't urgent:
 
 ### Known architectural debt
 
-- Schema migrations still run via Prisma — ST-071 is removing Prisma ORM, ST-074 (dbmate version) is replacing Prisma migrations with dbmate
+- Schema migrations still run via Prisma — ST-071 is removing Prisma ORM, ST-076 is replacing Prisma migrations with dbmate
 - `main` is behind staging — needs a merge once ST-074 decision is made
 - Index (`_index.md`) is authoritative but will be replaced by an Obsidian-generated view per user decision
 
@@ -115,7 +117,7 @@ These are the decisions waiting for the user when work resumes:
 1. **Merge staging → main?** Staging has partial ST-074 fix (wave graph works, criteria counts still 0). Merging would ship the wave graph improvement to production but leave criteria counts broken there too. Alternative: hold until full fix ready.
 2. **Resume ST-074 debugging?** Next concrete step is reproducing on staging preview with devtools open to see which fetch is failing in `generate()`. The swallowing `try/catch` is the first thing to fix regardless.
 3. **Worktree cleanup?** All four are safe to remove but none blocks anything.
-4. **ID collision fix for ST-074?** Cleanest path: rename `ST-074-switch-to-dbmate-migrations.md` to a new unused ID and regenerate any references. Alternative: user handles via Obsidian kanban.
+4. ~~**ID collision fix for ST-074?**~~ Resolved — dbmate issue renamed to ST-076.
 
 ---
 

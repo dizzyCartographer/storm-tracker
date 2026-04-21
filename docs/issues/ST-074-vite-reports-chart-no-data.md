@@ -14,7 +14,7 @@ created: 2026-04-15
 completed:
 ---
 
-> **ID collision note:** `ST-074-switch-to-dbmate-migrations.md` also uses ID ST-074. The `claude/competent-rubin` branch (`bdc411c`) renumbers the dbmate issue to avoid this but isn't merged. User plans to re-triage via Obsidian kanban.
+> **ID collision resolved (2026-04-16):** The dbmate issue that previously also used ID ST-074 has been renamed to [[ST-076-switch-to-dbmate-migrations|ST-076]]. This file keeps the original ST-074 ID.
 
 ## Current Status (2026-04-16) — Paused
 

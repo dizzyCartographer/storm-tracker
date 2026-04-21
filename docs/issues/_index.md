@@ -6,7 +6,9 @@ Auto-generated from YAML frontmatter in issue files. Do not edit manually.
 
 ## In Progress
 
-_(none)_
+| ID | Title | Type | Urgency | Phase | Components |
+|----|-------|------|---------|-------|------------|
+| ST-074 | Wave graph chart on Vite reports page displays no data | bug | now | A | web, reports, scoring |
 
 ## On Stage (built, awaiting merge/verification)
 
@@ -30,7 +32,7 @@ _(none)_
 | ST-071 | Delete old Next.js source code and Prisma dependencies | tech-debt | high | web, infrastructure |
 | ST-064 | Fix premature "no data" messages during loading | bug | medium | mobile, dashboard |
 | ST-073 | Surface actual error messages in mobile save/load failures | enhancement | medium | mobile |
-| ST-074 | Switch from Prisma to dbmate for database migrations | tech-debt | low | infrastructure |
+| ST-076 | Switch from Prisma to dbmate for database migrations | tech-debt | low | infrastructure |
 | ST-004 | Database grants for Neon Data API not in a migration | tech-debt | low | infrastructure |
 | ST-068 | Remove debug error handler from web auth serverless function | tech-debt | low | web, auth |
 | ST-069 | Remove unused _auth-config.ts from web serverless functions | tech-debt | low | web, auth |

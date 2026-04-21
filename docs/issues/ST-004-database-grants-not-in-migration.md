@@ -8,7 +8,7 @@ phase: A
 components:
   - infrastructure
 depends_on:
-  - [[ST-074-switch-to-dbmate-migrations|ST-074]]
+  - [[ST-076-switch-to-dbmate-migrations|ST-076]]
 source: session
 created: 2026-04-08
 completed:
@@ -19,6 +19,6 @@ GRANT permissions for Neon Data API roles (`authenticated`, `neon_auth`, `anonym
 
 **Risk:** Any new Neon branch or environment will get 403 errors until grants are applied manually. Staging DB does not have them. This blocks the ephemeral feature branch workflow — every new Neon branch needs these GRANTs.
 
-**Fix:** Write as the first dbmate migration after [[ST-074-switch-to-dbmate-migrations|ST-074]] (Prisma → dbmate switch) lands.
+**Fix:** Write as the first dbmate migration after [[ST-076-switch-to-dbmate-migrations|ST-076]] (Prisma → dbmate switch) lands.
 
-**Depends on:** [[ST-074-switch-to-dbmate-migrations|ST-074]] (migration tool must be in place first).
+**Depends on:** [[ST-076-switch-to-dbmate-migrations|ST-076]] (migration tool must be in place first).

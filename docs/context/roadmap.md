@@ -62,7 +62,7 @@ Phases are ordered by what makes the creator's daily experience better first, th
 
 Infrastructure cleanup, bug fixes, and merge of already-built features. Unblocks all future development.
 
-**Key issues:** ST-071 (Next.js cleanup), ST-074 (dbmate migrations), ST-004 (DB grants), ST-064 (loading states), ST-073 (error messages), plus 8 on-stage items awaiting merge.
+**Key issues:** ST-071 (Next.js cleanup), ST-076 (dbmate migrations), ST-004 (DB grants), ST-064 (loading states), ST-073 (error messages), plus 8 on-stage items awaiting merge.
 
 ### Phase B: Feature Complete (Solo Caregiver)
 *One caregiver can do everything the app promises: log, analyze, report, manage — without wifi anxiety.*
@@ -103,7 +103,7 @@ AI-powered logging for exhausted caregivers, faith-based resources, advanced the
 
 ```
 ST-071 (remove old Next.js/Prisma — in progress)
-  → ST-074 (switch to dbmate)
+  → ST-076 (switch to dbmate)
     → ST-004 (GRANTs as first dbmate migration)
       → ephemeral Neon feature branches work
         → faster development velocity for all phases

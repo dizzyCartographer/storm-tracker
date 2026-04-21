@@ -1,5 +1,5 @@
 ---
-id: ST-074
+id: ST-076
 title: Switch from Prisma to dbmate for database migrations
 type: tech-debt
 status: open
@@ -14,7 +14,9 @@ blocks:
 created: 2026-04-16
 ---
 
-# ST-074: Switch from Prisma to dbmate for database migrations
+# ST-076: Switch from Prisma to dbmate for database migrations
+
+> **Renamed 2026-04-16** from ST-074 to resolve an ID collision with the scoring-fix ST-074 (both files ended up using the same ID after parallel development landed via PR #9 and PR #10).
 
 ## Context
 

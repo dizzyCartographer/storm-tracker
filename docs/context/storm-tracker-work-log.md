@@ -1401,7 +1401,7 @@ Resolution: `git checkout --theirs docs/issues/ && git add docs/issues/ && git c
 
 ### Known Stale State (not fixed this session)
 
-- **`claude/competent-rubin` branch (`bdc411c`)** — has "renumber ST-068 → ST-074 to avoid ID collision". Not merged. There are currently two issues using ID ST-074: `ST-074-switch-to-dbmate-migrations.md` (from PR #9) and `ST-074-vite-reports-chart-no-data.md` (the scoring fix). User plans to handle via Obsidian kanban.
+- **`claude/competent-rubin` branch (`bdc411c`)** — has "renumber ST-068 → ST-074 to avoid ID collision". Not merged. There were two issues using ID ST-074: `ST-074-switch-to-dbmate-migrations.md` (from PR #9) and `ST-074-vite-reports-chart-no-data.md` (the scoring fix). **Resolved same session:** the dbmate issue was renamed to ST-076, all inbound references updated (ST-004, roadmap, `_index.md`). The `competent-rubin` branch's collision fix is now redundant.
 - **`claude/relaxed-kapitsa` branch (`0d4ce30`)** — older version of phase-based docs work superseded by PR #9.
 - **`claude/sharp-hawking` worktree** — uncommitted debug `console.log`s in `web/src/pages/Reports.tsx` plus a `CLEANUP.md` file.
 - **`scoring-fix` worktree (`fix/st-074-scoring` branch, `a3e8d43`)** — source of PR #10, already merged.
