@@ -44,6 +44,11 @@ next-env.d.ts
 .contextstore/settings.local.yml
 .vercel
 
+# claude code
+
+.claude/settings.local.json
+.claude/worktrees/
+
 /src/generated/prisma
 
 # expo / react native
