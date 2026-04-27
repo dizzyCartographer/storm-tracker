@@ -28,6 +28,7 @@ _None._
 
 | ID | Title | Type | Urgency | Components |
 |----|-------|------|---------|------------|
+| ST-077 | ProjectProvider silent failure strands dashboard, history, log, entry detail | bug | high | mobile, auth, dashboard |
 | ST-064 | Fix premature "no data" messages during loading | bug | medium | mobile, dashboard |
 | ST-073 | Surface actual error messages in mobile save/load failures | enhancement | medium | mobile |
 | ST-076 | Switch from Prisma to dbmate for database migrations | tech-debt | low | infrastructure |
@@ -152,4 +153,4 @@ _None._
 
 ---
 
-**Total: 74 issues** (0 in progress, 9 on stage, 6 Phase A, 11 Phase B, 7 Phase C, 5 Phase D, 7 Phase E, 20 Phase F, 1 deferred, 1 needs verification, 3 superseded, 5 done)
+**Total: 75 issues** (0 in progress, 9 on stage, 7 Phase A, 11 Phase B, 7 Phase C, 5 Phase D, 7 Phase E, 20 Phase F, 1 deferred, 1 needs verification, 3 superseded, 5 done)
