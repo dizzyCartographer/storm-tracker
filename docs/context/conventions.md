@@ -6,11 +6,7 @@ _Fill in as the project establishes norms._
 
 ## Data & API Architecture
 
-See `docs/context/architecture-standards.md` for the full reference. Key points for this project:
-
-### ⚠️ Existing code is not a reference architecture.
-
-The current codebase contains TypeScript-based computation on read paths (episode detection, prodrome signals, predictions, suggestions), custom API endpoints for mobile, and server actions that bypass RLS. **These patterns are architectural debt, not examples to follow.** Do not replicate, extend, or build on top of them. New features must follow the conventions below. When in doubt, these conventions override whatever the existing code does.
+See `docs/context/application-architecture-standards.md` for the full reference. Key points for this project:
 
 ### Computation happens at write time. Always.
 
@@ -18,19 +14,15 @@ When business logic produces a result (classification, score, episode, signal, p
 
 ### All reads and writes go through Neon Data API.
 
-Both web and mobile are clients of the same Neon Data API. Authentication is via JWT. Authorization is via Postgres RLS. No Next.js API routes for data access. No server action wrappers around queries. The database is the API.
-
-_Note: The web app currently uses server actions and Prisma (which bypass RLS). New features should use Neon Data API. Existing server actions will be migrated over time._
+Both web and mobile are clients of the same Neon Data API. Authentication is via JWT. Authorization is via Postgres RLS. The only server-side endpoints that exist are the serverless functions in `web/api/` for things that genuinely need server-side secrets (Better Auth, Anthropic, Vercel Blob). The database is the API for everything else.
 
 ### Computation lives in Postgres.
 
-Scoring, classification, episode detection, and all derived data should be computed by Postgres triggers and functions that fire on insert/update. This eliminates the need for custom write endpoints — even writes that require computation go through Neon Data API, and Postgres handles the logic.
+Scoring, classification, episode detection, and all derived data are computed by Postgres triggers and functions that fire on insert/update. Even writes that require computation go through Neon Data API — Postgres handles the logic via triggers, no custom write endpoint needed.
 
-_Note: Computation currently lives in TypeScript (scoring engine, episode detection). These will be migrated to Postgres functions as part of Phase 20. Until then, the TypeScript implementations are legacy — do not use them as patterns for new features._
+### No custom API endpoints for data access.
 
-### No custom API endpoints.
-
-Do not create Next.js API routes under `/api/mobile/` or anywhere else for data access. If you're about to create a GET route, the data should already be in the database — read it via Neon Data API. If you're about to create a POST route, ask whether the computation can be a Postgres trigger instead.
+If you're about to create a GET route for data, the data should already be in the database — read it via Neon Data API. If you're about to create a POST route, ask whether the computation can be a Postgres trigger instead. The only legitimate reasons for a serverless function are server-side secrets that can't be exposed to the client.
 
 ### RLS is the only authorization layer.
 
@@ -40,10 +32,6 @@ Do not write permission checks in application code for data access. RLS policies
 
 When adding a new model/table, add RLS policies in the same migration. No table should exist without RLS.
 
-### When these conventions conflict with existing code, the conventions win.
-
-Do not look at an existing server action, API route, or TypeScript analysis module and conclude "this is how the app does it." The existing patterns predate these conventions. If you find yourself writing a custom endpoint, a server-side query wrapper, or computation on a read path because "that's what the other code does" — stop. Re-read this document.
-
 ## File & Folder Naming
 
 - `kebab-case` for files and directories
@@ -51,8 +39,9 @@ Do not look at an existing server action, API route, or TypeScript analysis modu
 
 ## Testing
 
-- Unit tests co-located with source: `src/foo/foo.test.ts`
-- Integration tests in `src/__tests__/`
+- Unit tests co-located with source: `web/src/foo/foo.test.ts` or `mobile/src/foo/foo.test.ts`
+- Integration tests in `__tests__/` adjacent to the code being tested
+- _No test infrastructure exists yet (ST-005)._
 
 ## Commit Messages
 

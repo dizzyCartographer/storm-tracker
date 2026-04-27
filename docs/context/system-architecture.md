@@ -12,35 +12,34 @@ This document describes Storm Tracker's system architecture — how the componen
 │                                                                 │
 │  ┌──────────────┐              ┌──────────────┐                │
 │  │  Mobile App   │              │   Web App     │                │
-│  │  (Expo/RN)    │              │  (Next.js)    │                │
+│  │  (Expo/RN)    │              │  (Vite SPA)   │                │
 │  │               │              │               │                │
-│  │  React Native │              │  React + SSR  │                │
-│  │  Paper v5.15  │              │  Tailwind CSS │                │
-│  │  Expo Router  │              │  Recharts     │                │
+│  │  React Native │              │  React        │                │
+│  │  Paper v5.15  │              │  React Router │                │
+│  │  Expo Router  │              │  Tailwind v4  │                │
+│  │               │              │  Recharts     │                │
 │  └──────┬───────┘              └──────┬───────┘                │
 │         │                             │                         │
-│    JWT + Neon                   Session cookies                  │
-│    Data API                     + Prisma (legacy)               │
-└─────────┼─────────────────────────────┼─────────────────────────┘
-          │                             │
-          ▼                             ▼
+│         └────── JWT + Neon Data API ──┘  (same path both)       │
+│         + serverless functions for server-side secrets only     │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                     BACKEND SERVICES                            │
 │                                                                 │
 │  ┌──────────────────────────┐  ┌──────────────────────────┐    │
-│  │   Neon Data API           │  │   Vercel (Next.js)       │    │
-│  │   (PostgREST)             │  │                          │    │
-│  │                           │  │   Server Actions (web)   │    │
-│  │   Auto-generated REST     │  │   API Routes:            │    │
-│  │   JWT verification        │  │     POST /api/mobile/    │    │
-│  │   RLS enforcement         │  │       entries            │    │
-│  │                           │  │     GET /api/mobile/     │    │
-│  │   Reads: mobile           │  │       analysis/[id]      │    │
-│  │   Writes: mobile (simple) │  │       frameworks/[id]    │    │
-│  └──────────┬───────────────┘  │     POST /api/parse-     │    │
-│             │                   │       journal             │    │
-│             │                   │     /api/auth/*           │    │
-│             │                   │     /api/attachments      │    │
+│  │   Neon Data API           │  │   Vercel Serverless       │    │
+│  │   (PostgREST)             │  │   (web/api/*)             │    │
+│  │                           │  │                          │    │
+│  │   Auto-generated REST     │  │   /api/auth/*             │    │
+│  │   JWT verification        │  │     Better Auth via Hono  │    │
+│  │   RLS enforcement         │  │   /api/parse-journal      │    │
+│  │                           │  │     Anthropic SDK         │    │
+│  │   All reads + writes      │  │   /api/attachments        │    │
+│  │   from web AND mobile     │  │     Vercel Blob upload    │    │
+│  └──────────┬───────────────┘  │   /api/invite-details      │    │
+│             │                   │   /api/health              │    │
 │             │                   └──────────┬───────────────┘    │
 │             │                              │                    │
 │             ▼                              ▼                    │
@@ -116,18 +115,19 @@ mobile/src/app/
     └── profile.tsx          # User profile
 ```
 
-### Web App (Next.js)
+### Web App (Vite + React SPA)
 
-Legacy client. Functional but not the primary development target. Uses Prisma (bypasses RLS) and server actions. May or may not be sunset.
+Single-page app served as static assets from Vercel. Same data path as mobile: Neon Data API with JWT and RLS. Serverless functions exist only for things that require server-side secrets (auth, Anthropic, Blob).
 
 | Aspect | Detail |
 |--------|--------|
-| Framework | Next.js 16 (App Router) |
-| Hosting | Vercel |
-| Styling | Tailwind CSS v4.2 |
+| Framework | Vite + React + TypeScript |
+| Routing | React Router v7 (client-side) |
+| Hosting | Vercel (static + `web/api/*` serverless) |
+| Styling | Tailwind CSS v4 |
 | Charts | Recharts v3.8 |
-| Auth | Better Auth (session cookies) |
-| Data access | Prisma ORM → Postgres (bypasses RLS — tech debt) |
+| Auth | Better Auth client → `/api/auth/*` (Hono-routed serverless function) |
+| Data access | Neon Data API (JWT + RLS) — no ORM, no server-side query wrappers |
 
 ### Neon Postgres (Database)
 
@@ -148,12 +148,12 @@ Handles authentication for both web and mobile.
 
 | Aspect | Detail |
 |--------|--------|
-| Version | Better Auth with expo(), jwt(), nextCookies() plugins |
-| Plugin order | `expo()`, `jwt()`, `nextCookies()` — **nextCookies() must be last** |
+| Version | Better Auth with `expo()` and `jwt()` plugins |
+| Web routing | Hono catches `/api/auth/:rest*` and forwards `c.req.raw` to `auth.handler()` |
 | JWT algorithm | RS256 |
 | JWKS endpoint | `/api/auth/jwks` (served by Better Auth) |
 | Mobile sessions | SecureStore via @better-auth/expo |
-| Web sessions | HTTP-only cookies via nextCookies() |
+| Web sessions | HTTP-only cookies (default Better Auth behavior, same-origin) |
 
 ### Vercel Blob
 
@@ -196,43 +196,53 @@ Mobile App
   └─ Render in React Native
 ```
 
-### Mobile: Writing an Entry
+### Mobile (and Web): Writing an Entry
+
+Both clients write entries the same way. No custom endpoint — the upsert goes through Neon Data API; Postgres triggers do the computation.
 
 ```
-Mobile App
+Client (mobile or web)
   │
-  ├─ POST /api/mobile/entries    # Custom endpoint (needs server-side computation)
-  │   ├─ Better Auth verifies session
-  │   ├─ Validates membership in tenant
-  │   ├─ Upserts entry via Prisma
+  ├─ authClient.token()                      # JWT from Better Auth
+  │
+  ├─ POST Neon Data API /entries             # PostgREST upsert
+  │      ?on_conflict=userId,tenantId,date    # uniqueness key
+  │      Prefer: resolution=merge-duplicates,return=representation
+  │   ├─ JWT verified via JWKS
+  │   ├─ RLS checks tenant membership
   │   │
-  │   ├─ Postgres trigger: compute_daily_score()
-  │   │   └─ Reads framework tables → computes classification, wave score, severity
-  │   │   └─ Stores as computedMood, computedScore on entry row
+  │   ├─ BEFORE trigger: compute_daily_score()
+  │   │   └─ Reads framework tables → classification, waveScore, severity,
+  │   │      computedCriteriaCounts (per-pole counts)
+  │   │   └─ Persists as columns on the entry row
   │   │
-  │   ├─ Postgres trigger: run_tenant_analysis()
-  │   │   ├─ compute_episodes() → replaces episodes table rows
+  │   ├─ AFTER trigger: run_tenant_analysis()
+  │   │   ├─ compute_episodes()         → replaces episodes rows
   │   │   ├─ compute_prodrome_signals() → replaces prodrome_signals rows
-  │   │   ├─ compute_predictions() → replaces predictions rows
-  │   │   └─ compute_suggestions() → replaces suggestions rows
+  │   │   ├─ compute_predictions()      → replaces predictions rows
+  │   │   └─ compute_suggestions()      → replaces suggestions rows
   │   │
-  │   └─ Returns saved entry with computed fields
+  │   └─ Returns the saved row with computed fields
   │
-  └─ Dashboard refreshes from Neon Data API (reads persisted results)
+  └─ Dashboard re-fetches from Neon Data API (reads persisted results only)
 ```
 
-### Web: Reading Data (Legacy)
+### Web: Reading Data
 
 ```
 Web Browser
   │
-  ├─ Server Component renders
-  │   ├─ Better Auth session cookie verified
-  │   ├─ Server action calls Prisma (bypasses RLS)
-  │   ├─ Some pages still recompute analysis in TypeScript (tech debt)
-  │   └─ Returns rendered HTML
+  ├─ React Router renders the route component
   │
-  └─ Client hydrates
+  ├─ authClient.token()                  # JWT from Better Auth
+  │
+  ├─ GET Neon Data API                   # Direct REST query (same as mobile)
+  │   ├─ Authorization: Bearer <JWT>
+  │   ├─ Neon verifies JWT via JWKS endpoint
+  │   ├─ RLS policies filter rows by tenant membership
+  │   └─ Returns JSON rows
+  │
+  └─ React renders persisted data — no compute on read
 ```
 
 ---
@@ -277,7 +287,7 @@ Every table has RLS policies. Two helper functions enforce access:
 - `is_tenant_member(tenant_id)` — Returns true if the JWT user is a member of the tenant. Used for SELECT/INSERT/UPDATE policies.
 - `is_tenant_owner(tenant_id)` — Returns true if the JWT user is the owner. Used for DELETE and admin operations.
 
-Prisma (used by web) connects as database owner and **bypasses RLS entirely**. This is known tech debt (ST-001).
+Both web and mobile go through Neon Data API, so RLS is enforced on every query.
 
 ---
 
@@ -302,8 +312,6 @@ Entry INSERT/UPDATE
 
 Mobile and web read from these tables directly. No computation on read paths.
 
-**Exception:** Web still recomputes some analysis on read (ST-002 tech debt). Mobile uses the correct architecture.
-
 ---
 
 ## Infrastructure
@@ -312,9 +320,9 @@ Mobile and web read from these tables directly. No computation on read paths.
 |---------|---------|----------|
 | Database | Postgres (serverless) | Neon |
 | Data API | Auto-generated REST | Neon Data API (PostgREST) |
-| Web hosting | Next.js SSR + static | Vercel |
-| Mobile builds | iOS builds + TestFlight | EAS Build or local Xcode |
-| Auth | Session + JWT management | Better Auth (self-hosted on Vercel) |
+| Web hosting | Vite SPA static assets + serverless functions in `web/api/` | Vercel |
+| Mobile builds | iOS builds + TestFlight | Local Xcode (EAS available as fallback) |
+| Auth | Session + JWT management | Better Auth (self-hosted serverless function on Vercel) |
 | File storage | Document attachments | Vercel Blob |
 | AI | Journal parsing | Anthropic API (Claude) |
-| ORM | Database migrations + web queries | Prisma (legacy, web only) |
+| Migrations | Schema migrations | Prisma CLI against `prisma/migrations/` (planned switch to dbmate — see ST-076) |

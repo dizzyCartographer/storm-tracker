@@ -20,6 +20,7 @@ _None._
 | ST-056 | Fix AI Journal page title and redundant header | bug | low | A | mobile, navigation |
 | ST-065 | Behavior checklist not displaying on mobile log screen | bug | medium | A | mobile, log |
 | ST-067 | Dynamic app icon per build profile (dev vs production) | enhancement | low | A | mobile, infrastructure, theming |
+| ST-071 | Delete old Next.js source code and Prisma dependencies | tech-debt | high | A | web, infrastructure |
 
 ## Phase A: Core Stability
 
@@ -27,7 +28,6 @@ _None._
 
 | ID | Title | Type | Urgency | Components |
 |----|-------|------|---------|------------|
-| ST-071 | Delete old Next.js source code and Prisma dependencies | tech-debt | high | web, infrastructure |
 | ST-064 | Fix premature "no data" messages during loading | bug | medium | mobile, dashboard |
 | ST-073 | Surface actual error messages in mobile save/load failures | enhancement | medium | mobile |
 | ST-076 | Switch from Prisma to dbmate for database migrations | tech-debt | low | infrastructure |
@@ -152,4 +152,4 @@ _None._
 
 ---
 
-**Total: 74 issues** (0 in progress, 8 on stage, 7 Phase A, 11 Phase B, 7 Phase C, 5 Phase D, 7 Phase E, 20 Phase F, 1 deferred, 1 needs verification, 3 superseded, 5 done)
+**Total: 74 issues** (0 in progress, 9 on stage, 6 Phase A, 11 Phase B, 7 Phase C, 5 Phase D, 7 Phase E, 20 Phase F, 1 deferred, 1 needs verification, 3 superseded, 5 done)

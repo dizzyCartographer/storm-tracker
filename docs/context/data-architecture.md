@@ -187,7 +187,7 @@ Helper functions (SECURITY DEFINER):
 - `is_tenant_member(tenant_id)` — checks if `auth.user_id()` (from JWT `sub` claim) exists in `TenantMember` for that tenant
 - `is_tenant_owner(tenant_id)` — checks if user has OWNER role in that tenant
 
-**Important:** Prisma connects as database owner and bypasses RLS. Only Neon Data API requests are subject to RLS. This is known tech debt (ST-001).
+All runtime data access goes through Neon Data API, so RLS is enforced on every query. (Prisma still ships migrations until ST-076 swaps in dbmate, but no application code talks to Postgres through Prisma anymore.)
 
 ---
 
@@ -218,22 +218,15 @@ run_tenant_analysis()
 
 ## Data Access Patterns
 
-### Mobile (correct architecture)
+Both mobile and web use the same data path: JWT from Better Auth, REST queries to Neon Data API, RLS enforced in Postgres.
 
 | Operation | Method |
 |-----------|--------|
 | Read entries, episodes, signals, predictions, suggestions | Neon Data API (GET with JWT) |
 | Read tenant/project data | Neon Data API |
-| Save/update entry | `POST /api/mobile/entries` (triggers scoring + analysis) |
-| Read framework data for UI | `GET /api/mobile/frameworks/[tenantId]` (tech debt — should be Neon Data API) |
-
-### Web (legacy architecture)
-
-| Operation | Method |
-|-----------|--------|
-| All reads | Server actions → Prisma (bypasses RLS) |
-| All writes | Server actions → Prisma |
-| Analysis | Some still recomputed on read (tech debt) |
+| Read framework data (categories, definitions, criteria) | Neon Data API |
+| Save/update entry | Neon Data API upsert with `?on_conflict=userId,tenantId,date`; Postgres triggers handle scoring + analysis |
+| Side effects requiring server-side secrets | Vercel serverless functions (`web/api/parse-journal`, `web/api/attachments`, `web/api/auth/*`) |
 
 ---
 

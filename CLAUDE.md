@@ -6,7 +6,9 @@ This file is automatically loaded by Claude Code at the start of every session.
 
 ```
 storm-tracker/
-├── src/              # All application source code
+├── web/              # Vite + React SPA (client + Vercel serverless functions in web/api/)
+├── mobile/           # Expo / React Native iOS app
+├── prisma/           # Schema and migrations (kept until ST-076 switches migrations to dbmate)
 ├── docs/
 │   ├── context/      # Markdown files that define project context (all loaded every session)
 │   │   ├── overview.md                    # Project goals, users, and use cases

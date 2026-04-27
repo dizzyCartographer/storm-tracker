@@ -1489,3 +1489,66 @@ Both branches now at `f5c755c`.
 5. **ST-073** — Surface actual error messages in mobile save/load failures.
 
 ***
+
+## Session: 2026-04-27 — ST-071 Old Next.js Cleanup
+
+### What Happened
+
+Deleted the old Next.js source code, root-level Next configs, and the orphaned `scripts/` directory. Stripped the root `package.json` down to the Prisma migration toolchain and updated context docs that contradicted the new Vite SPA architecture. Pushed to staging as `on-stage` for verification.
+
+### Decision: Narrowed scope vs. ST-076
+
+Discovered ST-076 (dbmate switch) overlaps with two of ST-071's stated steps and explicitly needs `prisma/migrations/*.sql` to remain readable in the working tree (its Phase 3 copies them into dbmate's directory). Resolved by:
+
+- ST-071 deletes `src/`, `scripts/`, root Next configs, and Next-related deps from `package.json`.
+- ST-076 owns: deleting `prisma/`, removing Prisma from `package.json`, and the final fate of root `node_modules/`/`package.json`.
+
+This keeps each ticket with a single clear job and avoids forcing ST-076 to fish migration files out of git history.
+
+### What Changed
+
+| Area | Change |
+|------|--------|
+| `src/` | Deleted (155 TS/TSX files — old Next.js App Router app) |
+| `scripts/` | Deleted (6 seed/backfill scripts; all imported `src/generated/prisma/client`) |
+| Root configs | Deleted `next.config.ts`, `postcss.config.mjs`, `tsconfig.json`, plus untracked `next-env.d.ts` and `tsconfig.tsbuildinfo` |
+| Root `package.json` | 22 deps → 4 (kept `@prisma/adapter-pg`, `@prisma/client`, `pg`, `prisma`). Reinstalled — `node_modules/` lost ~710 packages. |
+| `CLAUDE.md` | Project structure tree now shows `web/`, `mobile/`, `prisma/` instead of `src/` |
+| `docs/context/system-architecture.md` | High-level diagram, web subsection, data flow, Better Auth section, infrastructure table all rewritten for the Vite SPA + Hono auth + Neon Data API architecture |
+| `docs/context/data-architecture.md` | RLS bypass note removed; Data Access Patterns table rewritten as a single shared web+mobile path (was split into "Mobile (correct)" and "Web (legacy)" tables) |
+| `docs/context/conventions.md` | Removed "Existing code is not a reference architecture" warning + the two stale `_Note:_` callouts. Fixed broken link from `architecture-standards.md` → `application-architecture-standards.md`. Updated test paths to `web/src/` / `mobile/src/`. |
+| ST-071 issue file | Status `on-stage`, full closing note documenting what landed and what was deferred |
+| `_index.md` | ST-071 moved Phase A → On Stage |
+
+### Verification
+
+- `cd web && npm run build` — passes (291ms, 753 KB JS, 218 KB gzipped)
+- `mobile/` typecheck has one pre-existing error in `app-tabs.web.tsx` (Expo Router route type for `/explore`) — present before ST-071 and unrelated; mobile has zero imports from the deleted `src/` or `prisma/`
+- Confirmed `web/` has no imports from `src/` or `prisma/` (grep)
+- Confirmed `mobile/` has no imports from `src/` or `prisma/` (grep)
+- Confirmed mobile no longer references `/api/mobile/*` paths anywhere
+
+### Discovered Along the Way (not fixed here)
+
+- **`docs/CLAUDE.md` is no longer a symlink** — it's a regular file, content drifted from root `CLAUDE.md`. Per `tooling.md` it's supposed to be `docs/CLAUDE.md → ../CLAUDE.md`. Sometime between Apr 14 and now, something materialized it as a real file. Not fixed here; restore with `rm docs/CLAUDE.md && ln -s ../CLAUDE.md docs/CLAUDE.md` if desired.
+- **`conventions.md` "Git & Branching" section** still says `main` is the deployment branch and recommends committing directly to `main`. Contradicts the staging-first workflow in feedback memory + CLAUDE.md. Out of ST-071's scope; flagging for a future docs sweep.
+- **`environment-and-deployment.md`** has a "Prisma Migrations" section still accurate today. Will get a final pass when ST-076 ships.
+- **`application-architecture-standards.md`** mentions Prisma in two places — both are general principles and historical lessons. Left alone.
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current, pushed — ST-071 commit |
+| `main` | Behind staging — awaiting verification before merge |
+| Worktrees | 4 stale (`competent-rubin`, `relaxed-kapitsa`, `scoring-fix`, `sharp-hawking`) — still candidates for cleanup, untouched this session |
+
+### What's Next
+
+1. Verify staging deploy of ST-071. Verify production deploy after merge. Then mark ST-071 done.
+2. Stale worktree/branch cleanup.
+3. ST-068 — remove debug error handler from web auth.
+4. ST-076 — switch Prisma → dbmate (final Prisma teardown).
+5. ST-064, ST-073 — mobile UX issues.
+
+***
