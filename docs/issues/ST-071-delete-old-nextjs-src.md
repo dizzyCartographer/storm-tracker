@@ -2,7 +2,7 @@
 id: ST-071
 title: Delete old Next.js source code and Prisma dependencies
 type: tech-debt
-status: on-stage
+status: done
 urgency: high
 phase: A
 components:
@@ -10,6 +10,7 @@ components:
   - infrastructure
 source: ST-060-phase-8
 created: 2026-04-15
+completed: 2026-04-27
 depends-on: ST-060
 ---
 
@@ -53,3 +54,5 @@ The staging issue was resolved by setting up proper environment isolation (same-
 - Mobile typecheck has one pre-existing error in `app-tabs.web.tsx` (Expo Router route type) — not related to ST-071 deletions; mobile has zero imports from the deleted `src/` or `prisma/`
 
 **Awaiting:** staging deploy verification, then production verification (per `feedback_shipping_is_not_done.md`).
+
+**2026-04-27 — Verified and closed.** Staging preview confirmed working (web displaying correct data). Merged staging → main as fast-forward (`604ff9c`); production deployed from main and verified. Status: `done`.

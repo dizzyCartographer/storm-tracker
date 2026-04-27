@@ -1545,10 +1545,16 @@ This keeps each ticket with a single clear job and avoids forcing ST-076 to fish
 
 ### What's Next
 
-1. Verify staging deploy of ST-071. Verify production deploy after merge. Then mark ST-071 done.
-2. Stale worktree/branch cleanup.
+1. Stale worktree/branch cleanup.
+2. ST-077 — fix the ProjectProvider race; the dev mobile app is currently stranded on cold start until the user signs out and back in.
 3. ST-068 — remove debug error handler from web auth.
 4. ST-076 — switch Prisma → dbmate (final Prisma teardown).
 5. ST-064, ST-073 — mobile UX issues.
+
+### Closeout (same day)
+
+Staging preview verified by user (web rendering correct data). Fast-forward merged staging → main (`604ff9c`); production deployed from main and verified. ST-071 status flipped `on-stage` → `done`. Both branches in sync.
+
+While the cleanup was being verified, a separate mobile bug surfaced and got captured as **[[ST-077-project-context-silent-fail|ST-077]]**: `ProjectProvider` runs a one-shot fetch at root mount that throws silently if `getJwt()` hasn't resolved yet, leaving `tenants=[]` forever and stranding Dashboard, History, Log, and Entry detail. The Projects tab does its own fetch on mount and works, which masked the bug for a while. Same root pattern as ST-065 but on a higher-impact code path. **Not** caused by cross-origin cleanup; pre-existing race condition. Filed as Phase A high urgency.
 
 ***
