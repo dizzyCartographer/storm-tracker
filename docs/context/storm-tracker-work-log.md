@@ -1558,3 +1558,33 @@ Staging preview verified by user (web rendering correct data). Fast-forward merg
 While the cleanup was being verified, a separate mobile bug surfaced and got captured as **[[ST-077-project-context-silent-fail|ST-077]]**: `ProjectProvider` runs a one-shot fetch at root mount that throws silently if `getJwt()` hasn't resolved yet, leaving `tenants=[]` forever and stranding Dashboard, History, Log, and Entry detail. The Projects tab does its own fetch on mount and works, which masked the bug for a while. Same root pattern as ST-065 but on a higher-impact code path. **Not** caused by cross-origin cleanup; pre-existing race condition. Filed as Phase A high urgency.
 
 ***
+## Session: 2026-07-08 — Autonomous-Run Harness (the Moody protocol, ported)
+
+### What Happened
+
+Maria asked for a requirements set robust enough to run unattended coding sessions, modeled on MoodyMeals. Cloned MoodyMeals, studied its harness (requirements → build-spec → TEST_CASES → BACKLOG → QUESTIONS/DECISIONS/RUNLOG + CLAUDE.md work-loop), ran a full ground-truth survey of the Storm Tracker codebase (web, mobile, all 17 migrations, Postgres functions, issues), and authored the equivalent harness for this project.
+
+### Work Completed
+
+- **`docs/requirements.md`** — consolidated north-star requirements (mission, design principles, 19 functional areas, liability invariants, phasing, open questions).
+- **`docs/build-spec.md`** — resolved-decisions table, corrected data-model reference, pinned algorithm values, ground-truth current-state inventory, test-rig spec (local Postgres 16 + `auth.user_id()` shim), milestones M0–M6, constants registry (§8).
+- **`docs/TEST_CASES.md`** — 129 Given/When/Then cases in 15 sections; ⚠️ safety-critical: §1 scoring correctness, §2 RLS/tenant isolation, §3 liability language.
+- **`docs/BACKLOG.md`** — ordered, criteria-tagged work queue (M0 harness/rig → M1 Phase A → … → M6 App Store), every task citing TEST_CASES IDs + ST-issues, with NEEDS-VISUAL-REVIEW / CLINICAL-REVIEW / PROMPT-REVIEW / DEVICE-GATED / DB-GATED / DIGEST-GATED tags.
+- **`docs/QUESTIONS.md`** — Q1–Q9 product questions + findings F1–F22 from the survey.
+- **`docs/DECISIONS.md`** — first digest, D-1…D-5 (harness adoption, invite-pipeline repair, test-rig approach, scoring-defect policy, CI).
+- **`docs/RUNLOG.md`** — per-task autonomous session log (this session is the first entry).
+- **`CLAUDE.md`** — new "Autonomous Runs" section: work loop, hard rules (safety-test halt, digest-gated schema, clinical-review-gated scoring, never-touch-production), session-end digest protocol, authority order.
+
+### Notable Findings (full list: QUESTIONS.md F1–F22)
+
+- Invite pipeline likely broken as-migrated: `accept_invite()` targets a nonexistent `invites.status` column and wrong `tenant_members` columns (F1/F2); `invite-details` queries `"Invite"`/`"Tenant"` table names that don't match the schema (F3). Needs live-DB drift audit (M0-6).
+- `jwks` (RS256 private keys) has no RLS (F4).
+- **No framework seed remains in the repo** — deleted with ST-071; a fresh DB scores every entry NULL (F5). Recovery from git history is M0-4.
+- Severity is computed then discarded; episode peakSeverity hardcoded MODERATE (F6). Withdrawal-trend signal documented but never implemented in SQL (F8).
+- Mobile's UI library (`react-native-paper`) is an undeclared dependency (F12).
+- Attachments API fully built, zero UI on either platform (F15).
+
+### What's Next
+
+1. Maria answers digest D-1…D-5 (esp. D-1 harness adoption, D-3 test rig).
+2. M0-2/M0-3 test infra, M0-4 seed recovery, then M1-1 (ST-077) — per BACKLOG, top-down.
