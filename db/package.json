@@ -1,0 +1,14 @@
+{
+  "name": "storm-tracker-db-tests",
+  "private": true,
+  "description": "Postgres test rig for Storm Tracker's clinical scoring triggers and RLS policies (build-spec §5.1). Run `npm test` — it rebuilds the throwaway database (rig/setup.sh) and runs the Vitest suite in tests/.",
+  "scripts": {
+    "setup": "bash rig/setup.sh",
+    "test": "bash rig/setup.sh && vitest run"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.20.0",
+    "pg": "^8.22.0",
+    "vitest": "^4.1.10"
+  }
+}
