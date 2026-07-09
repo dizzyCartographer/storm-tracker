@@ -100,7 +100,7 @@ function defaultRange() {
   };
 }
 
-function extractScore(entry: EntryRow) {
+export function extractScore(entry: EntryRow) {
   // All values are computed and persisted by the Postgres scoring trigger.
   // computedMood = classification string, computedScore = wave score number,
   // computedCriteriaCounts = { pole_slug: count } JSONB.
