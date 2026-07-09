@@ -1588,3 +1588,7 @@ Maria asked for a requirements set robust enough to run unattended coding sessio
 
 1. Maria answers digest D-1…D-5 (esp. D-1 harness adoption, D-3 test rig).
 2. M0-2/M0-3 test infra, M0-4 seed recovery, then M1-1 (ST-077) — per BACKLOG, top-down.
+
+## Session: 2026-07-09 — Digest Answered, M0 Executed (first backlog run)
+
+Maria answered the full first digest in chat (D-1…D-5 canon; D-4 resolved as "split — fix F6 early" after a walkthrough of what F8 actually is). The session then worked the backlog top-down: web + mobile test infra (M0-2/3), DSM-5 seed recovered from git history to `db/seed/dsm5-bipolar.sql` (M0-4), the Postgres test rig built and green (M0-5), the ⚠️ scoring/episode suites completed (M0-7 — 33 db tests: 28 green + 2 honest expected-fail pins), and CI added (M0-8). Building the suite exposed four new confirmed findings: F23 (the committed analysis migration cannot even compile — the RECORD[] fix from Apr 7 was applied live but never committed), F24 (documented subthreshold-MIXED fallback is dead code), F25 (episode gap tolerance is 1 missed day, not the documented 2), and F26 (episode detection counts "DSM-full days" far more loosely than daily scoring — clinician-facing overstatement risk; posted as D-6). Everything pinned, nothing changed unilaterally. Remaining in M0: the DB-GATED schema-drift audit (M0-6). Details: docs/RUNLOG.md; findings: docs/QUESTIONS.md; new digest D-6/D-7 awaiting answers. Work is on branch `claude/codebase-requirements-doc-iwlutu` pending merge to staging.
