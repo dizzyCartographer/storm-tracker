@@ -2,7 +2,7 @@
 id: ST-077
 title: ProjectProvider silent failure leaves dashboard, history, log, entry detail empty until app restart
 type: bug
-status: open
+status: on-stage
 urgency: high
 phase: A
 components:
@@ -88,3 +88,15 @@ Two pieces, both small:
 ## Discovery
 
 Found 2026-04-27 during ST-071 staging verification. User reported "the mobile app cannot see any projects… none of the same data that i see on web staging" while testing the staging branch deploy. Diagnosis traced to ProjectProvider after confirming Projects tab fetched fine while Dashboard didn't. Cross-origin cleanup (Apr 16) is unrelated — mobile dev still hits production, race has always been there.
+
+## Implementation (2026-07-09, M1-1 — awaiting device verification)
+
+Landed on `claude/codebase-requirements-doc-iwlutu`:
+
+1. **Auth-ready gate.** `AuthProvider` exposes `ready` (true once the initial session check resolves). `ProjectProvider` fetches only when `ready && isSignedIn`, and re-runs on sign-in — the mount-time race is gone.
+2. **Error state + recovery.** `ProjectProvider` auto-retries once after a 1.5s backoff, then surfaces `error`. A shared `ProjectLoadError` banner (rendered once in the tabs layout) covers Dashboard, Log, AI Journal, and History with a Retry that reloads the context in place. Dashboard no longer claims "No projects yet" when the load failed. Entry detail / log-edit are only reachable through recovered screens, so the shared-context recovery covers them by construction.
+3. **F18 fix.** `neonFetch` no longer signs the user out on a null JWT — it retries `getJwt()` up to 3 times with backoff (300ms/900ms), then throws a visible error. Genuine 401s still sign out.
+
+Tests (jest-expo): MOB-1/1b (no fetch before ready; signed-out no-fetch), MOB-2 (auto-retry then visible error), MOB-3 (in-place recovery), MOB-4/4b (transient null JWT never signs out), MOB-8 (jwk-not-found retry). Suite 10/10.
+
+**Remaining for done:** cold-launch verification on a real device/TestFlight build (DEVICE-GATED).

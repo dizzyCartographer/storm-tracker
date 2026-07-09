@@ -8,6 +8,10 @@ import {
 
 interface AuthState {
   isLoading: boolean;
+  /** True once the initial session check has resolved (SecureStore cookie hydrated).
+   *  Data fetches that need a JWT must wait for this — firing earlier races the
+   *  auth round-trip and strands every dependent screen (ST-077). */
+  ready: boolean;
   isSignedIn: boolean;
   signIn: (
     email: string,
@@ -23,6 +27,7 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState>({
   isLoading: true,
+  ready: false,
   isSignedIn: false,
   signIn: async () => ({ success: false }),
   signUp: async () => ({ success: false }),
@@ -70,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         isLoading,
+        ready: !isLoading,
         isSignedIn,
         signIn: handleSignIn,
         signUp: handleSignUp,

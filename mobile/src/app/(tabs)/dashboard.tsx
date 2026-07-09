@@ -204,7 +204,7 @@ function EpisodeCard({ episode }: { episode: EpisodeRow }) {
 // ── Main Screen ──
 
 export default function DashboardScreen() {
-  const { selectedTenant, tenants, loading: projectLoading } = useProject();
+  const { selectedTenant, tenants, loading: projectLoading, error: projectError } = useProject();
   const [entries, setEntries] = useState<EntryRow[]>([]);
   const [episodes, setEpisodes] = useState<EpisodeRow[]>([]);
   const [signals, setSignals] = useState<SignalRow[]>([]);
@@ -278,13 +278,19 @@ export default function DashboardScreen() {
           </Button>
         </View>
       ) : tenants.length === 0 ? (
+        // ST-077: when the project load FAILED, the shared banner in the tabs
+        // layout owns the message — never claim "No projects yet" on an error.
         <View style={styles.centered}>
-          <Text variant="bodyLarge" style={styles.emptyText}>
-            No projects yet.
-          </Text>
-          <Text variant="bodySmall" style={styles.emptySubtext}>
-            Create a project on the web app to get started.
-          </Text>
+          {!projectError && (
+            <>
+              <Text variant="bodyLarge" style={styles.emptyText}>
+                No projects yet.
+              </Text>
+              <Text variant="bodySmall" style={styles.emptySubtext}>
+                Create a project on the web app to get started.
+              </Text>
+            </>
+          )}
         </View>
       ) : (
         <ScrollView

@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/auth-context";
 import { useProject } from "@/lib/project-context";
 import { ProjectSelector } from "@/components/project-selector";
+import { ProjectLoadError } from "@/components/project-load-error";
 import { HeaderMenu } from "@/components/header-menu";
 import { palette } from "@/lib/theme";
 
@@ -52,6 +53,11 @@ function TabLayoutInner() {
           ]}
         />
       )}
+
+      {/* ST-077: shared recovery banner — covers every tab that depends on the
+          project context, so a failed load is always visible and retryable. */}
+      <ProjectLoadError />
+
 
       {/* Tab screens render here */}
       <View style={styles.content}>

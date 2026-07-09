@@ -2,6 +2,14 @@
 Newest at top. One block per task; one Session summary per run window. Session summaries also get a short pointer entry in `docs/context/storm-tracker-work-log.md` (the cross-conversation continuity file) — RUNLOG carries the per-task detail, the work log carries the narrative.
 
 ---
+## Session addendum — 2026-07-09 (M1-1 / ST-077)
+
+### [M1-1] — ST-077 ProjectProvider resilience (F18 included)
+- Outcome: **done — issue moved to on-stage** (device cold-start verification is Maria's). AuthProvider exposes `ready`; ProjectProvider gates on `ready && isSignedIn` (also re-loads after sign-in), auto-retries once (1.5s backoff), then surfaces `error`; shared `ProjectLoadError` banner in the tabs layout gives Dashboard/Log/AI Journal/History one in-place Retry; Dashboard's "No projects yet" suppressed on error. `neonFetch` retries a null JWT (300/900ms) and never signs out for transient failures — genuine 401s still do.
+- Tests: MOB-1/1b/2/3 (provider), MOB-4/4b/8 (token handling) — mobile suite 10/10. Typecheck clean (one pre-existing error in dead template code, M1-5 deletes it).
+- New behavioral constants (need build-spec §8 rows — proposing via digest next run, per the no-hardcoded-numbers rule): provider auto-retry backoff 1500ms; getJwt retry backoff 300ms/900ms (3 attempts).
+- Next unblocked: M1-2 (ST-064 loading states). M1-1b (F6) waits only on D-7 (severity-only vs severity+ruleType — one migration either way).
+
 ## Session summary — 2026-07-09 (first backlog run — M0 near-complete)
 - **Done:** D-1…D-5 answered by Maria (recorded as canon) + D-4 split decision after live discussion; M0-2 (web Vitest, 3 green), M0-3 (mobile jest-expo, 2 green, F12 deps declared), M0-4 (seed recovered to SQL), M0-5 (Postgres rig), M0-7 (30-case db suite: 28 green + 2 expected-fail pins), M0-8 (CI workflow, db path verified locally).
 - **Blocked / remaining in M0:** M0-6 schema-drift audit — DB-GATED (no Neon credentials in this environment). M0-8 live-run verification lands with the first push to `staging`.

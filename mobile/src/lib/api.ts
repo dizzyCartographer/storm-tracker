@@ -40,15 +40,31 @@ export async function apiFetch(
 
 // ── Authenticated fetch for Neon Data API (JWT + RLS) ──
 
+// getJwt() returns null on ANY failure — including transient ones (token endpoint
+// not yet reachable on cold start, brief network blips). Retry with backoff before
+// giving up, and never sign the user out for a transient null: the 401 path below
+// handles genuinely invalid sessions (ST-077 / F18, MOB-4).
+async function getJwtWithRetry(): Promise<string | null> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const jwt = await getJwt();
+    if (jwt) return jwt;
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 300 * Math.pow(3, attempt)));
+    }
+  }
+  return null;
+}
+
 export async function neonFetch(
   path: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const jwt = await getJwt();
+  const jwt = await getJwtWithRetry();
 
   if (!jwt) {
-    await signOut();
-    throw new Error("No JWT available");
+    throw new Error(
+      "Couldn't get an authentication token. Check your connection and try again."
+    );
   }
 
   const headers: Record<string, string> = {
