@@ -6,18 +6,13 @@ Format per item:
 **Maria:** _answer here_
 
 ---
-## Digest — 2026-07-08 (harness bootstrap + consistency read) — 1 open item remaining
-
-**D-4. Scoring defects: pin now, fix in Phase D — or fix sooner?** F6 (severity computed then thrown away; episode `peakSeverity` hardcoded MODERATE — **and Reports.tsx line 313 prints "Peak severity" on every possible episode in the clinician report**), F8 (documented withdrawal-trend signal never implemented), F9 (episodes re-derive counts instead of reading the persisted ones), F7 (predictions coupled to episodes' temp table). All change clinical output, so they're CLINICAL-REVIEW either way.
-→ Options (revised 2026-07-09 after Maria flagged the bundle as unclear — it mixed wrong-output defects with internal-hygiene defects):
-   a) split: fix **F6** as soon as the rig exists (it misinforms clinicians today); park F7/F8/F9 to M5 (recommended)
-   b) fix all four early
-   c) pin all four now, fix everything in M5 (original recommendation)
-→ Blocks: M5-3 ordering; whether near-term clinician reports carry a wrong severity label.
-**Maria:** _____
+## Digest — 2026-07-08 (harness bootstrap + consistency read) — all items answered
 
 ---
 ## Answered (canon)
+
+**D-4. Scoring defects: pin now, fix in Phase D — or fix sooner?** (F6 severity discarded + report prints hardcoded "moderate" peak severity; F8 withdrawal-trend signal documented but dropped in the Postgres port; F7/F9 internal plumbing.)
+**Maria:** **Split — fix F6 early** (2026-07-09, in chat, after F8 context) → ANSWERED, canon. F6 lands right after the test rig (new task M1-1b, includes approving the persisted-severity column, CLINICAL-REVIEW on the before/after). F7/F8/F9 stay in M5-3 for Phase D review.
 
 **D-1. Adopt the autonomous-run harness as written (files in `docs/`, authority order as stated)?**
 **Maria:** a) adopt as written (2026-07-09, in chat) → ANSWERED, canon.

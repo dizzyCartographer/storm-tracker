@@ -15,6 +15,7 @@ Every task cites its TEST_CASES IDs; a task without tests for its ACs is not don
 
 ## M1 — Phase A: core stability
 - [M1-1] (90m) **ST-077** ProjectProvider resilience — add `ready` flag to AuthProvider (true after session hydration); gate the first load on it; add `error` state + auto-retry once with short backoff + visible Retry banner consumed by Dashboard/History/Log/Entry-detail; `getJwt()` null must NOT trigger signOut (transient path retries — F18). **AC:** MOB-1..4 as jest-expo tests with mocked auth/api; manual cold-start check.
+- [M1-1b] (75m) **F6 severity fix** (per D-4 split, 2026-07-09) — add persisted severity to entries (column approved via D-4); `compute_daily_score` persists it; `compute_episodes` derives real `peakSeverity` (MILD/MODERATE/SEVERE) from per-day severities; backfill via the ST-074 pattern (analysis trigger disabled during touch-update); report reads real values. **AC:** SC-21 asserts persistence; EP-11 flips to real peak severity; Reports shows it. **CLINICAL-REVIEW:** Maria reviews before/after on staging before merge. Live-DB apply DB-GATED, staging first. Depends: M0-4, M0-5.
 - [M1-2] (60m) **ST-064** loading states — every list screen shows skeleton/spinner until first fetch resolves; empty-state copy only after confirmed-empty. **AC:** MOB-5, MOB-6. NEEDS-VISUAL-REVIEW.
 - [M1-3] (60m) **ST-073** error surfacing audit — replace generic/silent catches in `log-edit` (save), `project-edit` (load), `profile`, `history`, `import`/reference loads with real-message + retry-where-sensible. **AC:** MOB-7; grep shows no user-facing catch that drops `e.message`.
 - [M1-4] (30m) **ST-068** remove web auth debug handlers — the 500 body-leak, the `err.stack` response, the `app.all("*")` debug route. **AC:** AU-5; staging sign-in verified working after deploy.
@@ -57,7 +58,7 @@ Every task cites its TEST_CASES IDs; a task without tests for its ACs is not don
 ## M5 — Phase D: clinical review & validation
 - [M5-1] (120m) **ST-005** full clinical test coverage — every §1/§4/§5/§6/§7 case implemented in the rig; coverage report appended to RUNLOG. **AC:** all TEST_CASES clinical sections green or pinned with findings.
 - [M5-2] (90m) **ST-006** clinician review package — generate a plain-language document from the LIVE database config (every behavior→criterion mapping, rule, threshold, with DSM-5 citations) for external clinical review. **CLINICAL-REVIEW** (Maria reviews before it goes anywhere). **AC:** doc generated reproducibly from DB; matches reference page.
-- [M5-3] (—) Scoring-defect fixes bundle — F6 (persist severity; real episode peakSeverity), F8 (withdrawal-trend signal: implement or de-document), F9 (episodes read persisted counts), F7 (remove temp-table coupling; framework-agnostic poles). **CLINICAL-REVIEW + BLOCKED(D-4)** — each changes clinical output; tests first (SC-21, EP-11, SIG-8, PRD-7 flip from pinned-red to green).
+- [M5-3] (—) Scoring-defect fixes bundle — F8 (withdrawal-trend signal: restore with Maria's threshold review, or de-document), F9 (episodes read persisted counts), F7 (remove temp-table coupling; framework-agnostic poles). **CLINICAL-REVIEW.** *(D-4 answered 2026-07-09: split — F6 moved to M1-1b; these three stay here.)* Tests first (SIG-8, PRD-7 flip from pinned-red to green).
 - [M5-4] (45m) **ST-029** cite sources on reference page; **ST-057** reference page on mobile (60m). **AC:** citation per criterion; mobile parity. CLINICAL-REVIEW for citation accuracy.
 
 ## M6 — Phase E: App Store (mostly DEVICE-GATED)
@@ -75,4 +76,4 @@ ST-014, ST-018, ST-019, ST-020, ST-021, ST-023, ST-024, ST-025, ST-026, ST-028, 
 - Aesthetic iteration of any screen; AI journal prompt tuning (PROMPT-REVIEW); any change to suggestion/episode/prediction wording (LNG + CLINICAL-REVIEW); anything touching production env vars or the production database.
 
 ## Blocked pending Maria
-- M5-3 scoring defects → **D-4** (revised options posted 2026-07-09). *(D-1/D-2/D-3/D-5 answered 2026-07-09 — see DECISIONS.md Answered section.)*
+- *(none — D-1…D-5 all answered 2026-07-09; see DECISIONS.md Answered section.)*
