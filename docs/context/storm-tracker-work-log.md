@@ -1558,3 +1558,53 @@ Staging preview verified by user (web rendering correct data). Fast-forward merg
 While the cleanup was being verified, a separate mobile bug surfaced and got captured as **[[ST-077-project-context-silent-fail|ST-077]]**: `ProjectProvider` runs a one-shot fetch at root mount that throws silently if `getJwt()` hasn't resolved yet, leaving `tenants=[]` forever and stranding Dashboard, History, Log, and Entry detail. The Projects tab does its own fetch on mount and works, which masked the bug for a while. Same root pattern as ST-065 but on a higher-impact code path. **Not** caused by cross-origin cleanup; pre-existing race condition. Filed as Phase A high urgency.
 
 ***
+
+## Session: 2026-07-12 — Production TestFlight Rebuild (Build 4) + Missing Dependency Fix
+
+### What Happened
+
+Production TestFlight build 3 (uploaded April 15) was hitting its 90-day expiry. User requested a fresh build for the main app. Rebuilt from `main` (mobile code unchanged since build 3 — the only mobile-touching commit since `e3990cd` is a docs change) and uploaded build 4 to App Store Connect. Along the way, discovered and fixed a latent dependency bug.
+
+### Latent Bug Found: react-native-paper missing from package.json
+
+Running `npm install` in `mobile/` before the build **removed 6 packages** — react-native-paper and its dependency subtree. The first archive attempt then failed: Metro couldn't resolve `react-native-paper`.
+
+Root cause: `react-native-paper` was never declared in `mobile/package.json` and never recorded in the committed lockfile — it must have been installed with `--no-save` back when the theming was built (April 9). The April 14/15 revert chaos didn't lose it from the manifest; it was *never in* the manifest. Every build since (staging 12, 13; production 2, 3) succeeded only because the stale `node_modules` on this machine still contained it. Any fresh checkout / `npm install` would have hit this.
+
+Fix: declared `"react-native-paper": "^5.15.0"` in `mobile/package.json` (v5.15 is the documented line in the branding style guide; installed 5.15.3). It's now in the lockfile, so this cannot recur. Paper is pure JS — no pod changes, no prebuild needed for the fix.
+
+Also audited all other imports in `mobile/src` against the manifest: the only other undeclared import is `@expo/vector-icons`, which resolves via the `expo` package's own dependency tree (standard Expo pattern) — left as is.
+
+### Build & Upload
+
+- `mobile/app.json` buildNumber bumped 3 → 4 (production sequence; staging sequence is separate, last used 13).
+- `CI=1 LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo prebuild --platform ios --clean` — generated `StormTrackRx.xcworkspace` (production naming confirmed).
+- Archived via documented `xcodebuild archive` command to `StormTrackRx-build4.xcarchive` (per archive-naming convention), with `-allowProvisioningUpdates`.
+- **New: upload done entirely via CLI** — `xcodebuild -exportArchive` with an ExportOptions.plist (`method: app-store-connect`, `destination: upload`, team `RC99K6SXQX`). No Xcode Organizer GUI step needed. "Upload succeeded" / "Uploaded StormTrackRx" confirmed. dSYM warnings for React/Hermes prebuilt frameworks are expected and harmless.
+- Archive verified before upload: `com.stormtracker.app`, version 1.0.0, build 4.
+- `ITSAppUsesNonExemptEncryption=false` already in app.json, so no compliance question blocks TestFlight availability.
+
+### Process Note: masked exit codes in background builds
+
+The first archive failure was initially reported as success because the shell wrapper (`xcodebuild … ; echo "exit: $?"`) made the background task exit 0. Caught it by grepping the log for `ARCHIVE SUCCEEDED` / `error:` instead of trusting the wrapper. Verify build logs by content, not wrapper exit codes.
+
+### Still Expiring Soon
+
+The **staging** app (StormTrackRxDev, build 13, also uploaded April 15) expires around the same time. Not rebuilt this session — user asked for the main app only. If the dev app is still needed on-device, it needs the same treatment (`APP_ENV=staging` prebuild, bump beyond 13, archive `StormTrackRxDev` scheme).
+
+### Git State (end of session)
+
+| Branch | Status |
+|--------|--------|
+| `staging` | Current — build number bump + react-native-paper manifest fix + this work log entry |
+| `main` | Untouched this session (still at `485d6a3`); needs staging merged at next opportunity. The paper fix is mobile-only — zero web deploy risk. |
+| No worktrees | Clean (previous session's stale worktrees are gone) |
+
+### What's Next
+
+1. **Verify build 4 on TestFlight** once Apple finishes processing (5–15 min typical).
+2. **Merge staging → main** so the dependency fix and build number land on main before the next production build.
+3. **ST-077** — ProjectProvider race (high, Phase A) — next code work.
+4. **Rebuild StormTrackRxDev** if the dev app is still wanted on-device (build 13 expiring).
+
+***
